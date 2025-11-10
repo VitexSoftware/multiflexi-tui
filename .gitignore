@@ -1,0 +1,5 @@
+debian/debhelper-build-stamp
+debian/.debhelper/
+debian/multiflexi-tui/
+debian/files
+debian/multiflexi-tui.substvars

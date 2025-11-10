@@ -1,0 +1,27 @@
+Source: multiflexi-tui
+Section: utils
+Priority: optional
+Maintainer: Vitex Software <info@vitexsoftware.cz>
+Build-Depends: debhelper-compat (= 13), golang-any
+Standards-Version: 4.6.2
+Homepage: https://github.com/VitexSoftware/multiflexi-cli
+Vcs-Git: https://github.com/VitexSoftware/multiflexi-tui.git
+Vcs-Browser: https://github.com/VitexSoftware/multiflexi-tui
+Rules-Requires-Root: no
+
+Package: multiflexi-tui
+Architecture: any
+Depends: ${misc:Depends}, ${shlibs:Depends}, multiflexi-cli
+Description: TUI frontend for MultiFlexi CLI built with Bubbletea
+ MultiFlexi TUI provides a terminal user interface for the MultiFlexi CLI tool.
+ It features a dynamic command menu that loads available commands from
+ multiflexi-cli and displays help text in an easy-to-navigate interface.
+ .
+ Built using the Charmbracelet Bubbletea framework, it offers:
+  * Dynamic command discovery
+  * Scrollable command list
+  * Interactive help viewer
+  * Keyboard-driven navigation
+ .
+ This package provides a user-friendly way to explore and use MultiFlexi
+ commands through an intuitive terminal interface.

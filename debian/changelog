@@ -1,0 +1,10 @@
+multiflexi-tui (1.0.0-1) unstable; urgency=medium
+
+  * Initial release of MultiFlexi TUI
+  * Dynamic command discovery from multiflexi-cli
+  * Interactive scrollable menu using Bubbletea framework
+  * Help viewer for command documentation
+  * Keyboard navigation support
+  * Debian packaging support
+
+ -- Vitex Software <info@vitexsoftware.cz>  Mon, 10 Nov 2025 12:00:00 +0100

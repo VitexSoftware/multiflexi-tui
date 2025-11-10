@@ -1,0 +1,13 @@
+#!/usr/bin/make -f
+
+%:
+	dh $@
+
+override_dh_auto_build:
+	go build -trimpath -ldflags="-s -w" -o bin/multiflexi-tui ./cmd/multiflexi-tui
+
+override_dh_auto_test:
+	go test -v ./...
+
+override_dh_auto_clean:
+	rm -rf bin/
