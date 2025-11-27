@@ -9,52 +9,88 @@ var (
 	accentColor    = lipgloss.Color("#F25D94")
 	textColor      = lipgloss.Color("#FAFAFA")
 	subtleColor    = lipgloss.Color("#626262")
-	
+
 	// Base styles
 	baseStyle = lipgloss.NewStyle().
-		Foreground(textColor)
-	
+			Foreground(textColor)
+
 	// Title styles
 	titleStyle = lipgloss.NewStyle().
-		Foreground(primaryColor).
-		Bold(true).
-		Margin(0, 0, 1, 0)
-	
+			Foreground(primaryColor).
+			Bold(true).
+			Margin(0, 0, 1, 0)
+
 	// List styles
 	listStyle = lipgloss.NewStyle().
-		Border(lipgloss.RoundedBorder()).
-		BorderForeground(primaryColor).
-		Padding(1, 2)
-	
+			Border(lipgloss.RoundedBorder()).
+			BorderForeground(primaryColor).
+			Padding(1, 2)
+
 	selectedItemStyle = lipgloss.NewStyle().
-		Foreground(accentColor).
-		Bold(true).
-		Padding(0, 1)
-	
+				Foreground(accentColor).
+				Bold(true).
+				Padding(0, 1)
+
 	unselectedItemStyle = lipgloss.NewStyle().
-		Foreground(textColor).
-		Padding(0, 1)
-	
+				Foreground(textColor).
+				Padding(0, 1)
+
 	itemDescriptionStyle = lipgloss.NewStyle().
-		Foreground(subtleColor).
-		Italic(true)
-	
+				Foreground(subtleColor).
+				Italic(true)
+
 	// Viewer styles
 	viewerStyle = lipgloss.NewStyle().
-		Border(lipgloss.RoundedBorder()).
-		BorderForeground(primaryColor).
-		Padding(1, 2).
-		Margin(0, 0, 1, 0)
-	
+			Border(lipgloss.RoundedBorder()).
+			BorderForeground(primaryColor).
+			Padding(1, 2).
+			Margin(0, 0, 1, 0)
+
 	// Footer styles
 	footerStyle = lipgloss.NewStyle().
-		Foreground(subtleColor).
-		Margin(1, 0, 0, 0)
-	
+			Foreground(subtleColor).
+			Margin(1, 0, 0, 0)
+
 	// Error styles
 	errorStyle = lipgloss.NewStyle().
-		Foreground(accentColor).
-		Bold(true)
+			Foreground(accentColor).
+			Bold(true)
+
+	// Button styles
+	buttonStyle = lipgloss.NewStyle().
+			Foreground(textColor).
+			Background(primaryColor).
+			Padding(0, 1).
+			Border(lipgloss.NormalBorder()).
+			BorderForeground(primaryColor)
+
+	disabledButtonStyle = lipgloss.NewStyle().
+				Foreground(subtleColor).
+				Background(lipgloss.Color("#333333")).
+				Padding(0, 1).
+				Border(lipgloss.NormalBorder()).
+				BorderForeground(subtleColor)
+
+	// Status table styles
+	statusTableStyle = lipgloss.NewStyle().
+				Border(lipgloss.RoundedBorder()).
+				BorderForeground(primaryColor).
+				Padding(1, 2)
+
+	activeStatusStyle = lipgloss.NewStyle().
+				Foreground(secondaryColor).
+				Bold(true)
+
+	disabledStatusStyle = lipgloss.NewStyle().
+				Foreground(accentColor).
+				Bold(true)
+
+	statusLabelStyle = lipgloss.NewStyle().
+				Foreground(textColor).
+				Bold(true)
+
+	statusValueStyle = lipgloss.NewStyle().
+				Foreground(textColor)
 )
 
 // GetListStyle returns the list container style
@@ -95,4 +131,39 @@ func GetFooterStyle() lipgloss.Style {
 // GetErrorStyle returns the error style
 func GetErrorStyle() lipgloss.Style {
 	return errorStyle
+}
+
+// GetButtonStyle returns the button style
+func GetButtonStyle() lipgloss.Style {
+	return buttonStyle
+}
+
+// GetDisabledButtonStyle returns the disabled button style
+func GetDisabledButtonStyle() lipgloss.Style {
+	return disabledButtonStyle
+}
+
+// GetStatusTableStyle returns the status table style
+func GetStatusTableStyle() lipgloss.Style {
+	return statusTableStyle
+}
+
+// GetActiveStatusStyle returns the active status style (green)
+func GetActiveStatusStyle() lipgloss.Style {
+	return activeStatusStyle
+}
+
+// GetDisabledStatusStyle returns the disabled status style (red)
+func GetDisabledStatusStyle() lipgloss.Style {
+	return disabledStatusStyle
+}
+
+// GetStatusLabelStyle returns the status label style
+func GetStatusLabelStyle() lipgloss.Style {
+	return statusLabelStyle
+}
+
+// GetStatusValueStyle returns the status value style
+func GetStatusValueStyle() lipgloss.Style {
+	return statusValueStyle
 }
