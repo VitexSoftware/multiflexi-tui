@@ -310,6 +310,250 @@ func GetRunTemplates(limit, offset int) ([]RunTemplate, error) {
 	return templates, nil
 }
 
+// Credential represents a credential from multiflexi-cli
+type Credential struct {
+	ID               int    `json:"id"`
+	Name             string `json:"name"`
+	CompanyID        int    `json:"company_id"`
+	CredentialTypeID int    `json:"credential_type_id"`
+}
+
+// GetCredentials fetches credentials from multiflexi-cli with pagination
+func GetCredentials(limit, offset int) ([]Credential, error) {
+	cmd := exec.Command("multiflexi-cli", "credential", "list",
+		"--format=json",
+		"--order=D", // Newer on top (descending order)
+		"--limit="+fmt.Sprintf("%d", limit),
+		"--offset="+fmt.Sprintf("%d", offset),
+	)
+
+	output, err := cmd.Output()
+	if err != nil {
+		return nil, fmt.Errorf("failed to run multiflexi-cli credential list: %w", err)
+	}
+
+	var credentials []Credential
+	if err := json.Unmarshal(output, &credentials); err != nil {
+		return nil, fmt.Errorf("failed to parse credential JSON output: %w", err)
+	}
+
+	return credentials, nil
+}
+
+// Token represents a token from multiflexi-cli
+type Token struct {
+	ID    int    `json:"id"`
+	User  string `json:"user"`
+	Token string `json:"token"`
+}
+
+// GetTokens fetches tokens from multiflexi-cli with pagination
+func GetTokens(limit, offset int) ([]Token, error) {
+	cmd := exec.Command("multiflexi-cli", "token", "list",
+		"--format=json",
+		"--order=D", // Newer on top (descending order)
+		"--limit="+fmt.Sprintf("%d", limit),
+		"--offset="+fmt.Sprintf("%d", offset),
+	)
+
+	output, err := cmd.Output()
+	if err != nil {
+		return nil, fmt.Errorf("failed to run multiflexi-cli token list: %w", err)
+	}
+
+	var tokens []Token
+	if err := json.Unmarshal(output, &tokens); err != nil {
+		return nil, fmt.Errorf("failed to parse token JSON output: %w", err)
+	}
+
+	return tokens, nil
+}
+
+// User represents a user from multiflexi-cli
+type User struct {
+	ID        int    `json:"id"`
+	Login     string `json:"login"`
+	Firstname string `json:"firstname"`
+	Lastname  string `json:"lastname"`
+	Email     string `json:"email"`
+}
+
+// GetUsers fetches users from multiflexi-cli with pagination
+func GetUsers(limit, offset int) ([]User, error) {
+	cmd := exec.Command("multiflexi-cli", "user", "list",
+		"--format=json",
+		"--order=D", // Newer on top (descending order)
+		"--limit="+fmt.Sprintf("%d", limit),
+		"--offset="+fmt.Sprintf("%d", offset),
+	)
+
+	output, err := cmd.Output()
+	if err != nil {
+		return nil, fmt.Errorf("failed to run multiflexi-cli user list: %w", err)
+	}
+
+	var users []User
+	if err := json.Unmarshal(output, &users); err != nil {
+		return nil, fmt.Errorf("failed to parse user JSON output: %w", err)
+	}
+
+	return users, nil
+}
+
+// Artifact represents an artifact from multiflexi-cli
+type Artifact struct {
+	ID     int    `json:"id"`
+	Job_ID int    `json:"job_id"`
+	File   string `json:"file"`
+}
+
+// GetArtifacts fetches artifacts from multiflexi-cli with pagination
+func GetArtifacts(limit, offset int) ([]Artifact, error) {
+	cmd := exec.Command("multiflexi-cli", "artifact", "list",
+		"--format=json",
+		"--order=D", // Newer on top (descending order)
+		"--limit="+fmt.Sprintf("%d", limit),
+		"--offset="+fmt.Sprintf("%d", offset),
+	)
+
+	output, err := cmd.Output()
+	if err != nil {
+		return nil, fmt.Errorf("failed to run multiflexi-cli artifact list: %w", err)
+	}
+
+	var artifacts []Artifact
+	if err := json.Unmarshal(output, &artifacts); err != nil {
+		return nil, fmt.Errorf("failed to parse artifact JSON output: %w", err)
+	}
+
+	return artifacts, nil
+}
+
+// CredType represents a credential type from multiflexi-cli
+type CredType struct {
+	ID   int    `json:"id"`
+	UUID string `json:"uuid"`
+	Name string `json:"name"`
+}
+
+// GetCredTypes fetches credential types from multiflexi-cli with pagination
+func GetCredTypes(limit, offset int) ([]CredType, error) {
+	cmd := exec.Command("multiflexi-cli", "credtype", "list",
+		"--format=json",
+		"--order=D", // Newer on top (descending order)
+		"--limit="+fmt.Sprintf("%d", limit),
+		"--offset="+fmt.Sprintf("%d", offset),
+	)
+
+	output, err := cmd.Output()
+	if err != nil {
+		return nil, fmt.Errorf("failed to run multiflexi-cli credtype list: %w", err)
+	}
+
+	var credTypes []CredType
+	if err := json.Unmarshal(output, &credTypes); err != nil {
+		return nil, fmt.Errorf("failed to parse credtype JSON output: %w", err)
+	}
+
+	return credTypes, nil
+}
+
+// CompanyApp represents a company-application relation from multiflexi-cli
+type CompanyApp struct {
+	ID        int `json:"id"`
+	CompanyID int `json:"company_id"`
+	AppID     int `json:"app_id"`
+}
+
+// GetCompanyApps fetches company-application relations from multiflexi-cli with pagination
+func GetCompanyApps(limit, offset int) ([]CompanyApp, error) {
+	cmd := exec.Command("multiflexi-cli", "companyapp", "list",
+		"--format=json",
+		"--order=D", // Newer on top (descending order)
+		"--limit="+fmt.Sprintf("%d", limit),
+		"--offset="+fmt.Sprintf("%d", offset),
+	)
+
+	output, err := cmd.Output()
+	if err != nil {
+		return nil, fmt.Errorf("failed to run multiflexi-cli companyapp list: %w", err)
+	}
+
+	var companyApps []CompanyApp
+	if err := json.Unmarshal(output, &companyApps); err != nil {
+		return nil, fmt.Errorf("failed to parse companyapp JSON output: %w", err)
+	}
+
+	return companyApps, nil
+}
+
+// InitEncryption initializes encryption
+func InitEncryption() error {
+	cmd := exec.Command("multiflexi-cli", "encryption", "init")
+	err := cmd.Run()
+	if err != nil {
+		return fmt.Errorf("failed to run multiflexi-cli encryption init: %w", err)
+	}
+	return nil
+}
+
+// Prune prunes logs and jobs
+func Prune(logs, jobs bool, keep int) error {
+	args := []string{"prune"}
+	if logs {
+		args = append(args, "--logs")
+	}
+	if jobs {
+		args = append(args, "--jobs")
+	}
+	args = append(args, "--keep", fmt.Sprintf("%d", keep))
+
+	cmd := exec.Command("multiflexi-cli", args...)
+	err := cmd.Run()
+	if err != nil {
+		return fmt.Errorf("failed to run multiflexi-cli prune: %w", err)
+	}
+	return nil
+}
+
+// Queue represents a queue item from multiflexi-cli
+type Queue struct {
+	ID      int    `json:"id"`
+	Message string `json:"message"`
+}
+
+// GetQueue fetches queue items from multiflexi-cli with pagination
+func GetQueue(limit, offset int) ([]Queue, error) {
+	cmd := exec.Command("multiflexi-cli", "queue", "list",
+		"--format=json",
+		"--order=D", // Newer on top (descending order)
+		"--limit="+fmt.Sprintf("%d", limit),
+		"--offset="+fmt.Sprintf("%d", offset),
+	)
+
+	output, err := cmd.Output()
+	if err != nil {
+		return nil, fmt.Errorf("failed to run multiflexi-cli queue list: %w", err)
+	}
+
+	var queue []Queue
+	if err := json.Unmarshal(output, &queue); err != nil {
+		return nil, fmt.Errorf("failed to parse queue JSON output: %w", err)
+	}
+
+	return queue, nil
+}
+
+// TruncateQueue truncates the queue
+func TruncateQueue() error {
+	cmd := exec.Command("multiflexi-cli", "queue", "truncate")
+	err := cmd.Run()
+	if err != nil {
+		return fmt.Errorf("failed to run multiflexi-cli queue truncate: %w", err)
+	}
+	return nil
+}
+
 type Job struct {
 	ID           int    `json:"id"`
 	AppID        int    `json:"app"`

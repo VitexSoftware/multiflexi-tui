@@ -84,13 +84,7 @@ func (m JobsModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.cursor++
 			}
 
-		case "tab":
-			// Tab switches to next view (handled by main app)
-			return m, func() tea.Msg {
-				return ShowMenuMsg{}
-			}
-
-		case "shift+left", "shift+h":
+		case "left", "h":
 			// Previous page (for job navigation specifically)
 			if m.hasPrev && !m.loading {
 				m.offset = max(0, m.offset-m.limit)
@@ -98,7 +92,7 @@ func (m JobsModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, m.loadJobsCmd()
 			}
 
-		case "shift+right", "shift+l":
+		case "right", "l":
 			// Next page (for job navigation specifically)
 			if m.hasMore && !m.loading {
 				m.offset += m.limit

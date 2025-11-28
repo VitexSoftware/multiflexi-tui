@@ -129,14 +129,14 @@ func (t *TableWidget) HandleKeypress(key string) (needsRefresh bool, needsNextPa
 		if len(t.rows) > 0 && t.cursor >= 0 && t.cursor < len(t.rows) {
 			return false, false, false, true
 		}
-	case "n", "right", "pgdown":
+	case "right", "pgdown":
 		// Next page
 		if t.hasMore {
 			t.offset += t.limit
 			t.cursor = 0 // Reset cursor for new page
 			return false, true, false, false
 		}
-	case "p", "left", "pgup":
+	case "left", "pgup":
 		// Previous page
 		if t.offset > 0 {
 			t.offset -= t.limit
@@ -242,24 +242,24 @@ func (t *TableWidget) View() string {
 		t.pageNum, t.totalShown, t.offset))
 	content.WriteString("\n\n")
 
-	// Pagination buttons
-	var prevButton, nextButton string
+	// Pagination controls
+	var prevText, nextText string
 	if t.offset > 0 {
-		prevButton = "← Previous"
+		prevText = GetSelectedItemStyle().Render("[←] Prev")
 	} else {
-		prevButton = "  Previous"
+		prevText = GetItemDescriptionStyle().Render("[←] Prev")
 	}
 
 	if t.hasMore {
-		nextButton = "Next →"
+		nextText = GetSelectedItemStyle().Render("[→] Next")
 	} else {
-		nextButton = "Next  "
+		nextText = GetItemDescriptionStyle().Render("[→] Next")
 	}
 
-	content.WriteString(fmt.Sprintf("[%s]   [%s]   [r] Refresh", prevButton, nextButton))
-	content.WriteString("\n")
-	content.WriteString("Enter: View details • PgUp/PgDn: Page navigation • ←/→: Page navigation • ↑/↓: Row selection")
-	content.WriteString("\n")
+	pageInfo := GetItemDescriptionStyle().Render(fmt.Sprintf("Page %d", t.pageNum))
+
+	content.WriteString(prevText + "  " + nextText + "    " + pageInfo)
+	content.WriteString("\n\n")
 
 	// Help text
 	if t.helpText != "" {
