@@ -1,4 +1,3 @@
-
 package app
 
 import (
@@ -10,7 +9,6 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
-
 
 // Init initializes the application model
 func (m Model) Init() tea.Cmd {
@@ -64,50 +62,109 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		case "f10":
 			m.state = MenuView
+			m.focus = true // Focus on menu when switching to menu view
+			return m, nil
+		case "tab":
+			m.focus = !m.focus
 			return m, nil
 		}
 
-		// Handle view-specific key navigation
-		switch m.state {
-		case HomeView:
-			// Handle menu navigation for home view
+		// Handle menu or view-specific navigation based on focus
+		if m.focus {
+			// Menu navigation
 			switch msg.String() {
 			case "left", "h":
 				if m.menuCursor > 0 {
 					m.menuCursor--
 					m.updateSelectedHint()
 				}
-				return m, nil
 			case "right", "l":
 				if m.menuCursor < len(m.menuItems)-1 {
 					m.menuCursor++
 					m.updateSelectedHint()
 				}
-				return m, nil
 			case "enter", "space":
 				return m.handleMenuSelection()
-				}
 			}
-		case ApplicationsView:
-			var cmd tea.Cmd
-			applicationsModel, cmd := m.applications.Update(msg)
-			m.applications = applicationsModel.(ui.ApplicationsModel)
-			return m, cmd
-		case CompaniesView:
-			var cmd tea.Cmd
-			companiesModel, cmd := m.companies.Update(msg)
-			m.companies = companiesModel.(ui.CompaniesModel)
-			return m, cmd
-		case MenuView:
-			var cmd tea.Cmd
-			menuModel, cmd := m.menu.Update(msg)
-			m.menu = menuModel.(ui.MenuModel)
-			return m, cmd
-		case HelpView:
-			var cmd tea.Cmd
-			viewerModel, cmd := m.viewer.Update(msg)
-			m.viewer = viewerModel.(ui.ViewerModel)
-			return m, cmd
+		} else {
+			// Content view navigation
+			switch m.state {
+			case RunTemplatesView:
+				var cmd tea.Cmd
+				runTemplatesModel, cmd := m.runTemplates.Update(msg)
+				m.runTemplates = runTemplatesModel.(ui.RunTemplatesModel)
+				return m, cmd
+			case JobsView:
+				var cmd tea.Cmd
+				jobsModel, cmd := m.jobs.Update(msg)
+				m.jobs = jobsModel.(ui.JobsModel)
+				return m, cmd
+			case ApplicationsView:
+				var cmd tea.Cmd
+				applicationsModel, cmd := m.applications.Update(msg)
+				m.applications = applicationsModel.(ui.ApplicationsModel)
+				return m, cmd
+			case CompaniesView:
+				var cmd tea.Cmd
+				companiesModel, cmd := m.companies.Update(msg)
+				m.companies = companiesModel.(ui.CompaniesModel)
+				return m, cmd
+			case CredentialsView:
+				var cmd tea.Cmd
+				credentialsModel, cmd := m.credentials.Update(msg)
+				m.credentials = credentialsModel.(ui.CredentialsModel)
+				return m, cmd
+			case TokensView:
+				var cmd tea.Cmd
+				tokensModel, cmd := m.tokens.Update(msg)
+				m.tokens = tokensModel.(ui.TokensModel)
+				return m, cmd
+			case UsersView:
+				var cmd tea.Cmd
+				usersModel, cmd := m.users.Update(msg)
+				m.users = usersModel.(ui.UsersModel)
+				return m, cmd
+			case ArtifactsView:
+				var cmd tea.Cmd
+				artifactsModel, cmd := m.artifacts.Update(msg)
+				m.artifacts = artifactsModel.(ui.ArtifactsModel)
+				return m, cmd
+			case CredTypesView:
+				var cmd tea.Cmd
+				credTypesModel, cmd := m.credTypes.Update(msg)
+				m.credTypes = credTypesModel.(ui.CredTypesModel)
+				return m, cmd
+			case CompanyAppsView:
+				var cmd tea.Cmd
+				companyAppsModel, cmd := m.companyApps.Update(msg)
+				m.companyApps = companyAppsModel.(ui.CompanyAppsModel)
+				return m, cmd
+			case EncryptionView:
+				var cmd tea.Cmd
+				encryptionModel, cmd := m.encryption.Update(msg)
+				m.encryption = encryptionModel.(ui.EncryptionModel)
+				return m, cmd
+			case QueueView:
+				var cmd tea.Cmd
+				queueModel, cmd := m.queue.Update(msg)
+				m.queue = queueModel.(ui.QueueModel)
+				return m, cmd
+			case PruneView:
+				var cmd tea.Cmd
+				pruneModel, cmd := m.prune.Update(msg)
+				m.prune = pruneModel.(ui.PruneModel)
+				return m, cmd
+			case MenuView:
+				var cmd tea.Cmd
+				menuModel, cmd := m.menu.Update(msg)
+				m.menu = menuModel.(ui.MenuModel)
+				return m, cmd
+			case HelpView:
+				var cmd tea.Cmd
+				viewerModel, cmd := m.viewer.Update(msg)
+				m.viewer = viewerModel.(ui.ViewerModel)
+				return m, cmd
+			}
 		}
 	}
 
@@ -144,6 +201,33 @@ func (m Model) View() string {
 	case CompaniesView:
 		content = m.companies.View()
 		statusPanel = m.renderHelpFooter()
+	case CredentialsView:
+		content = m.credentials.View()
+		statusPanel = m.renderHelpFooter()
+	case TokensView:
+		content = m.tokens.View()
+		statusPanel = m.renderHelpFooter()
+	case UsersView:
+		content = m.users.View()
+		statusPanel = m.renderHelpFooter()
+	case ArtifactsView:
+		content = m.artifacts.View()
+		statusPanel = m.renderHelpFooter()
+	case CredTypesView:
+		content = m.credTypes.View()
+		statusPanel = m.renderHelpFooter()
+	case CompanyAppsView:
+		content = m.companyApps.View()
+		statusPanel = m.renderHelpFooter()
+	case EncryptionView:
+		content = m.encryption.View()
+		statusPanel = m.renderHelpFooter()
+	case QueueView:
+		content = m.queue.View()
+		statusPanel = m.renderHelpFooter()
+	case PruneView:
+		content = m.prune.View()
+		statusPanel = m.renderHelpFooter()
 	case MenuView:
 		content = m.menu.View()
 		statusPanel = m.renderHelpFooter()
@@ -161,10 +245,14 @@ func (m Model) View() string {
 // renderMenuBar renders the top menu bar with hints
 func (m Model) renderMenuBar() string {
 	var menuItems []string
+	style := ui.GetUnselectedItemStyle()
+	if m.focus {
+		style = ui.GetSelectedItemStyle()
+	}
 
 	for i, item := range m.menuItems {
 		if i == m.menuCursor {
-			menuItems = append(menuItems, ui.GetSelectedItemStyle().Render(" "+item+" "))
+			menuItems = append(menuItems, style.Render(" "+item+" "))
 		} else {
 			menuItems = append(menuItems, ui.GetUnselectedItemStyle().Render(" "+item+" "))
 		}
@@ -190,7 +278,12 @@ func (m Model) renderHelpFooter() string {
 	}
 
 	separator := strings.Repeat("─", width)
-	helpLine := ui.GetFooterStyle().Render("←/→: navigate menu • enter: select • r: refresh • q: quit")
+	var helpLine string
+	if m.focus {
+		helpLine = ui.GetFooterStyle().Render("←/→: navigate menu • enter: select • tab: switch to content • q: quit")
+	} else {
+		helpLine = ui.GetFooterStyle().Render("↑/↓: navigate list • ←/→: paginate • tab: switch to menu • q: quit")
+	}
 
 	return separator + "\n" + helpLine
 }
@@ -326,11 +419,29 @@ func (m *Model) updateSelectedHint() {
 		m.selectedHint = "Browse available MultiFlexi applications and their status"
 	case 4: // Companies
 		m.selectedHint = "View registered companies and their configuration"
-	case 5: // Commands
+	case 5: // Credentials
+		m.selectedHint = "View and manage credentials"
+	case 6: // Tokens
+		m.selectedHint = "View and manage tokens"
+	case 7: // Users
+		m.selectedHint = "View and manage users"
+	case 8: // Artifacts
+		m.selectedHint = "View and manage artifacts"
+	case 9: // CredTypes
+		m.selectedHint = "View and manage credential types"
+	case 10: // CompanyApps
+		m.selectedHint = "View and manage company-application relations"
+	case 11: // Encryption
+		m.selectedHint = "Manage encryption settings"
+	case 12: // Queue
+		m.selectedHint = "Manage the job queue"
+	case 13: // Prune
+		m.selectedHint = "Prune logs and jobs"
+	case 14: // Commands
 		m.selectedHint = "Browse available MultiFlexi commands and their documentation"
-	case 6: // Help
+	case 15: // Help
 		m.selectedHint = "View help and documentation for using this interface"
-	case 7: // Quit
+	case 16: // Quit
 		m.selectedHint = "Exit the MultiFlexi TUI application"
 	default:
 		m.selectedHint = "Navigation: ←/→ to move, Enter to select"
@@ -363,13 +474,56 @@ func (m Model) handleMenuSelection() (tea.Model, tea.Cmd) {
 		// Reset companies model and trigger loading
 		m.companies = ui.NewCompaniesModel()
 		return m, m.companies.Init()
-	case 5: // Commands
+	case 5: // Credentials
+		m.state = CredentialsView
+		// Reset credentials model and trigger loading
+		m.credentials = ui.NewCredentialsModel()
+		return m, m.credentials.Init()
+	case 6: // Tokens
+		m.state = TokensView
+		// Reset tokens model and trigger loading
+		m.tokens = ui.NewTokensModel()
+		return m, m.tokens.Init()
+	case 7: // Users
+		m.state = UsersView
+		// Reset users model and trigger loading
+		m.users = ui.NewUsersModel()
+		return m, m.users.Init()
+	case 8: // Artifacts
+		m.state = ArtifactsView
+		// Reset artifacts model and trigger loading
+		m.artifacts = ui.NewArtifactsModel()
+		return m, m.artifacts.Init()
+	case 9: // CredTypes
+		m.state = CredTypesView
+		// Reset credTypes model and trigger loading
+		m.credTypes = ui.NewCredTypesModel()
+		return m, m.credTypes.Init()
+	case 10: // CompanyApps
+		m.state = CompanyAppsView
+		// Reset companyApps model and trigger loading
+		m.companyApps = ui.NewCompanyAppsModel()
+		return m, m.companyApps.Init()
+	case 11: // Encryption
+		m.state = EncryptionView
+		m.encryption = ui.NewEncryptionModel(m.statusInfo.Encryption)
+		return m, nil
+	case 12: // Queue
+		m.state = QueueView
+		// Reset queue model and trigger loading
+		m.queue = ui.NewQueueModel()
+		return m, m.queue.Init()
+	case 13: // Prune
+		m.state = PruneView
+		m.prune = ui.NewPruneModel()
+		return m, nil
+	case 14: // Commands
 		m.state = MenuView
 		return m, nil
-	case 6: // Help
+	case 15: // Help
 		m.state = HelpView
 		return m, m.loadHelpCmd("help")
-	case 7: // Quit
+	case 16: // Quit
 		return m, tea.Quit
 	default:
 		return m, nil

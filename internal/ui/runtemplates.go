@@ -41,7 +41,7 @@ func NewRunTemplatesModel() RunTemplatesModel {
 			{Header: "Executor", Width: 15, Field: "executor"},
 		},
 		Limit:    10,
-		HelpText: "↑↓: navigate • ←→/PgUp/PgDn: prev/next page • r: refresh",
+		HelpText: "↑/↓: navigate • ←/→: paginate • r: refresh • enter: view details",
 	}
 
 	return RunTemplatesModel{

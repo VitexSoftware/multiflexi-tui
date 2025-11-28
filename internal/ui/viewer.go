@@ -38,7 +38,7 @@ func (m ViewerModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height
-		
+
 		headerHeight := 4 // Title + borders + padding
 		footerHeight := 3 // Footer + margin
 		verticalMarginHeight := headerHeight + footerHeight
@@ -82,12 +82,12 @@ func (m ViewerModel) View() string {
 	}
 
 	title := GetTitleStyle().Render(fmt.Sprintf("Help: %s", m.commandName))
-	
+
 	// Create a styled viewport container
 	viewportContent := GetViewerStyle().Render(m.viewport.View())
-	
+
 	footer := GetFooterStyle().Render("↑/↓: scroll • q: back to menu • ctrl+c: quit")
-	
+
 	return lipgloss.JoinVertical(
 		lipgloss.Left,
 		title,

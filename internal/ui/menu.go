@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/VitexSoftware/multiflexi-tui/internal/cli"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/VitexSoftware/multiflexi-tui/internal/cli"
 )
 
 // MenuModel represents the command list screen
@@ -39,8 +39,8 @@ func (i menuItem) Description() string {
 // menuDelegate defines how list items are rendered
 type menuDelegate struct{}
 
-func (d menuDelegate) Height() int { return 2 }
-func (d menuDelegate) Spacing() int { return 1 }
+func (d menuDelegate) Height() int                               { return 2 }
+func (d menuDelegate) Spacing() int                              { return 1 }
 func (d menuDelegate) Update(msg tea.Msg, m *list.Model) tea.Cmd { return nil }
 func (d menuDelegate) Render(w io.Writer, m list.Model, index int, listItem list.Item) {
 	i, ok := listItem.(menuItem)
@@ -57,7 +57,7 @@ func (d menuDelegate) Render(w io.Writer, m list.Model, index int, listItem list
 
 	title := style.Render(i.command.Name)
 	description := GetItemDescriptionStyle().Render(i.command.Description)
-	
+
 	fmt.Fprint(w, title+"\n"+description)
 }
 
@@ -126,7 +126,7 @@ func (m MenuModel) View() string {
 
 	content := m.list.View()
 	footer := GetFooterStyle().Render("↑/↓: navigate • enter: select • q: quit")
-	
+
 	return content + "\n" + footer
 }
 
