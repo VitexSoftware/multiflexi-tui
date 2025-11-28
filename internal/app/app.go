@@ -36,14 +36,60 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// Switch to menu view
 		m.state = MenuView
 
-	case ui.BackToMenuMsg:
-		// Switch back to menu view
-		m.state = MenuView
+	case ui.BackMsg:
+		// Switch back to the previous view
+		m.state = m.previousState
 
 	case ui.OpenRunTemplateDetailMsg:
 		// Switch to RunTemplate detail view
-		m.state = RunTemplateDetailView
-		return m, m.loadRunTemplateDetail(msg.RunTemplate)
+		m.previousState = m.state
+		m.state = DetailView
+		m.detailView.SetRunTemplate(msg.RunTemplate)
+		return m, nil
+
+	case ui.OpenApplicationDetailMsg:
+		// Switch to Application detail view
+		m.previousState = m.state
+		m.state = DetailView
+		m.detailView.SetApplication(msg.Application)
+		return m, nil
+
+	case ui.SaveApplicationMsg:
+		err := cli.UpdateApplication(msg.App)
+		if err != nil {
+			m.statusMessage = fmt.Sprintf("Error saving application: %v", err)
+		} else {
+			m.statusMessage = fmt.Sprintf("Saved application: %s", msg.App.Name)
+		}
+		m.state = m.previousState
+		return m, nil
+
+	case ui.SaveRunTemplateMsg:
+		err := cli.UpdateRunTemplate(msg.Template)
+		if err != nil {
+			m.statusMessage = fmt.Sprintf("Error saving run template: %v", err)
+		} else {
+			m.statusMessage = fmt.Sprintf("Saved run template: %s", msg.Template.Name)
+		}
+		m.state = m.previousState
+		return m, nil
+
+	case ui.StatusMessage:
+		m.statusMessage = msg.Text
+		return m, nil
+
+	case ui.EditItemMsg:
+		switch data := msg.Data.(type) {
+		case cli.RunTemplate:
+			m.previousState = m.state
+			m.state = RunTemplateEditorView
+			m.runTemplateEditor = ui.NewRunTemplateEditorModel(data)
+		case cli.Application:
+			m.previousState = m.state
+			m.state = ApplicationEditorView
+			m.applicationEditor = ui.NewApplicationEditorModel(data)
+		}
+		return m, nil
 
 	case helpLoadedMsg:
 		// Update viewer with help content
@@ -164,33 +210,33 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				viewerModel, cmd := m.viewer.Update(msg)
 				m.viewer = viewerModel.(ui.ViewerModel)
 				return m, cmd
+			case DetailView:
+				var cmd tea.Cmd
+				detailModel, cmd := m.detailView.Update(msg)
+				m.detailView = detailModel.(ui.DetailViewModel)
+				return m, cmd
+			case RunTemplateEditorView:
+				var cmd tea.Cmd
+				editorModel, cmd := m.runTemplateEditor.Update(msg)
+				m.runTemplateEditor = editorModel.(ui.RunTemplateEditorModel)
+				return m, cmd
+			case ApplicationEditorView:
+				var cmd tea.Cmd
+				editorModel, cmd := m.applicationEditor.Update(msg)
+				m.applicationEditor = editorModel.(ui.ApplicationEditorModel)
+				return m, cmd
 			}
 		}
 	}
-
-	// Forward other messages to current view
-
-	return m, nil
-}
-
-// View renders the current view with the new layout
-func (m Model) View() string {
-	// Top menu bar
-	menuBar := m.renderMenuBar()
-
-	// Content area
-	var content string
-	var statusPanel string
-
-	switch m.state {
-	case HomeView:
-		content = m.renderSystemStatus()
+// ... (rest of the code)
+	case DetailView:
+		content = m.detailView.View()
 		statusPanel = m.renderHelpFooter()
-	case RunTemplatesView:
-		content = m.runTemplates.View()
+	case RunTemplateEditorView:
+		content = m.runTemplateEditor.View()
 		statusPanel = m.renderHelpFooter()
-	case RunTemplateDetailView:
-		content = m.runTemplateDetail.View()
+	case ApplicationEditorView:
+		content = m.applicationEditor.View()
 		statusPanel = m.renderHelpFooter()
 	case JobsView:
 		content = m.jobs.View()
@@ -271,7 +317,7 @@ func (m Model) renderMenuBar() string {
 }
 
 // renderHelpFooter renders just the help footer
-func (m Model) renderHelpFooter() string {
+func (m *Model) renderHelpFooter() string {
 	width := m.width
 	if width == 0 {
 		width = 80 // Default width if not set
@@ -285,7 +331,13 @@ func (m Model) renderHelpFooter() string {
 		helpLine = ui.GetFooterStyle().Render("↑/↓: navigate list • ←/→: paginate • tab: switch to menu • q: quit")
 	}
 
-	return separator + "\n" + helpLine
+	statusLine := ""
+	if m.statusMessage != "" {
+		statusLine = ui.GetFooterStyle().Render(m.statusMessage)
+		m.statusMessage = ""
+	}
+
+	return separator + "\n" + statusLine + "\n" + helpLine
 }
 
 // renderSystemStatus renders the system status as main content
@@ -550,38 +602,13 @@ func (m Model) handleDetailAction(actionCommand string) tea.Cmd {
 	}
 }
 
-// loadRunTemplateDetail loads the detail view for a RunTemplate
-func (m Model) loadRunTemplateDetail(template cli.RunTemplate) tea.Cmd {
-	return func() tea.Msg {
-		// Convert RunTemplate to detail fields
-		fields := []ui.DetailField{
-			{Label: "ID", Value: fmt.Sprintf("%d", template.ID)},
-			{Label: "Name", Value: template.Name},
-			{Label: "App ID", Value: fmt.Sprintf("%d", template.AppID)},
-			{Label: "Company ID", Value: fmt.Sprintf("%d", template.CompanyID)},
-			{Label: "Interval", Value: template.Interv},
-			{Label: "Active", Value: fmt.Sprintf("%d", template.Active)},
-			{Label: "Executor", Value: template.Executor},
-			{Label: "Cron", Value: template.Cron},
-			{Label: "Last Schedule", Value: template.LastSchedule},
-			{Label: "Next Schedule", Value: template.NextSchedule},
-		}
-
-		m.runTemplateDetail.SetData(fields, template)
-		return nil
-	}
-}
-
 // Run starts the Bubbletea program
 func Run() error {
-	model, err := NewModel()
-	if err != nil {
-		return fmt.Errorf("failed to create model: %w", err)
-	}
+	model := NewModel()
 
 	p := tea.NewProgram(model, tea.WithAltScreen())
 
-	_, err = p.Run()
+	_, err := p.Run()
 	if err != nil {
 		return fmt.Errorf("failed to start program: %w", err)
 	}

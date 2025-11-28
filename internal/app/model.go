@@ -11,7 +11,6 @@ type ViewState int
 const (
 	HomeView ViewState = iota // Default view showing system status
 	RunTemplatesView
-	RunTemplateDetailView
 	JobsView
 	ApplicationsView
 	CompaniesView
@@ -26,6 +25,9 @@ const (
 	PruneView
 	MenuView
 	HelpView
+	DetailView
+	RunTemplateEditorView
+	ApplicationEditorView
 )
 
 // StatusLoadedMsg is sent when status is loaded
@@ -36,9 +38,12 @@ type StatusLoadedMsg struct {
 // Model represents the main application model
 type Model struct {
 	state             ViewState
+	previousState     ViewState
 	jobs              ui.JobsModel
 	runTemplates      ui.RunTemplatesModel
-	runTemplateDetail *ui.DetailWidget
+	runTemplateEditor ui.RunTemplateEditorModel
+	applicationEditor ui.ApplicationEditorModel
+	detailView        ui.DetailViewModel
 	applications      ui.ApplicationsModel
 	companies         ui.CompaniesModel
 	credentials       ui.CredentialsModel
@@ -55,6 +60,7 @@ type Model struct {
 	width             int
 	height            int
 	statusInfo        *cli.StatusInfo
+	statusMessage     string
 	menuItems         []string
 	menuCursor        int
 	selectedHint      string
@@ -66,7 +72,9 @@ func NewModel() *Model {
 	menuItems := []string{"Status", "RunTemplates", "Jobs", "Applications", "Companies", "Credentials", "Tokens", "Users", "Artifacts", "CredTypes", "CompanyApps", "Encryption", "Queue", "Prune", "Commands", "Help", "Quit"}
 	jobs := ui.NewJobsModel()
 	runTemplates := ui.NewRunTemplatesModel()
-	runTemplateDetail := &ui.DetailWidget{} // You may want to initialize with config
+	runTemplateEditor := ui.NewRunTemplateEditorModel(cli.RunTemplate{})
+	applicationEditor := ui.NewApplicationEditorModel(cli.Application{})
+	detailView := ui.NewDetailViewModel()
 	applications := ui.NewApplicationsModel()
 	companies := ui.NewCompaniesModel()
 	credentials := ui.NewCredentialsModel()
@@ -84,7 +92,8 @@ func NewModel() *Model {
 		state:             HomeView,
 		jobs:              jobs,
 		runTemplates:      runTemplates,
-		runTemplateDetail: runTemplateDetail,
+		runTemplateEditor: runTemplateEditor,
+		detailView:        detailView,
 		applications:      applications,
 		companies:         companies,
 		credentials:       credentials,

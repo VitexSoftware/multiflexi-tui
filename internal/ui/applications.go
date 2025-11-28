@@ -2,28 +2,19 @@ package ui
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/VitexSoftware/multiflexi-tui/internal/cli"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 )
 
-// ApplicationsModel represents the applications listing screen
+// ApplicationsModel represents the applications listing view
 type ApplicationsModel struct {
-	apps    []cli.Application
-	offset  int
-	limit   int
-	loading bool
-	err     error
-	width   int
-	height  int
-	cursor  int
-	hasMore bool
-	hasPrev bool
+	table *TableWidget
+	width  int
+	height int
 }
 
-// applicationsLoadedMsg is sent when applications are loaded successfully
+// applicationsLoadedMsg is sent when applications are loaded
 type applicationsLoadedMsg struct {
 	apps []cli.Application
 }
@@ -33,19 +24,59 @@ type applicationsErrorMsg struct {
 	err error
 }
 
+// OpenApplicationDetailMsg is sent when an application should be opened in detail view
+type OpenApplicationDetailMsg struct {
+	Application cli.Application
+}
+
 // NewApplicationsModel creates a new applications model
 func NewApplicationsModel() ApplicationsModel {
+	config := TableConfig{
+		Title: "📦 Applications",
+		Columns: []TableColumn{
+			{Header: "ID", Width: 5, Field: "id"},
+			{Header: "Name", Width: 30, Field: "name"},
+			{Header: "Version", Width: 15, Field: "version"},
+			{Header: "Status", Width: 10, Field: "status"},
+		},
+		Limit:    10,
+		HelpText: "↑/↓: navigate • ←/→: paginate • r: refresh • enter: view details",
+	}
+
 	return ApplicationsModel{
-		apps:    []cli.Application{},
-		offset:  0,
-		limit:   10,
-		loading: true,
-		cursor:  0,
+		table: NewTableWidget(config),
 	}
 }
 
-// Init initializes the applications model and loads the first batch
+// convertApplicationsToTableRows converts CLI Application data to table rows
+func convertApplicationsToTableRows(apps []cli.Application) []TableRow {
+	rows := make([]TableRow, len(apps))
+
+	for i, app := range apps {
+		// Status - plain text only
+		status := "Disabled"
+		if app.Enabled == 1 {
+			status = "Enabled"
+		}
+
+		rows[i] = TableRow{
+			ID: app.ID,
+			Values: map[string]interface{}{
+				"id":         app.ID,
+				"name":       app.Name,
+				"version":    app.Version,
+				"status":     status,
+				"_full_data": app, // Store full application data
+			},
+		}
+	}
+
+	return rows
+}
+
+// Init initializes the applications model
 func (m ApplicationsModel) Init() tea.Cmd {
+	m.table.SetLoading(true)
 	return m.loadApplicationsCmd()
 }
 
@@ -58,140 +89,54 @@ func (m ApplicationsModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case applicationsLoadedMsg:
-		m.loading = false
-		m.apps = msg.apps
-		m.hasMore = len(msg.apps) == m.limit
-		m.hasPrev = m.offset > 0
+		rows := convertApplicationsToTableRows(msg.apps)
+		m.table.SetData(rows)
 		return m, nil
 
 	case applicationsErrorMsg:
-		m.loading = false
-		m.err = msg.err
+		m.table.SetError(msg.err)
 		return m, nil
 
 	case tea.KeyMsg:
-		switch msg.String() {
-		case "up", "k":
-			if m.cursor > 0 {
-				m.cursor--
-			}
+		needsRefresh, needsNextPage, needsPrevPage, openDetail := m.table.HandleKeypress(msg.String())
 
-		case "down", "j":
-			if m.cursor < len(m.apps)-1 {
-				m.cursor++
+		if openDetail {
+			// Get the selected row and extract the full Application data
+			selectedRow := m.table.GetSelectedRow()
+			if selectedRow != nil {
+				if fullData, exists := selectedRow.Values["_full_data"]; exists {
+					if app, ok := fullData.(cli.Application); ok {
+						return m, func() tea.Msg {
+							return OpenApplicationDetailMsg{Application: app}
+						}
+					}
+				}
 			}
+		}
 
-		case "tab":
-			return m, func() tea.Msg {
-				return ShowMenuMsg{}
-			}
+		if needsRefresh {
+			m.table.SetLoading(true)
+			return m, m.loadApplicationsCmd()
+		}
 
-		case "shift+left", "shift+h":
-			if m.hasPrev && !m.loading {
-				m.offset = max(0, m.offset-m.limit)
-				m.loading = true
-				return m, m.loadApplicationsCmd()
-			}
-
-		case "shift+right", "shift+l":
-			if m.hasMore && !m.loading {
-				m.offset += m.limit
-				m.loading = true
-				return m, m.loadApplicationsCmd()
-			}
+		if needsNextPage || needsPrevPage {
+			m.table.SetLoading(true)
+			return m, m.loadApplicationsCmd()
 		}
 	}
 
 	return m, nil
 }
 
-// View renders the applications listing
+// View renders the applications model
 func (m ApplicationsModel) View() string {
-	if m.loading {
-		return "Loading applications..."
-	}
-
-	if m.err != nil {
-		return GetErrorStyle().Render(fmt.Sprintf("Error loading applications: %v", m.err))
-	}
-
-	var content strings.Builder
-
-	// Applications table header
-	headerStyle := GetSelectedItemStyle().Copy().Bold(true)
-	content.WriteString(headerStyle.Render(fmt.Sprintf("%-6s %-25s %-15s %-20s", "ID", "Name", "Version", "Status")))
-	content.WriteString("\n")
-	content.WriteString(strings.Repeat("─", 70))
-	content.WriteString("\n")
-
-	// Applications list
-	if len(m.apps) == 0 {
-		content.WriteString(GetItemDescriptionStyle().Render("No applications found"))
-	} else {
-		for i, app := range m.apps {
-			var style lipgloss.Style
-			if i == m.cursor {
-				style = GetSelectedItemStyle()
-			} else {
-				style = GetUnselectedItemStyle()
-			}
-
-			// Determine status
-			status := "Disabled"
-			if app.Enabled == 1 {
-				status = "Enabled"
-			}
-
-			// Truncate long names for display
-			name := app.Name
-			if len(name) > 23 {
-				name = name[:20] + "..."
-			}
-
-			// Format version
-			version := app.Version
-			if len(version) > 13 {
-				version = version[:10] + "..."
-			}
-			if version == "" {
-				version = "N/A"
-			}
-
-			line := fmt.Sprintf("%-6d %-25s %-15s %-20s", app.ID, name, version, status)
-			content.WriteString(style.Render(line))
-			content.WriteString("\n")
-		}
-	}
-
-	content.WriteString("\n")
-
-	// Pagination controls
-	pageNum := (m.offset / m.limit) + 1
-
-	var prevText, nextText string
-	if m.hasPrev {
-		prevText = GetSelectedItemStyle().Render("[←] Prev")
-	} else {
-		prevText = GetItemDescriptionStyle().Render("[←] Prev")
-	}
-
-	if m.hasMore {
-		nextText = GetSelectedItemStyle().Render("[→] Next")
-	} else {
-		nextText = GetItemDescriptionStyle().Render("[→] Next")
-	}
-
-	pageInfo := GetItemDescriptionStyle().Render(fmt.Sprintf("Page %d", pageNum))
-	content.WriteString(prevText + "  " + nextText + "    " + pageInfo)
-	content.WriteString("\n")
-
-	return content.String()
+	return m.table.View()
 }
 
-// loadApplicationsCmd returns a command that loads applications
+// loadApplicationsCmd returns a command that loads applications from CLI
 func (m ApplicationsModel) loadApplicationsCmd() tea.Cmd {
 	return func() tea.Msg {
-		apps, err := cli.GetApplications(m.limit, m.offset)
+		apps, err := cli.GetApplications(m.table.GetLimit(), m.table.GetOffset())
 		if err != nil {
 			return applicationsErrorMsg{err: err}
 		}

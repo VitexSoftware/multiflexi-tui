@@ -266,6 +266,23 @@ func GetApplications(limit, offset int) ([]Application, error) {
 	return apps, nil
 }
 
+// UpdateApplication updates an application using multiflexi-cli
+func UpdateApplication(app Application) error {
+	args := []string{
+		"application", "update",
+		fmt.Sprintf("%d", app.ID),
+		"--name", app.Name,
+	}
+
+	cmd := exec.Command("multiflexi-cli", args...)
+	err := cmd.Run()
+	if err != nil {
+		return fmt.Errorf("failed to run multiflexi-cli application update: %w", err)
+	}
+
+	return nil
+}
+
 // GetCompanies fetches companies from multiflexi-cli with pagination
 func GetCompanies(limit, offset int) ([]Company, error) {
 	cmd := exec.Command("multiflexi-cli", "company", "list",
@@ -308,6 +325,23 @@ func GetRunTemplates(limit, offset int) ([]RunTemplate, error) {
 	}
 
 	return templates, nil
+}
+
+// UpdateRunTemplate updates a run template using multiflexi-cli
+func UpdateRunTemplate(template RunTemplate) error {
+	args := []string{
+		"runtemplate", "update",
+		fmt.Sprintf("%d", template.ID),
+		"--name", template.Name,
+	}
+
+	cmd := exec.Command("multiflexi-cli", args...)
+	err := cmd.Run()
+	if err != nil {
+		return fmt.Errorf("failed to run multiflexi-cli runtemplate update: %w", err)
+	}
+
+	return nil
 }
 
 // Credential represents a credential from multiflexi-cli
