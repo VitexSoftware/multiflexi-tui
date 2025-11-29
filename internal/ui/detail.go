@@ -21,12 +21,13 @@ type DetailAction struct {
 
 // DetailWidget is a reusable detail view component
 type DetailWidget struct {
-	title   string
-	fields  []DetailField
-	actions []DetailAction
-	loading bool
-	err     error
-	data    interface{} // Store the original data object
+	title          string
+	fields         []DetailField
+	actions        []DetailAction
+	selectedAction int
+	loading        bool
+	err            error
+	data           interface{} // Store the original data object
 }
 
 // DetailConfig contains configuration for creating a detail view
@@ -38,10 +39,11 @@ type DetailConfig struct {
 // NewDetailWidget creates a new detail widget
 func NewDetailWidget(config DetailConfig) *DetailWidget {
 	return &DetailWidget{
-		title:   config.Title,
-		actions: config.Actions,
-		fields:  []DetailField{},
-		loading: true,
+		title:          config.Title,
+		actions:        config.Actions,
+		fields:         []DetailField{},
+		selectedAction: 0,
+		loading:        true,
 	}
 }
 
@@ -71,9 +73,26 @@ func (d *DetailWidget) GetData() interface{} {
 
 // HandleKeypress processes keyboard input for actions
 func (d *DetailWidget) HandleKeypress(key string) (actionCommand string, shouldGoBack bool) {
+	if len(d.actions) == 0 {
+		if key == "escape" || key == "q" {
+			return "", true
+		}
+		return "", false
+	}
+
 	switch key {
 	case "escape", "q":
 		return "", true
+	case "tab", "right":
+		d.selectedAction = (d.selectedAction + 1) % len(d.actions)
+		return "", false
+	case "left":
+		d.selectedAction = (d.selectedAction - 1 + len(d.actions)) % len(d.actions)
+		return "", false
+	case "enter":
+		if d.selectedAction < len(d.actions) {
+			return d.actions[d.selectedAction].Command, false
+		}
 	default:
 		// Check if key matches any action
 		for _, action := range d.actions {
@@ -133,8 +152,13 @@ func (d *DetailWidget) View() string {
 	// Action buttons
 	if len(d.actions) > 0 {
 		var actionButtons []string
-		for _, action := range d.actions {
-			actionButtons = append(actionButtons, fmt.Sprintf("[%s] %s", action.Key, action.Label))
+		for i, action := range d.actions {
+			button := fmt.Sprintf("[%s] %s", action.Key, action.Label)
+			if i == d.selectedAction {
+				actionButtons = append(actionButtons, GetSelectedItemStyle().Render(button))
+			} else {
+				actionButtons = append(actionButtons, GetUnselectedItemStyle().Render(button))
+			}
 		}
 		content.WriteString(strings.Join(actionButtons, "   "))
 		content.WriteString("\n\n")

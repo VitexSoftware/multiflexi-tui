@@ -25,6 +25,7 @@ func (m *DetailViewModel) SetRunTemplate(template cli.RunTemplate) {
 		Title: fmt.Sprintf("Run Template: %s", template.Name),
 		Actions: []DetailAction{
 			{Label: "Edit", Key: "e", Command: "edit"},
+			{Label: "Schedule", Key: "s", Command: "schedule"},
 			{Label: "Clone", Key: "c", Command: "clone"},
 			{Label: "Delete", Key: "d", Command: "delete"},
 		},
