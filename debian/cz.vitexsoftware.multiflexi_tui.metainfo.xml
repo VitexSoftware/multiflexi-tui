@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="console-application">
+  <id>cz.vitexsoftware.multiflexi_tui</id>
+  <metadata_license>MIT</metadata_license>
+  <project_license>MIT</project_license>
+  <name>multiflexi-tui</name>
+  <summary>TUI frontend for MultiFlexi CLI built with Bubbletea</summary>
+  <description>
+    <p>
+      MultiFlexi TUI provides a terminal user interface for the MultiFlexi CLI tool. It features a dynamic command menu that loads available commands from multiflexi-cli and displays help text in an easy-to-navigate interface. Built using the Charmbracelet Bubbletea framework, it offers: * Dynamic command discovery * Scrollable command list * Interactive help viewer * Keyboard-driven navigation This package provides a user-friendly way to explore and use MultiFlexi commands through an intuitive terminal interface.
+    </p>
+  </description>
+  <categories>
+    <category>System</category>
+    <category>ConsoleOnly</category>
+  </categories>
+  <url type="homepage">https://github.com/VitexSoftware/multiflexi-tui</url>
+  <url type="bugtracker">https://github.com/VitexSoftware/multiflexi-tui/issues</url>
+  <developer id="cz.vitexsoftware">
+    <name>VitexSoftware</name>
+  </developer>
+  <provides>
+    <binary>multiflexi-tui</binary>
+  </provides>
+  <content_rating type="oars-1.1"/>
+</component>
