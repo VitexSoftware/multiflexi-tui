@@ -287,6 +287,67 @@ All listing operations support pagination options:
 - `multiflexi-cli queue list`
 - `multiflexi-cli userdataerasure list`
 
+## System Status Command
+
+The `multiflexi-cli status` command provides comprehensive system information:
+
+```bash
+# Get system status in JSON format
+multiflexi-cli status --format=json
+```
+
+**Current Output Format (v2.3.2.110):**
+```json
+{
+    "version-cli": "2.3.2.110",
+    "db-migration": "GdprDataExport (20251220151500)",
+    "user": "root",
+    "php": "8.4.17",
+    "os": "Linux",
+    "memory": 4259072,
+    "companies": 5,
+    "apps": 51,
+    "runtemplates": 151,
+    "topics": 67,
+    "credentials": 12,
+    "credential_types": 10,
+    "jobs": "total: 107, monthly: 107, weekly: 107, daily: 10, hourly: 0, minute avg: 0.01",
+    "database": "mysql Localhost via UNIX socket Uptime: 462910  Threads: 5  Questions: 1907901  Slow queries: 10  Opens: 2794  Open tables: 1114  Queries per second avg: 4.121 11.8.3-MariaDB-0+deb13u1 from Debian",
+    "encryption": "active (3 keys)",
+    "zabbix": "krax.vitexsoftware.brevnov.czf => zabbix-dev.serverovna.brevnov.czf",
+    "telemetry": "disabled",
+    "executor": "active",
+    "scheduler": "inactive",
+    "timestamp": "2026-02-02T22:52:21+00:00"
+}
+```
+
+**Status Data Structure for TUI:**
+```go
+type StatusInfo struct {
+    VersionCli      string `json:"version-cli"`
+    DbMigration     string `json:"db-migration"`
+    User            string `json:"user"`
+    PHP             string `json:"php"`
+    OS              string `json:"os"`
+    Memory          int    `json:"memory"`
+    Companies       int    `json:"companies"`
+    Apps            int    `json:"apps"`
+    RunTemplates    int    `json:"runtemplates"`
+    Topics          int    `json:"topics"`
+    Credentials     int    `json:"credentials"`
+    CredentialTypes int    `json:"credential_types"`
+    Jobs            string `json:"jobs"`
+    Database        string `json:"database"`
+    Encryption      string `json:"encryption"`
+    Zabbix          string `json:"zabbix"`
+    Telemetry       string `json:"telemetry"`
+    Executor        string `json:"executor"`
+    Scheduler       string `json:"scheduler"`
+    Timestamp       string `json:"timestamp"`
+}
+```
+
 ## Practical Examples
 
 ### Dashboard Summary

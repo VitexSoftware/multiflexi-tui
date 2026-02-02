@@ -28,6 +28,7 @@ const (
 	DetailView
 	RunTemplateEditorView
 	ApplicationEditorView
+	RunTemplateSchedulerView
 )
 
 // StatusLoadedMsg is sent when status is loaded
@@ -37,34 +38,35 @@ type StatusLoadedMsg struct {
 
 // Model represents the main application model
 type Model struct {
-	state             ViewState
-	previousState     ViewState
-	jobs              ui.JobsModel
-	runTemplates      ui.RunTemplatesModel
-	runTemplateEditor ui.RunTemplateEditorModel
-	applicationEditor ui.ApplicationEditorModel
-	detailView        ui.DetailViewModel
-	applications      ui.ApplicationsModel
-	companies         ui.CompaniesModel
-	credentials       ui.CredentialsModel
-	tokens            ui.TokensModel
-	users             ui.UsersModel
-	artifacts         ui.ArtifactsModel
-	credTypes         ui.CredTypesModel
-	companyApps       ui.CompanyAppsModel
-	encryption        ui.EncryptionModel
-	queue             ui.QueueModel
-	prune             ui.PruneModel
-	menu              ui.MenuModel
-	viewer            ui.ViewerModel
-	width             int
-	height            int
-	statusInfo        *cli.StatusInfo
-	statusMessage     string
-	menuItems         []string
-	menuCursor        int
-	selectedHint      string
-	focus             bool // true for menu, false for content
+	state                ViewState
+	previousState        ViewState
+	jobs                 ui.JobsModel
+	runTemplates         ui.RunTemplatesModel
+	runTemplateEditor    ui.RunTemplateEditorModel
+	runTemplateScheduler ui.RunTemplateSchedulerModel
+	applicationEditor    ui.ApplicationEditorModel
+	detailView           ui.DetailViewModel
+	applications         ui.ApplicationsModel
+	companies            ui.CompaniesModel
+	credentials          ui.CredentialsModel
+	tokens               ui.TokensModel
+	users                ui.UsersModel
+	artifacts            ui.ArtifactsModel
+	credTypes            ui.CredTypesModel
+	companyApps          ui.CompanyAppsModel
+	encryption           ui.EncryptionModel
+	queue                ui.QueueModel
+	prune                ui.PruneModel
+	menu                 ui.MenuModel
+	viewer               ui.ViewerModel
+	width                int
+	height               int
+	statusInfo           *cli.StatusInfo
+	statusMessage        string
+	menuItems            []string
+	menuCursor           int
+	selectedHint         string
+	focus                bool // true for menu, false for content
 }
 
 // NewModel creates and returns a new application model
@@ -73,6 +75,7 @@ func NewModel() *Model {
 	jobs := ui.NewJobsModel()
 	runTemplates := ui.NewRunTemplatesModel()
 	runTemplateEditor := ui.NewRunTemplateEditorModel(cli.RunTemplate{})
+	runTemplateScheduler := ui.NewRunTemplateSchedulerModel(cli.RunTemplate{})
 	applicationEditor := ui.NewApplicationEditorModel(cli.Application{})
 	detailView := ui.NewDetailViewModel()
 	applications := ui.NewApplicationsModel()
@@ -89,27 +92,29 @@ func NewModel() *Model {
 	menu := ui.NewMenuModel(nil)
 	viewer := ui.NewViewerModel("", "")
 	return &Model{
-		state:             HomeView,
-		jobs:              jobs,
-		runTemplates:      runTemplates,
-		runTemplateEditor: runTemplateEditor,
-		detailView:        detailView,
-		applications:      applications,
-		companies:         companies,
-		credentials:       credentials,
-		tokens:            tokens,
-		users:             users,
-		artifacts:         artifacts,
-		credTypes:         credTypes,
-		companyApps:       companyApps,
-		encryption:        encryption,
-		queue:             queue,
-		prune:             prune,
-		menu:              menu,
-		viewer:            viewer,
-		menuItems:         menuItems,
-		menuCursor:        0,
-		selectedHint:      "View system dashboard with status information",
-		focus:             true, // focus menu by default
+		state:                HomeView,
+		jobs:                 jobs,
+		runTemplates:         runTemplates,
+		runTemplateEditor:    runTemplateEditor,
+		runTemplateScheduler: runTemplateScheduler,
+		applicationEditor:    applicationEditor,
+		detailView:           detailView,
+		applications:         applications,
+		companies:            companies,
+		credentials:          credentials,
+		tokens:               tokens,
+		users:                users,
+		artifacts:            artifacts,
+		credTypes:            credTypes,
+		companyApps:          companyApps,
+		encryption:           encryption,
+		queue:                queue,
+		prune:                prune,
+		menu:                 menu,
+		viewer:               viewer,
+		menuItems:            menuItems,
+		menuCursor:           0,
+		selectedHint:         "View system dashboard with status information",
+		focus:                true, // focus menu by default
 	}
 }

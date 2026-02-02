@@ -1,8 +1,6 @@
 package ui
 
 import (
-	"fmt"
-
 	"github.com/VitexSoftware/multiflexi-tui/internal/cli"
 	tea "github.com/charmbracelet/bubbletea"
 )

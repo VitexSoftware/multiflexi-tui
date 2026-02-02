@@ -75,6 +75,11 @@ type EditItemMsg struct {
 	Data interface{}
 }
 
+// ScheduleItemMsg is sent when an item should be scheduled
+type ScheduleItemMsg struct {
+	Data interface{}
+}
+
 // Update handles messages for the detail view model
 func (m DetailViewModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
@@ -92,6 +97,11 @@ func (m DetailViewModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if action == "edit" {
 			return m, func() tea.Msg {
 				return EditItemMsg{Data: m.widget.GetData()}
+			}
+		}
+		if action == "schedule" {
+			return m, func() tea.Msg {
+				return ScheduleItemMsg{Data: m.widget.GetData()}
 			}
 		}
 		if action != "" {

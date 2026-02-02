@@ -116,19 +116,26 @@ func GetStatus() (string, error) {
 
 // StatusInfo represents comprehensive system status
 type StatusInfo struct {
-	Version    string
-	User       string
-	PHP        string
-	OS         string
-	Companies  int
-	Apps       int
-	Templates  int
-	Executor   string
-	Scheduler  string
-	Zabbix     string
-	Telemetry  string
-	Encryption string
-	Database   string
+	VersionCli      string `json:"version-cli"`
+	DbMigration     string `json:"db-migration"`
+	User            string `json:"user"`
+	PHP             string `json:"php"`
+	OS              string `json:"os"`
+	Memory          int    `json:"memory"`
+	Companies       int    `json:"companies"`
+	Apps            int    `json:"apps"`
+	RunTemplates    int    `json:"runtemplates"`
+	Topics          int    `json:"topics"`
+	Credentials     int    `json:"credentials"`
+	CredentialTypes int    `json:"credential_types"`
+	Jobs            string `json:"jobs"`
+	Database        string `json:"database"`
+	Encryption      string `json:"encryption"`
+	Zabbix          string `json:"zabbix"`
+	Telemetry       string `json:"telemetry"`
+	Executor        string `json:"executor"`
+	Scheduler       string `json:"scheduler"`
+	Timestamp       string `json:"timestamp"`
 }
 
 // GetStatusInfo returns comprehensive status information
@@ -141,68 +148,9 @@ func GetStatusInfo() (*StatusInfo, error) {
 
 	outputStr := strings.TrimSpace(string(output))
 
-	var statusData map[string]interface{}
-	if err := json.Unmarshal([]byte(outputStr), &statusData); err != nil {
-		return nil, fmt.Errorf("failed to parse status JSON: %w", err)
-	}
-
 	status := &StatusInfo{}
-
-	if version, ok := statusData["version-cli"].(string); ok {
-		status.Version = version
-	}
-
-	if user, ok := statusData["user"].(string); ok {
-		status.User = user
-	}
-
-	if php, ok := statusData["php"].(string); ok {
-		status.PHP = php
-	}
-
-	if os, ok := statusData["os"].(string); ok {
-		status.OS = os
-	}
-
-	if companies, ok := statusData["companies"].(float64); ok {
-		status.Companies = int(companies)
-	}
-
-	if apps, ok := statusData["apps"].(float64); ok {
-		status.Apps = int(apps)
-	}
-
-	if templates, ok := statusData["runtemplates"].(float64); ok {
-		status.Templates = int(templates)
-	}
-
-	if executor, ok := statusData["executor"].(string); ok {
-		status.Executor = executor
-	}
-
-	if scheduler, ok := statusData["scheduler"].(string); ok {
-		status.Scheduler = scheduler
-	}
-
-	if zabbix, ok := statusData["zabbix"].(string); ok {
-		status.Zabbix = zabbix
-	}
-
-	if telemetry, ok := statusData["telemetry"].(string); ok {
-		status.Telemetry = telemetry
-	}
-
-	if encryption, ok := statusData["encryption"].(string); ok {
-		status.Encryption = encryption
-	}
-
-	if database, ok := statusData["database"].(string); ok {
-		// Truncate database info for display
-		if len(database) > 50 {
-			status.Database = database[:50] + "..."
-		} else {
-			status.Database = database
-		}
+	if err := json.Unmarshal([]byte(outputStr), status); err != nil {
+		return nil, fmt.Errorf("failed to parse status JSON: %w", err)
 	}
 
 	return status, nil

@@ -91,6 +91,15 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		return m, nil
 
+	case ui.ScheduleItemMsg:
+		switch data := msg.Data.(type) {
+		case cli.RunTemplate:
+			m.previousState = m.state
+			m.state = RunTemplateSchedulerView
+			m.runTemplateScheduler = ui.NewRunTemplateSchedulerModel(data)
+		}
+		return m, nil
+
 	case helpLoadedMsg:
 		// Update viewer with help content
 		m.viewer.SetContent(msg.command, msg.content)
@@ -220,6 +229,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				editorModel, cmd := m.runTemplateEditor.Update(msg)
 				m.runTemplateEditor = editorModel.(ui.RunTemplateEditorModel)
 				return m, cmd
+			case RunTemplateSchedulerView:
+				var cmd tea.Cmd
+				schedulerModel, cmd := m.runTemplateScheduler.Update(msg)
+				m.runTemplateScheduler = schedulerModel.(ui.RunTemplateSchedulerModel)
+				return m, cmd
 			case ApplicationEditorView:
 				var cmd tea.Cmd
 				editorModel, cmd := m.applicationEditor.Update(msg)
@@ -228,64 +242,64 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		}
 	}
-// ... (rest of the code)
-	case DetailView:
-		content = m.detailView.View()
-		statusPanel = m.renderHelpFooter()
-	case RunTemplateEditorView:
-		content = m.runTemplateEditor.View()
-		statusPanel = m.renderHelpFooter()
-	case ApplicationEditorView:
-		content = m.applicationEditor.View()
-		statusPanel = m.renderHelpFooter()
-	case JobsView:
-		content = m.jobs.View()
-		statusPanel = m.renderHelpFooter()
-	case ApplicationsView:
-		content = m.applications.View()
-		statusPanel = m.renderHelpFooter()
-	case CompaniesView:
-		content = m.companies.View()
-		statusPanel = m.renderHelpFooter()
-	case CredentialsView:
-		content = m.credentials.View()
-		statusPanel = m.renderHelpFooter()
-	case TokensView:
-		content = m.tokens.View()
-		statusPanel = m.renderHelpFooter()
-	case UsersView:
-		content = m.users.View()
-		statusPanel = m.renderHelpFooter()
-	case ArtifactsView:
-		content = m.artifacts.View()
-		statusPanel = m.renderHelpFooter()
-	case CredTypesView:
-		content = m.credTypes.View()
-		statusPanel = m.renderHelpFooter()
-	case CompanyAppsView:
-		content = m.companyApps.View()
-		statusPanel = m.renderHelpFooter()
-	case EncryptionView:
-		content = m.encryption.View()
-		statusPanel = m.renderHelpFooter()
-	case QueueView:
-		content = m.queue.View()
-		statusPanel = m.renderHelpFooter()
-	case PruneView:
-		content = m.prune.View()
-		statusPanel = m.renderHelpFooter()
-	case MenuView:
-		content = m.menu.View()
-		statusPanel = m.renderHelpFooter()
-	case HelpView:
-		content = m.viewer.View()
-		statusPanel = m.renderHelpFooter()
-	default:
-		content = "Unknown view state"
-		statusPanel = m.renderHelpFooter()
+
+	return m, nil
+}
+
+func (m Model) View() string {
+	if m.width == 0 {
+		return "Initializing..."
 	}
 
-	return menuBar + content + statusPanel
+	var content string
+	// Render content based on view state
+	switch m.state {
+	case HomeView:
+		content = m.renderSystemStatus()
+	case RunTemplatesView:
+		content = m.runTemplates.View()
+	case JobsView:
+		content = m.jobs.View()
+	case ApplicationsView:
+		content = m.applications.View()
+	case CompaniesView:
+		content = m.companies.View()
+	case CredentialsView:
+		content = m.credentials.View()
+	case TokensView:
+		content = m.tokens.View()
+	case UsersView:
+		content = m.users.View()
+	case ArtifactsView:
+		content = m.artifacts.View()
+	case CredTypesView:
+		content = m.credTypes.View()
+	case CompanyAppsView:
+		content = m.companyApps.View()
+	case EncryptionView:
+		content = m.encryption.View()
+	case QueueView:
+		content = m.queue.View()
+	case PruneView:
+		content = m.prune.View()
+	case MenuView:
+		content = m.menu.View()
+	case HelpView:
+		content = m.viewer.View()
+	case DetailView:
+		content = m.detailView.View()
+	case RunTemplateEditorView:
+		content = m.runTemplateEditor.View()
+	case RunTemplateSchedulerView:
+		content = m.runTemplateScheduler.View()
+	case ApplicationEditorView:
+		content = m.applicationEditor.View()
+
+	default:
+		content = "Unknown view"
+	}
+
+	return lipgloss.JoinVertical(lipgloss.Left, m.renderMenuBar(), content, m.renderHelpFooter())
 }
 
 // renderMenuBar renders the top menu bar with hints
@@ -359,22 +373,29 @@ func (m Model) renderSystemStatus() string {
 			value  string
 			status string
 		}{
-			{"🔧", "CLI Version", m.statusInfo.Version, "info"},
+			{"🔧", "CLI Version", m.statusInfo.VersionCli, "info"},
+			{"🗄️", "DB Migration", m.statusInfo.DbMigration, "info"},
 			{"👤", "User", m.statusInfo.User, "info"},
 			{"🐘", "PHP", m.statusInfo.PHP, "info"},
 			{"💻", "OS", m.statusInfo.OS, "info"},
+			{"🧠", "Memory", fmt.Sprintf("%d KB", m.statusInfo.Memory), "info"},
 			{"🏢", "Companies", fmt.Sprintf("%d", m.statusInfo.Companies), "info"},
 			{"📱", "Applications", fmt.Sprintf("%d", m.statusInfo.Apps), "info"},
-			{"📄", "Templates", fmt.Sprintf("%d", m.statusInfo.Templates), "info"},
+			{"📄", "RunTemplates", fmt.Sprintf("%d", m.statusInfo.RunTemplates), "info"},
+			{"🏷️", "Topics", fmt.Sprintf("%d", m.statusInfo.Topics), "info"},
+			{"🔑", "Credentials", fmt.Sprintf("%d", m.statusInfo.Credentials), "info"},
+			{"🎭", "Credential Types", fmt.Sprintf("%d", m.statusInfo.CredentialTypes), "info"},
+			{"💼", "Jobs", m.statusInfo.Jobs, "info"},
 			{"⚙️", "Executor", m.statusInfo.Executor, m.statusInfo.Executor},
 			{"📅", "Scheduler", m.statusInfo.Scheduler, m.statusInfo.Scheduler},
 			{"🔐", "Encryption", m.statusInfo.Encryption, m.statusInfo.Encryption},
-			{"📊", "Zabbix", m.statusInfo.Zabbix, m.statusInfo.Zabbix},
+			{"📊", "Zabbix", m.statusInfo.Zabbix, "info"},
 			{"📈", "Telemetry", m.statusInfo.Telemetry, m.statusInfo.Telemetry},
+			{"🕒", "Timestamp", m.statusInfo.Timestamp, "info"},
 		}
 
 		// Calculate column widths
-		labelWidth := 15
+		labelWidth := 18
 
 		// Render each row
 		for _, row := range rows {
@@ -382,7 +403,7 @@ func (m Model) renderSystemStatus() string {
 			switch row.status {
 			case "active":
 				valueStyle = ui.GetActiveStatusStyle()
-			case "disabled":
+			case "inactive", "disabled":
 				valueStyle = ui.GetDisabledStatusStyle()
 			default:
 				valueStyle = ui.GetItemDescriptionStyle()
@@ -450,8 +471,8 @@ func (m Model) loadStatusCmd() tea.Cmd {
 				errorLen = 20
 			}
 			return StatusLoadedMsg{status: &cli.StatusInfo{
-				Version: "Error",
-				User:    err.Error()[:errorLen],
+				VersionCli: "Error",
+				User:       err.Error()[:errorLen],
 			}}
 		}
 		return StatusLoadedMsg{status: status}
