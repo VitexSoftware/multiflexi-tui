@@ -1,4 +1,4 @@
-multiflexi-tui (1.0.0-1) unstable; urgency=medium
+multiflexi-tui (0.1.0) unstable; urgency=medium
 
   * Initial release of MultiFlexi TUI
   * Dynamic command discovery from multiflexi-cli
