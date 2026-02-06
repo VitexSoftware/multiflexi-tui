@@ -19,6 +19,7 @@ const (
 	UsersView
 	ArtifactsView
 	CredTypesView
+	CrPrototypesView
 	CompanyAppsView
 	EncryptionView
 	QueueView
@@ -53,6 +54,7 @@ type Model struct {
 	users                ui.UsersModel
 	artifacts            ui.ArtifactsModel
 	credTypes            ui.CredTypesModel
+	crPrototypes         ui.CrPrototypesModel
 	companyApps          ui.CompanyAppsModel
 	encryption           ui.EncryptionModel
 	queue                ui.QueueModel
@@ -71,7 +73,7 @@ type Model struct {
 
 // NewModel creates and returns a new application model
 func NewModel() *Model {
-	menuItems := []string{"Status", "RunTemplates", "Jobs", "Applications", "Companies", "Credentials", "Tokens", "Users", "Artifacts", "CredTypes", "CompanyApps", "Encryption", "Queue", "Prune", "Commands", "Help", "Quit"}
+	menuItems := []string{"Status", "RunTemplates", "Jobs", "Applications", "Companies", "Credentials", "Tokens", "Users", "Artifacts", "CredTypes", "CrPrototypes", "CompanyApps", "Encryption", "Queue", "Prune", "Commands", "Help", "Quit"}
 	jobs := ui.NewJobsModel()
 	runTemplates := ui.NewRunTemplatesModel()
 	runTemplateEditor := ui.NewRunTemplateEditorModel(cli.RunTemplate{})
@@ -85,6 +87,7 @@ func NewModel() *Model {
 	users := ui.NewUsersModel()
 	artifacts := ui.NewArtifactsModel()
 	credTypes := ui.NewCredTypesModel()
+	crPrototypes := ui.NewCrPrototypesModel()
 	companyApps := ui.NewCompanyAppsModel()
 	encryption := ui.NewEncryptionModel("")
 	queue := ui.NewQueueModel()
@@ -106,6 +109,7 @@ func NewModel() *Model {
 		users:                users,
 		artifacts:            artifacts,
 		credTypes:            credTypes,
+		crPrototypes:         crPrototypes,
 		companyApps:          companyApps,
 		encryption:           encryption,
 		queue:                queue,

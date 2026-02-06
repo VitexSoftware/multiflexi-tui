@@ -189,6 +189,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				credTypesModel, cmd := m.credTypes.Update(msg)
 				m.credTypes = credTypesModel.(ui.CredTypesModel)
 				return m, cmd
+			case CrPrototypesView:
+				var cmd tea.Cmd
+				crPrototypesModel, cmd := m.crPrototypes.Update(msg)
+				m.crPrototypes = crPrototypesModel.(ui.CrPrototypesModel)
+				return m, cmd
 			case CompanyAppsView:
 				var cmd tea.Cmd
 				companyAppsModel, cmd := m.companyApps.Update(msg)
@@ -274,6 +279,8 @@ func (m Model) View() string {
 		content = m.artifacts.View()
 	case CredTypesView:
 		content = m.credTypes.View()
+	case CrPrototypesView:
+		content = m.crPrototypes.View()
 	case CompanyAppsView:
 		content = m.companyApps.View()
 	case EncryptionView:
@@ -502,19 +509,21 @@ func (m *Model) updateSelectedHint() {
 		m.selectedHint = "View and manage artifacts"
 	case 9: // CredTypes
 		m.selectedHint = "View and manage credential types"
-	case 10: // CompanyApps
+	case 10: // CrPrototypes
+		m.selectedHint = "View and manage credential prototypes"
+	case 11: // CompanyApps
 		m.selectedHint = "View and manage company-application relations"
-	case 11: // Encryption
+	case 12: // Encryption
 		m.selectedHint = "Manage encryption settings"
-	case 12: // Queue
+	case 13: // Queue
 		m.selectedHint = "Manage the job queue"
-	case 13: // Prune
+	case 14: // Prune
 		m.selectedHint = "Prune logs and jobs"
-	case 14: // Commands
+	case 15: // Commands
 		m.selectedHint = "Browse available MultiFlexi commands and their documentation"
-	case 15: // Help
+	case 16: // Help
 		m.selectedHint = "View help and documentation for using this interface"
-	case 16: // Quit
+	case 17: // Quit
 		m.selectedHint = "Exit the MultiFlexi TUI application"
 	default:
 		m.selectedHint = "Navigation: ←/→ to move, Enter to select"
@@ -572,31 +581,36 @@ func (m Model) handleMenuSelection() (tea.Model, tea.Cmd) {
 		// Reset credTypes model and trigger loading
 		m.credTypes = ui.NewCredTypesModel()
 		return m, m.credTypes.Init()
-	case 10: // CompanyApps
+	case 10: // CrPrototypes
+		m.state = CrPrototypesView
+		// Reset crPrototypes model and trigger loading
+		m.crPrototypes = ui.NewCrPrototypesModel()
+		return m, m.crPrototypes.Init()
+	case 11: // CompanyApps
 		m.state = CompanyAppsView
 		// Reset companyApps model and trigger loading
 		m.companyApps = ui.NewCompanyAppsModel()
 		return m, m.companyApps.Init()
-	case 11: // Encryption
+	case 12: // Encryption
 		m.state = EncryptionView
 		m.encryption = ui.NewEncryptionModel(m.statusInfo.Encryption)
 		return m, nil
-	case 12: // Queue
+	case 13: // Queue
 		m.state = QueueView
 		// Reset queue model and trigger loading
 		m.queue = ui.NewQueueModel()
 		return m, m.queue.Init()
-	case 13: // Prune
+	case 14: // Prune
 		m.state = PruneView
 		m.prune = ui.NewPruneModel()
 		return m, nil
-	case 14: // Commands
+	case 15: // Commands
 		m.state = MenuView
 		return m, nil
-	case 15: // Help
+	case 16: // Help
 		m.state = HelpView
 		return m, m.loadHelpCmd("help")
-	case 16: // Quit
+	case 17: // Quit
 		return m, tea.Quit
 	default:
 		return m, nil

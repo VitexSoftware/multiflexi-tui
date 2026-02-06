@@ -4,29 +4,29 @@ A modern terminal user interface (TUI) frontend for the `multiflexi-cli` tool, b
 
 ## Features
 
-- **Job Dashboard**: View and manage the 10 newest jobs with pagination controls
-- **Dynamic Command Discovery**: Automatically loads available commands from `multiflexi-cli describe`
-- **Interactive Top Menu**: Horizontal navigation bar with contextual hints
+- **Comprehensive CLI Coverage**: Complete parity with all `multiflexi-cli --format=json` functionality
+- **Entity Management**: View and manage all MultiFlexi entities with full field coverage
+- **Advanced Pagination**: Navigate through large datasets with limit/offset controls
 - **Real-time Status Panel**: Live system information from `multiflexi-cli status`
-- **Help Viewer**: Displays command help text in a scrollable viewer
-- **Responsive Layout**: Professional three-panel design (menu/content/status)
-- **Keyboard Navigation**: Intuitive controls for navigation and selection
-- **Clean UI**: Styled with Lipgloss for a professional appearance
+- **Dynamic Menu System**: Access all entities through intuitive navigation
+- **Enhanced Data Views**: Complete field coverage for Artifacts, CredTypes, and new CrPrototypes
+- **Professional UI**: Responsive three-panel design with clean styling
+- **Keyboard Navigation**: Efficient controls for all operations
 
 ### Key Features
 
-#### 🎯 **Jobs Management Dashboard**
+#### 🎯 **Complete Entity Management**
 
-- **Latest 10 Jobs**: Displays newest jobs with real-time status updates
-- **Job Status Indicators**: Running, Success, Failed, Scheduled
-- **Pagination Controls**: Navigate through job history with Prev/Next buttons
-- **Job Details**: ID, Command, Status, and Schedule information
+- **All MultiFlexi Entities**: Full coverage of Applications, Companies, Jobs, Users, RunTemplates, Credentials, Tokens, Artifacts, CredTypes, CrPrototypes, CompanyApps, Encryption, Queue, and Prune operations
+- **Enhanced Data Views**: Complete field coverage with proper JSON parsing
+- **Pagination Controls**: Navigate through large datasets with configurable limits
+- **Real-time Updates**: Refresh data with 'r' key for current state
 
-#### 🧭 **Top Navigation Menu**
+#### 🧭 **Comprehensive Navigation Menu**
 
-- **Horizontal Menu Bar**: Jobs | Commands | Help | Quit
-- **Context-Aware Hints**: Dynamic descriptions for each menu option
-- **Seamless Navigation**: Arrow key navigation with visual feedback
+- **Complete Entity Access**: Status | RunTemplates | Jobs | Applications | Companies | Credentials | Tokens | Users | Artifacts | CredTypes | CrPrototypes | CompanyApps | Encryption | Queue | Prune | Commands | Help | Quit
+- **Context-Aware Hints**: Dynamic descriptions for each entity and operation
+- **Seamless Navigation**: Arrow key navigation with visual feedback and focus management
 
 #### 📊 **Real-time Status Panel**
 
@@ -53,12 +53,25 @@ A modern terminal user interface (TUI) frontend for the `multiflexi-cli` tool, b
 | `r` | Refresh status and data | Data refresh |
 | `q` or `Ctrl+C` | Quit application | Exit |
 
-#### Menu Options & Hints
+#### Menu Options & Entity Coverage
 
-- **Jobs**: "View and manage running jobs with pagination controls"
-- **Commands**: "Browse available MultiFlexi commands and their documentation"
-- **Help**: "View help and documentation for using this interface"
-- **Quit**: "Exit the MultiFlexi TUI application"
+- **Status**: System dashboard with live information
+- **RunTemplates**: Execution templates with pagination
+- **Jobs**: Running and historical job management
+- **Applications**: MultiFlexi application catalog
+- **Companies**: Registered company management
+- **Credentials**: Authentication credential management
+- **Tokens**: API token management
+- **Users**: User account management
+- **Artifacts**: Job artifacts and files (enhanced: 7 fields)
+- **CredTypes**: Credential type definitions (enhanced: 8 fields)
+- **CrPrototypes**: Credential prototypes (new entity: 10 fields)
+- **CompanyApps**: Company-application relationships
+- **Encryption**: System encryption management
+- **Queue**: Job queue management
+- **Prune**: Log and data cleanup operations
+- **Commands**: CLI command documentation
+- **Help**: Application usage documentation
 
 ## Prerequisites
 

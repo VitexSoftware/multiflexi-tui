@@ -158,38 +158,69 @@ func GetStatusInfo() (*StatusInfo, error) {
 
 // Application represents an application from multiflexi-cli
 type Application struct {
-	ID          int    `json:"id"`
-	Enabled     int    `json:"enabled"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	Executable  string `json:"executable"`
-	Version     string `json:"version"`
-	Code        string `json:"code"`
-	Topics      string `json:"topics"`
+	ID           int     `json:"id"`
+	Enabled      int     `json:"enabled"`
+	Image        *string `json:"image"`
+	Name         string  `json:"name"`
+	Description  string  `json:"description"`
+	Executable   string  `json:"executable"`
+	DatCreate    string  `json:"DatCreate"`
+	DatUpdate    string  `json:"DatUpdate"`
+	Setup        string  `json:"setup"`
+	CmdParams    string  `json:"cmdparams"`
+	Deploy       string  `json:"deploy"`
+	Homepage     string  `json:"homepage"`
+	Requirements string  `json:"requirements"`
+	OciImage     string  `json:"ociimage"`
+	Version      string  `json:"version"`
+	Code         string  `json:"code"`
+	UUID         string  `json:"uuid"`
+	Topics       string  `json:"topics"`
+	ResultFile   string  `json:"resultfile"`
+	Artifacts    string  `json:"artifacts"`
 }
 
 // Company represents a company from multiflexi-cli
 type Company struct {
-	ID      int    `json:"id"`
-	Enabled int    `json:"enabled"`
-	Name    string `json:"name"`
-	IC      string `json:"ic"`
-	Email   string `json:"email"`
-	Slug    string `json:"slug"`
+	ID                int     `json:"id"`
+	Enabled           int     `json:"enabled"`
+	Settings          *string `json:"settings"`
+	Logo              *string `json:"logo"`
+	Server            int     `json:"server"`
+	Name              string  `json:"name"`
+	IC                string  `json:"ic"`
+	Setup             int     `json:"setup"`
+	DatCreate         string  `json:"DatCreate"`
+	DatUpdate         string  `json:"DatUpdate"`
+	Customer          *string `json:"customer"`
+	Email             string  `json:"email"`
+	Slug              string  `json:"slug"`
+	ZabbixHost        *string `json:"zabbix_host"`
+	RetentionUntil    *string `json:"retention_until"`
+	MarkedForDeletion int     `json:"marked_for_deletion"`
 }
 
 // RunTemplate represents a run template from multiflexi-cli
 type RunTemplate struct {
-	ID           int    `json:"id"`
-	AppID        int    `json:"app_id"`
-	CompanyID    int    `json:"company_id"`
-	Name         string `json:"name"`
-	Interv       string `json:"interv"`
-	Active       int    `json:"active"`
-	Executor     string `json:"executor"`
-	Cron         string `json:"cron"`
-	LastSchedule string `json:"last_schedule"`
-	NextSchedule string `json:"next_schedule"`
+	ID                  int     `json:"id"`
+	AppID               int     `json:"app_id"`
+	CompanyID           int     `json:"company_id"`
+	Interv              string  `json:"interv"`
+	Prepared            *int    `json:"prepared"`
+	Success             *string `json:"success"`
+	Fail                *string `json:"fail"`
+	Name                string  `json:"name"`
+	Delay               int     `json:"delay"`
+	Executor            string  `json:"executor"`
+	Active              int     `json:"active"`
+	Cron                string  `json:"cron"`
+	LastSchedule        *string `json:"last_schedule"`
+	NextSchedule        *string `json:"next_schedule"`
+	Note                *string `json:"note"`
+	DatCreate           string  `json:"DatCreate"`
+	DatSave             string  `json:"DatSave"`
+	SuccessfulJobsCount int     `json:"successfull_jobs_count"`
+	FailedJobsCount     int     `json:"failed_jobs_count"`
 }
 
 // GetApplications fetches applications from multiflexi-cli with pagination
@@ -353,11 +384,31 @@ func GetTokens(limit, offset int) ([]Token, error) {
 
 // User represents a user from multiflexi-cli
 type User struct {
-	ID        int    `json:"id"`
-	Login     string `json:"login"`
-	Firstname string `json:"firstname"`
-	Lastname  string `json:"lastname"`
-	Email     string `json:"email"`
+	ID                  int     `json:"id"`
+	Enabled             int     `json:"enabled"`
+	Settings            *string `json:"settings"`
+	Email               string  `json:"email"`
+	Firstname           string  `json:"firstname"`
+	Lastname            string  `json:"lastname"`
+	Password            string  `json:"password"`
+	PasswordChangedAt   *string `json:"password_changed_at"`
+	PasswordExpiresAt   *string `json:"password_expires_at"`
+	FailedLoginAttempts int     `json:"failed_login_attempts"`
+	LockedUntil         *string `json:"locked_until"`
+	TwoFactorEnabled    int     `json:"two_factor_enabled"`
+	LastLoginIP         *string `json:"last_login_ip"`
+	LastLoginAt         *string `json:"last_login_at"`
+	SecuritySettings    *string `json:"security_settings"`
+	Login               string  `json:"login"`
+	DatCreate           string  `json:"DatCreate"`
+	DatSave             string  `json:"DatSave"`
+	LastModifierID      *int    `json:"last_modifier_id"`
+	DeletedAt           *string `json:"deleted_at"`
+	DeletionReason      *string `json:"deletion_reason"`
+	AnonymizedAt        *string `json:"anonymized_at"`
+	LastActivityAt      *string `json:"last_activity_at"`
+	InactiveSince       *string `json:"inactive_since"`
+	RetentionUntil      *string `json:"retention_until"`
 }
 
 // GetUsers fetches users from multiflexi-cli with pagination
@@ -384,9 +435,13 @@ func GetUsers(limit, offset int) ([]User, error) {
 
 // Artifact represents an artifact from multiflexi-cli
 type Artifact struct {
-	ID     int    `json:"id"`
-	Job_ID int    `json:"job_id"`
-	File   string `json:"file"`
+	ID          int    `json:"id"`
+	Job_ID      int    `json:"job_id"`
+	Filename    string `json:"filename"`
+	ContentType string `json:"content_type"`
+	Artifact    string `json:"artifact"`
+	CreatedAt   string `json:"created_at"`
+	Note        string `json:"note"`
 }
 
 // GetArtifacts fetches artifacts from multiflexi-cli with pagination
@@ -413,9 +468,14 @@ func GetArtifacts(limit, offset int) ([]Artifact, error) {
 
 // CredType represents a credential type from multiflexi-cli
 type CredType struct {
-	ID   int    `json:"id"`
-	UUID string `json:"uuid"`
-	Name string `json:"name"`
+	ID        int    `json:"id"`
+	UUID      string `json:"uuid"`
+	Name      string `json:"name"`
+	Class     string `json:"class"`
+	CompanyID int    `json:"company_id"`
+	Logo      string `json:"logo"`
+	URL       string `json:"url"`
+	Version   int `json:"version"`
 }
 
 // GetCredTypes fetches credential types from multiflexi-cli with pagination
@@ -537,16 +597,25 @@ func TruncateQueue() error {
 }
 
 type Job struct {
-	ID           int    `json:"id"`
-	AppID        int    `json:"app"`
-	Command      string `json:"command"`
-	Begin        string `json:"begin"`
-	End          string `json:"end"`
-	Exitcode     int    `json:"exitcode"`
-	Executor     string `json:"executor"`
-	PID          int    `json:"pid"`
-	Schedule     string `json:"schedule"`
-	ScheduleType string `json:"schedule_type"`
+	ID                int     `json:"id"`
+	AppID             int     `json:"app_id"`
+	Begin             string  `json:"begin"`
+	End               string  `json:"end"`
+	CompanyID         int     `json:"company_id"`
+	Exitcode          int     `json:"exitcode"`
+	Stdout            string  `json:"stdout"`
+	Stderr            string  `json:"stderr"`
+	LaunchedBy        int     `json:"launched_by"`
+	Env               string  `json:"env"`
+	Command           string  `json:"command"`
+	Schedule          string  `json:"schedule"`
+	Executor          string  `json:"executor"`
+	RunTemplateID     int     `json:"runtemplate_id"`
+	AppVersion        string  `json:"app_version"`
+	ScheduleType      string  `json:"schedule_type"`
+	PID               int     `json:"pid"`
+	RetentionUntil    *string `json:"retention_until"`
+	MarkedForDeletion int     `json:"marked_for_deletion"`
 }
 
 // GetJobs fetches jobs from multiflexi-cli with pagination
@@ -602,7 +671,43 @@ func getMockJobs(limit, offset int) []Job {
 	}
 
 	return allJobs[start:end]
-} // GetCommandHelp runs "multiflexi-cli <command> --help" and returns the output
+} // CrPrototype represents a credential prototype from multiflexi-cli
+type CrPrototype struct {
+	ID          int    `json:"id"`
+	UUID        string `json:"uuid"`
+	Name        string `json:"name"`
+	Code        string `json:"code"`
+	Description string `json:"description"`
+	Logo        string `json:"logo"`
+	URL         string `json:"url"`
+	Version     string `json:"version"`
+	CreatedAt   string `json:"created_at"`
+	UpdatedAt   string `json:"updated_at"`
+}
+
+// GetCrPrototypes fetches credential prototypes from multiflexi-cli with pagination
+func GetCrPrototypes(limit, offset int) ([]CrPrototype, error) {
+	cmd := exec.Command("multiflexi-cli", "crprototype", "list",
+		"--format=json",
+		"--order=D", // Newer on top (descending order)
+		"--limit="+fmt.Sprintf("%d", limit),
+		"--offset="+fmt.Sprintf("%d", offset),
+	)
+
+	output, err := cmd.Output()
+	if err != nil {
+		return nil, fmt.Errorf("failed to run multiflexi-cli crprototype list: %w", err)
+	}
+
+	var crPrototypes []CrPrototype
+	if err := json.Unmarshal(output, &crPrototypes); err != nil {
+		return nil, fmt.Errorf("failed to parse crprototype JSON output: %w", err)
+	}
+
+	return crPrototypes, nil
+}
+
+// GetCommandHelp runs "multiflexi-cli <command> --help" and returns the output
 func GetCommandHelp(commandName string) (string, error) {
 	cmd := exec.Command("multiflexi-cli", commandName, "--help")
 	output, err := cmd.Output()

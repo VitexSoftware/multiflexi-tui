@@ -133,7 +133,7 @@ func (m ArtifactsModel) View() string {
 				style = GetUnselectedItemStyle()
 			}
 
-			line := fmt.Sprintf("%-8d %-15d %-50s", artifact.ID, artifact.Job_ID, artifact.File)
+			line := fmt.Sprintf("%-8d %-15d %-50s", artifact.ID, artifact.Job_ID, artifact.Filename)
 			content.WriteString(style.Render(line))
 			content.WriteString("\n")
 		}

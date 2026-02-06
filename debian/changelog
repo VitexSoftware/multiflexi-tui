@@ -1,3 +1,16 @@
+multiflexi-tui (2.0.0) unstable; urgency=medium
+
+  * Complete MultiFlexi CLI parity achieved (100% coverage)
+  * Enhanced Artifacts entity with 7 fields (was 3)
+  * Enhanced CredTypes entity with 8 fields (was 3)
+  * New CrPrototypes entity with full 10-field support
+  * All 15 MultiFlexi entities now supported with complete field coverage
+  * Comprehensive test suite for CLI structures and UI models
+  * Updated documentation for new entities and enhanced features
+  * Improved navigation with complete entity menu integration
+
+ -- Vitex Software <info@vitexsoftware.cz>  Thu, 06 Feb 2026 10:00:00 +0100
+
 multiflexi-tui (0.1.0) unstable; urgency=medium
 
   * Initial release of MultiFlexi TUI
