@@ -117,11 +117,11 @@ func (m CompaniesModel) View() string {
 
 	var content strings.Builder
 
-	// Companies table header
+	// Companies table header - TurboVision style
 	headerStyle := GetSelectedItemStyle().Copy().Bold(true)
 	content.WriteString(headerStyle.Render(fmt.Sprintf("%-6s %-30s %-15s %-20s", "ID", "Name", "IC", "Status")))
 	content.WriteString("\n")
-	content.WriteString(strings.Repeat("─", 75))
+	content.WriteString(strings.Repeat("═", 75))
 	content.WriteString("\n")
 
 	// Companies list
@@ -130,10 +130,13 @@ func (m CompaniesModel) View() string {
 	} else {
 		for i, company := range m.companies {
 			var style lipgloss.Style
+			var prefix string
 			if i == m.cursor {
 				style = GetSelectedItemStyle()
+				prefix = "► " // TurboVision-style focus indicator
 			} else {
 				style = GetUnselectedItemStyle()
+				prefix = "  "
 			}
 
 			// Determine status
@@ -148,7 +151,7 @@ func (m CompaniesModel) View() string {
 				name = name[:25] + "..."
 			}
 
-			line := fmt.Sprintf("%-6d %-30s %-15s %-20s", company.ID, name, company.IC, status)
+			line := fmt.Sprintf("%s%-4d %-30s %-15s %-20s", prefix, company.ID, name, company.IC, status)
 			content.WriteString(style.Render(line))
 			content.WriteString("\n")
 		}
@@ -156,20 +159,20 @@ func (m CompaniesModel) View() string {
 
 	content.WriteString("\n")
 
-	// Pagination controls
+	// Pagination controls - TurboVision style
 	pageNum := (m.offset / m.limit) + 1
 
 	var prevText, nextText string
 	if m.hasPrev {
-		prevText = GetSelectedItemStyle().Render("[←] Prev")
+		prevText = GetSelectedItemStyle().Render("[◄] Prev")
 	} else {
-		prevText = GetItemDescriptionStyle().Render("[←] Prev")
+		prevText = GetItemDescriptionStyle().Render("[◄] Prev")
 	}
 
 	if m.hasMore {
-		nextText = GetSelectedItemStyle().Render("[→] Next")
+		nextText = GetSelectedItemStyle().Render("[►] Next")
 	} else {
-		nextText = GetItemDescriptionStyle().Render("[→] Next")
+		nextText = GetItemDescriptionStyle().Render("[►] Next")
 	}
 
 	pageInfo := GetItemDescriptionStyle().Render(fmt.Sprintf("Page %d", pageNum))

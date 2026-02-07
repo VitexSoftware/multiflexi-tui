@@ -477,30 +477,61 @@ func (m Model) View() string {
 	return lipgloss.JoinVertical(lipgloss.Left, m.renderMenuBar(), content, m.renderHelpFooter())
 }
 
-// renderMenuBar renders the top menu bar with hints
+// renderMenuBar renders the top menu bar with hints and horizontal scrolling
 func (m Model) renderMenuBar() string {
-	var menuItems []string
-	style := ui.GetUnselectedItemStyle()
-	if m.focus {
-		style = ui.GetSelectedItemStyle()
-	}
-
-	for i, item := range m.menuItems {
-		if i == m.menuCursor {
-			menuItems = append(menuItems, style.Render(" "+item+" "))
-		} else {
-			menuItems = append(menuItems, ui.GetUnselectedItemStyle().Render(" "+item+" "))
-		}
-	}
-
 	width := m.width
 	if width == 0 {
 		width = 80 // Default width if not set
 	}
 
-	menuLine := ui.GetTitleStyle().Render("MultiFlexi TUI") + "  " + strings.Join(menuItems, " ")
-	hintLine := ui.GetItemDescriptionStyle().Render(m.selectedHint)
-	separator := strings.Repeat("─", width)
+	// Calculate available width for menu items (excluding title and padding)
+	title := "MultiFlexi TUI"
+	titleWidth := len(title) + 4 // Add some padding
+	availableWidth := width - titleWidth
+
+	// Build visible menu items with scrolling
+	var visibleMenuItems []string
+	var currentWidth int
+	style := ui.GetUnselectedItemStyle()
+	if m.focus {
+		style = ui.GetSelectedItemStyle()
+	}
+
+	// Start from the offset and add items until we run out of space
+	for i := m.menuOffset; i < len(m.menuItems); i++ {
+		item := m.menuItems[i]
+		var renderedItem string
+		if i == m.menuCursor {
+			renderedItem = style.Render(" " + item + " ")
+		} else {
+			renderedItem = ui.GetUnselectedItemStyle().Render(" " + item + " ")
+		}
+
+		// Check if adding this item would exceed available width
+		itemWidth := len(item) + 2 + 1 // item + padding + space separator
+		if currentWidth + itemWidth > availableWidth && len(visibleMenuItems) > 0 {
+			// Add ellipsis to indicate more items
+			if currentWidth + 3 <= availableWidth {
+				visibleMenuItems = append(visibleMenuItems, "...")
+			}
+			break
+		}
+
+		visibleMenuItems = append(visibleMenuItems, renderedItem)
+		currentWidth += itemWidth
+	}
+
+	// Add left ellipsis if we're not showing the first item
+	if m.menuOffset > 0 {
+		visibleMenuItems = append([]string{"..."}, visibleMenuItems...)
+	}
+
+	// TurboVision-style menu bar with double borders
+	menuLine := ui.GetTitleStyle().Render(" " + title + " ") + " " + strings.Join(visibleMenuItems, " ")
+	hintLine := ui.GetItemDescriptionStyle().Render(" " + m.selectedHint + " ")
+	
+	// Double line separator in TurboVision style
+	separator := strings.Repeat("═", width)
 
 	return menuLine + "\n" + hintLine + "\n" + separator + "\n"
 }
@@ -512,17 +543,18 @@ func (m *Model) renderHelpFooter() string {
 		width = 80 // Default width if not set
 	}
 
-	separator := strings.Repeat("─", width)
+	// TurboVision-style double line separator
+	separator := strings.Repeat("═", width)
 	var helpLine string
 	if m.focus {
-		helpLine = ui.GetFooterStyle().Render("←/→: navigate menu • enter: select • tab: switch to content • q: quit")
+		helpLine = ui.GetFooterStyle().Render(" ←/→: navigate menu • enter: select • tab: switch to content • q: quit ")
 	} else {
-		helpLine = ui.GetFooterStyle().Render("↑/↓: navigate list • ←/→: paginate • tab: switch to menu • q: quit")
+		helpLine = ui.GetFooterStyle().Render(" ↑/↓: navigate list • ←/→: paginate • tab: switch to menu • q: quit ")
 	}
 
 	statusLine := ""
 	if m.statusMessage != "" {
-		statusLine = ui.GetFooterStyle().Render(m.statusMessage)
+		statusLine = ui.GetFooterStyle().Render(" " + m.statusMessage + " ")
 		m.statusMessage = ""
 	}
 

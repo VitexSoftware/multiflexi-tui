@@ -3,94 +3,118 @@ package ui
 import "github.com/charmbracelet/lipgloss"
 
 var (
-	// Colors
-	primaryColor   = lipgloss.Color("#7D56F4")
-	secondaryColor = lipgloss.Color("#04B575")
-	accentColor    = lipgloss.Color("#F25D94")
-	textColor      = lipgloss.Color("#FAFAFA")
-	subtleColor    = lipgloss.Color("#626262")
+	// TurboVision Classic Colors
+	tvBlue       = lipgloss.Color("#0000AA")   // Classic blue background
+	tvCyan       = lipgloss.Color("#00AAAA")   // Cyan for highlights  
+	tvWhite      = lipgloss.Color("#FFFFFF")   // White text
+	tvLightGray  = lipgloss.Color("#CCCCCC")   // Light gray text
+	tvDarkGray   = lipgloss.Color("#808080")   // Dark gray for disabled
+	tvYellow     = lipgloss.Color("#FFFF00")   // Yellow for selections
+	tvRed        = lipgloss.Color("#FF0000")   // Red for errors
+	tvGreen      = lipgloss.Color("#00FF00")   // Green for success
 
 	// Base styles
 	baseStyle = lipgloss.NewStyle().
-			Foreground(textColor)
+			Foreground(tvWhite).
+			Background(tvBlue)
 
-	// Title styles
+	// Title styles - White on blue with double border
 	titleStyle = lipgloss.NewStyle().
-			Foreground(primaryColor).
+			Foreground(tvWhite).
+			Background(tvBlue).
 			Bold(true).
+			Border(lipgloss.DoubleBorder()).
+			BorderForeground(tvWhite).
+			Padding(0, 1).
 			Margin(0, 0, 1, 0)
 
-	// List styles
+	// List styles - Classic TurboVision window style
 	listStyle = lipgloss.NewStyle().
-			Border(lipgloss.RoundedBorder()).
-			BorderForeground(primaryColor).
+			Border(lipgloss.DoubleBorder()).
+			BorderForeground(tvWhite).
+			Background(tvBlue).
+			Foreground(tvWhite).
 			Padding(1, 2)
 
 	selectedItemStyle = lipgloss.NewStyle().
-				Foreground(accentColor).
+				Foreground(tvBlue).
+				Background(tvYellow).
 				Bold(true).
 				Padding(0, 1)
 
 	unselectedItemStyle = lipgloss.NewStyle().
-				Foreground(textColor).
+				Foreground(tvWhite).
+				Background(tvBlue).
 				Padding(0, 1)
 
 	itemDescriptionStyle = lipgloss.NewStyle().
-				Foreground(subtleColor).
-				Italic(true)
+				Foreground(tvLightGray).
+				Background(tvBlue)
 
-	// Viewer styles
+	// Viewer styles - TurboVision dialog box style  
 	viewerStyle = lipgloss.NewStyle().
-			Border(lipgloss.RoundedBorder()).
-			BorderForeground(primaryColor).
+			Border(lipgloss.DoubleBorder()).
+			BorderForeground(tvWhite).
+			Background(tvBlue).
+			Foreground(tvWhite).
 			Padding(1, 2).
 			Margin(0, 0, 1, 0)
 
-	// Footer styles
+	// Footer styles - Status bar style
 	footerStyle = lipgloss.NewStyle().
-			Foreground(subtleColor).
+			Foreground(tvBlue).
+			Background(tvCyan).
+			Bold(true).
 			Margin(1, 0, 0, 0)
 
-	// Error styles
+	// Error styles - Classic red on white
 	errorStyle = lipgloss.NewStyle().
-			Foreground(accentColor).
+			Foreground(tvRed).
+			Background(tvWhite).
 			Bold(true)
 
-	// Button styles
+	// Button styles - TurboVision button style
 	buttonStyle = lipgloss.NewStyle().
-			Foreground(textColor).
-			Background(primaryColor).
+			Foreground(tvBlue).
+			Background(tvLightGray).
+			Bold(true).
 			Padding(0, 1).
 			Border(lipgloss.NormalBorder()).
-			BorderForeground(primaryColor)
+			BorderForeground(tvWhite)
 
 	disabledButtonStyle = lipgloss.NewStyle().
-				Foreground(subtleColor).
-				Background(lipgloss.Color("#333333")).
+				Foreground(tvDarkGray).
+				Background(tvBlue).
 				Padding(0, 1).
 				Border(lipgloss.NormalBorder()).
-				BorderForeground(subtleColor)
+				BorderForeground(tvDarkGray)
 
-	// Status table styles
+	// Status table styles - TurboVision window style
 	statusTableStyle = lipgloss.NewStyle().
-				Border(lipgloss.RoundedBorder()).
-				BorderForeground(primaryColor).
+				Border(lipgloss.DoubleBorder()).
+				BorderForeground(tvWhite).
+				Background(tvBlue).
+				Foreground(tvWhite).
 				Padding(1, 2)
 
 	activeStatusStyle = lipgloss.NewStyle().
-				Foreground(secondaryColor).
+				Foreground(tvGreen).
+				Background(tvBlue).
 				Bold(true)
 
 	disabledStatusStyle = lipgloss.NewStyle().
-				Foreground(accentColor).
+				Foreground(tvRed).
+				Background(tvBlue).
 				Bold(true)
 
 	statusLabelStyle = lipgloss.NewStyle().
-				Foreground(textColor).
+				Foreground(tvWhite).
+				Background(tvBlue).
 				Bold(true)
 
 	statusValueStyle = lipgloss.NewStyle().
-				Foreground(textColor)
+				Foreground(tvLightGray).
+				Background(tvBlue)
 )
 
 // GetListStyle returns the list container style

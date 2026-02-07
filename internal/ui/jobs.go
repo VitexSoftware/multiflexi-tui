@@ -117,11 +117,11 @@ func (m JobsModel) View() string {
 
 	var content strings.Builder
 
-	// Jobs table header
+	// Jobs table header - TurboVision style
 	headerStyle := GetSelectedItemStyle().Copy().Bold(true)
 	content.WriteString(headerStyle.Render(fmt.Sprintf("%-8s %-25s %-15s %-20s", "ID", "Command", "Status", "Schedule")))
 	content.WriteString("\n")
-	content.WriteString(strings.Repeat("─", 70))
+	content.WriteString(strings.Repeat("═", 70))
 	content.WriteString("\n")
 
 	// Jobs list
@@ -130,10 +130,13 @@ func (m JobsModel) View() string {
 	} else {
 		for i, job := range m.jobs {
 			var style lipgloss.Style
+			var prefix string
 			if i == m.cursor {
 				style = GetSelectedItemStyle()
+				prefix = "► " // TurboVision-style focus indicator
 			} else {
 				style = GetUnselectedItemStyle()
+				prefix = "  "
 			}
 
 			// Determine status based on exitcode and PID
@@ -163,7 +166,7 @@ func (m JobsModel) View() string {
 				}
 			}
 
-			line := fmt.Sprintf("%-8d %-25s %-15s %-20s", job.ID, command, status, schedule)
+			line := fmt.Sprintf("%s%-6d %-25s %-15s %-20s", prefix, job.ID, command, status, schedule)
 			content.WriteString(style.Render(line))
 			content.WriteString("\n")
 		}
@@ -171,20 +174,20 @@ func (m JobsModel) View() string {
 
 	content.WriteString("\n")
 
-	// Pagination controls - simple inline formatting without complex styling
+	// Pagination controls - TurboVision style
 	pageNum := (m.offset / m.limit) + 1
 
 	var prevText, nextText string
 	if m.hasPrev {
-		prevText = GetSelectedItemStyle().Render("[←] Prev")
+		prevText = GetSelectedItemStyle().Render("[◄] Prev")
 	} else {
-		prevText = GetItemDescriptionStyle().Render("[←] Prev")
+		prevText = GetItemDescriptionStyle().Render("[◄] Prev")
 	}
 
 	if m.hasMore {
-		nextText = GetSelectedItemStyle().Render("[→] Next")
+		nextText = GetSelectedItemStyle().Render("[►] Next")
 	} else {
-		nextText = GetItemDescriptionStyle().Render("[→] Next")
+		nextText = GetItemDescriptionStyle().Render("[►] Next")
 	}
 
 	pageInfo := GetItemDescriptionStyle().Render(fmt.Sprintf("Page %d", pageNum))

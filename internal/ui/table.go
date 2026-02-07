@@ -197,11 +197,11 @@ func (t *TableWidget) View() string {
 	content.WriteString(strings.Join(headerParts, " "))
 	content.WriteString("\n")
 
-	// Separator
-	content.WriteString(strings.Repeat("─", totalWidth))
+	// Separator - TurboVision double line style
+	content.WriteString(strings.Repeat("═", totalWidth))
 	content.WriteString("\n")
 
-	// Table rows - plain text with focus indicator
+	// Table rows - plain text with TurboVision-style focus indicator
 	for i, row := range t.rows {
 		rowParts := make([]string, len(t.columns))
 
@@ -224,13 +224,21 @@ func (t *TableWidget) View() string {
 			rowParts[j] = fmt.Sprintf(format, value)
 		}
 
-		// Add focus indicator
+		// TurboVision-style focus indicator
 		focusIndicator := " "
 		if i == t.cursor {
-			focusIndicator = "→"
+			focusIndicator = "►" // TurboVision-style arrow
 		}
 
 		line := focusIndicator + strings.Join(rowParts, " ")
+		
+		// Apply TurboVision styling to the focused row
+		if i == t.cursor {
+			line = GetSelectedItemStyle().Render(line)
+		} else {
+			line = GetUnselectedItemStyle().Render(line)
+		}
+		
 		content.WriteString(line)
 		content.WriteString("\n")
 	}
