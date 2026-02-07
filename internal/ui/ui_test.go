@@ -57,18 +57,18 @@ func TestPaginationLogic(t *testing.T) {
 	// Test pagination calculations
 	limit := 10
 	offset := 0
-	
+
 	// Test first page
 	if offset != 0 {
 		t.Errorf("Expected first page offset 0, got %d", offset)
 	}
-	
+
 	// Test next page calculation
 	nextOffset := offset + limit
 	if nextOffset != 10 {
 		t.Errorf("Expected next page offset 10, got %d", nextOffset)
 	}
-	
+
 	// Test previous page calculation (from second page)
 	offset = 10
 	prevOffset := offset - limit

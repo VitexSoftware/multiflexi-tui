@@ -67,6 +67,7 @@ type Model struct {
 	statusMessage        string
 	menuItems            []string
 	menuCursor           int
+	menuOffset           int // For horizontal menu scrolling
 	selectedHint         string
 	focus                bool // true for menu, false for content
 }
@@ -118,6 +119,7 @@ func NewModel() *Model {
 		viewer:               viewer,
 		menuItems:            menuItems,
 		menuCursor:           0,
+		menuOffset:           0,
 		selectedHint:         "View system dashboard with status information",
 		focus:                true, // focus menu by default
 	}

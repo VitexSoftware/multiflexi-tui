@@ -23,6 +23,69 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.height = msg.Height
 
 		// Forward size message to current view
+		switch m.state {
+		case RunTemplatesView:
+			var cmd tea.Cmd
+			runTemplatesModel, cmd := m.runTemplates.Update(msg)
+			m.runTemplates = runTemplatesModel.(ui.RunTemplatesModel)
+			return m, cmd
+		case JobsView:
+			var cmd tea.Cmd
+			jobsModel, cmd := m.jobs.Update(msg)
+			m.jobs = jobsModel.(ui.JobsModel)
+			return m, cmd
+		case ApplicationsView:
+			var cmd tea.Cmd
+			applicationsModel, cmd := m.applications.Update(msg)
+			m.applications = applicationsModel.(ui.ApplicationsModel)
+			return m, cmd
+		case CompaniesView:
+			var cmd tea.Cmd
+			companiesModel, cmd := m.companies.Update(msg)
+			m.companies = companiesModel.(ui.CompaniesModel)
+			return m, cmd
+		case CredentialsView:
+			var cmd tea.Cmd
+			credentialsModel, cmd := m.credentials.Update(msg)
+			m.credentials = credentialsModel.(ui.CredentialsModel)
+			return m, cmd
+		case TokensView:
+			var cmd tea.Cmd
+			tokensModel, cmd := m.tokens.Update(msg)
+			m.tokens = tokensModel.(ui.TokensModel)
+			return m, cmd
+		case UsersView:
+			var cmd tea.Cmd
+			usersModel, cmd := m.users.Update(msg)
+			m.users = usersModel.(ui.UsersModel)
+			return m, cmd
+		case ArtifactsView:
+			var cmd tea.Cmd
+			artifactsModel, cmd := m.artifacts.Update(msg)
+			m.artifacts = artifactsModel.(ui.ArtifactsModel)
+			return m, cmd
+		case CredTypesView:
+			var cmd tea.Cmd
+			credTypesModel, cmd := m.credTypes.Update(msg)
+			m.credTypes = credTypesModel.(ui.CredTypesModel)
+			return m, cmd
+		case CrPrototypesView:
+			var cmd tea.Cmd
+			crPrototypesModel, cmd := m.crPrototypes.Update(msg)
+			m.crPrototypes = crPrototypesModel.(ui.CrPrototypesModel)
+			return m, cmd
+		case CompanyAppsView:
+			var cmd tea.Cmd
+			companyAppsModel, cmd := m.companyApps.Update(msg)
+			m.companyApps = companyAppsModel.(ui.CompanyAppsModel)
+			return m, cmd
+		case QueueView:
+			var cmd tea.Cmd
+			queueModel, cmd := m.queue.Update(msg)
+			m.queue = queueModel.(ui.QueueModel)
+			return m, cmd
+		}
+		return m, nil
 
 	case StatusLoadedMsg:
 		m.statusInfo = msg.status
@@ -246,6 +309,111 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, cmd
 			}
 		}
+	}
+
+	// Forward all non-KeyMsg messages to the current view to handle async operations (loading, etc.)
+	// This ensures loading commands work even when menu has focus
+	switch m.state {
+	case RunTemplatesView:
+		var cmd tea.Cmd
+		runTemplatesModel, cmd := m.runTemplates.Update(msg)
+		m.runTemplates = runTemplatesModel.(ui.RunTemplatesModel)
+		return m, cmd
+	case JobsView:
+		var cmd tea.Cmd
+		jobsModel, cmd := m.jobs.Update(msg)
+		m.jobs = jobsModel.(ui.JobsModel)
+		return m, cmd
+	case ApplicationsView:
+		var cmd tea.Cmd
+		applicationsModel, cmd := m.applications.Update(msg)
+		m.applications = applicationsModel.(ui.ApplicationsModel)
+		return m, cmd
+	case CompaniesView:
+		var cmd tea.Cmd
+		companiesModel, cmd := m.companies.Update(msg)
+		m.companies = companiesModel.(ui.CompaniesModel)
+		return m, cmd
+	case CredentialsView:
+		var cmd tea.Cmd
+		credentialsModel, cmd := m.credentials.Update(msg)
+		m.credentials = credentialsModel.(ui.CredentialsModel)
+		return m, cmd
+	case TokensView:
+		var cmd tea.Cmd
+		tokensModel, cmd := m.tokens.Update(msg)
+		m.tokens = tokensModel.(ui.TokensModel)
+		return m, cmd
+	case UsersView:
+		var cmd tea.Cmd
+		usersModel, cmd := m.users.Update(msg)
+		m.users = usersModel.(ui.UsersModel)
+		return m, cmd
+	case ArtifactsView:
+		var cmd tea.Cmd
+		artifactsModel, cmd := m.artifacts.Update(msg)
+		m.artifacts = artifactsModel.(ui.ArtifactsModel)
+		return m, cmd
+	case CredTypesView:
+		var cmd tea.Cmd
+		credTypesModel, cmd := m.credTypes.Update(msg)
+		m.credTypes = credTypesModel.(ui.CredTypesModel)
+		return m, cmd
+	case CrPrototypesView:
+		var cmd tea.Cmd
+		crPrototypesModel, cmd := m.crPrototypes.Update(msg)
+		m.crPrototypes = crPrototypesModel.(ui.CrPrototypesModel)
+		return m, cmd
+	case CompanyAppsView:
+		var cmd tea.Cmd
+		companyAppsModel, cmd := m.companyApps.Update(msg)
+		m.companyApps = companyAppsModel.(ui.CompanyAppsModel)
+		return m, cmd
+	case EncryptionView:
+		var cmd tea.Cmd
+		encryptionModel, cmd := m.encryption.Update(msg)
+		m.encryption = encryptionModel.(ui.EncryptionModel)
+		return m, cmd
+	case QueueView:
+		var cmd tea.Cmd
+		queueModel, cmd := m.queue.Update(msg)
+		m.queue = queueModel.(ui.QueueModel)
+		return m, cmd
+	case PruneView:
+		var cmd tea.Cmd
+		pruneModel, cmd := m.prune.Update(msg)
+		m.prune = pruneModel.(ui.PruneModel)
+		return m, cmd
+	case MenuView:
+		var cmd tea.Cmd
+		menuModel, cmd := m.menu.Update(msg)
+		m.menu = menuModel.(ui.MenuModel)
+		return m, cmd
+	case HelpView:
+		var cmd tea.Cmd
+		viewerModel, cmd := m.viewer.Update(msg)
+		m.viewer = viewerModel.(ui.ViewerModel)
+		return m, cmd
+	case DetailView:
+		var cmd tea.Cmd
+		detailModel, cmd := m.detailView.Update(msg)
+		m.detailView = detailModel.(ui.DetailViewModel)
+		return m, cmd
+	case RunTemplateEditorView:
+		var cmd tea.Cmd
+		editorModel, cmd := m.runTemplateEditor.Update(msg)
+		m.runTemplateEditor = editorModel.(ui.RunTemplateEditorModel)
+		return m, cmd
+	case ApplicationEditorView:
+		var cmd tea.Cmd
+		editorModel, cmd := m.applicationEditor.Update(msg)
+		m.applicationEditor = editorModel.(ui.ApplicationEditorModel)
+		return m, cmd
+	case RunTemplateSchedulerView:
+		var cmd tea.Cmd
+		schedulerModel, cmd := m.runTemplateScheduler.Update(msg)
+		m.runTemplateScheduler = schedulerModel.(ui.RunTemplateSchedulerModel)
+		return m, cmd
 	}
 
 	return m, nil

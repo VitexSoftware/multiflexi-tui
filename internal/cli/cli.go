@@ -475,7 +475,7 @@ type CredType struct {
 	CompanyID int    `json:"company_id"`
 	Logo      string `json:"logo"`
 	URL       string `json:"url"`
-	Version   int `json:"version"`
+	Version   int    `json:"version"`
 }
 
 // GetCredTypes fetches credential types from multiflexi-cli with pagination
