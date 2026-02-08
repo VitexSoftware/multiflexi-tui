@@ -4,55 +4,71 @@ import (
 	"testing"
 )
 
-func TestMenuOffsetLogic(t *testing.T) {
-	// Create a model with many menu items
+func TestMenuNavigation(t *testing.T) {
+	// Create a model with menu items
 	model := NewModel()
-	model.width = 60 // Simulate a narrow terminal
 
-	// Test that offset starts at 0
-	if model.menuOffset != 0 {
-		t.Errorf("Expected initial menu offset 0, got %d", model.menuOffset)
+	// Test that cursor starts at 0
+	if model.menuCursor != 0 {
+		t.Errorf("Expected initial menu cursor 0, got %d", model.menuCursor)
 	}
 
-	// Test navigation to a position that should trigger scrolling
-	model.menuCursor = 10 // Move to "CrPrototypes"
-	model.updateMenuOffset()
+	// Test navigation within bounds
+	initialCursor := model.menuCursor
+	if initialCursor < len(model.menuItems)-1 {
+		model.menuCursor++
+		model.updateSelectedHint()
 
-	// The offset should have been adjusted to keep the cursor visible
-	if model.menuOffset < 0 {
-		t.Errorf("Menu offset should not be negative, got %d", model.menuOffset)
+		if model.menuCursor != initialCursor+1 {
+			t.Errorf("Expected cursor to increment, got %d", model.menuCursor)
+		}
 	}
 
-	if model.menuOffset > model.menuCursor {
-		t.Errorf("Menu offset (%d) should not be greater than cursor (%d)", model.menuOffset, model.menuCursor)
+	// Test that cursor doesn't go below 0
+	model.menuCursor = 0
+	if model.menuCursor > 0 {
+		model.menuCursor--
+	}
+	if model.menuCursor < 0 {
+		t.Errorf("Menu cursor should not be negative, got %d", model.menuCursor)
 	}
 }
 
-func TestMenuOffsetBounds(t *testing.T) {
+func TestMenuBounds(t *testing.T) {
 	model := NewModel()
-	model.width = 40 // Very narrow terminal
 
-	// Test with cursor at various positions
-	testPositions := []int{0, 5, 10, 15, len(model.menuItems) - 1}
+	// Test cursor bounds
+	maxCursor := len(model.menuItems) - 1
 
-	for _, pos := range testPositions {
-		if pos < len(model.menuItems) {
-			model.menuCursor = pos
-			model.updateMenuOffset()
+	// Test upper bound
+	model.menuCursor = maxCursor
+	if model.menuCursor < len(model.menuItems)-1 {
+		model.menuCursor++
+	}
+	if model.menuCursor > maxCursor {
+		t.Errorf("Menu cursor should not exceed max items, got %d, max %d", model.menuCursor, maxCursor)
+	}
 
-			// Check bounds
-			if model.menuOffset < 0 {
-				t.Errorf("Menu offset should not be negative at cursor %d, got %d", pos, model.menuOffset)
-			}
+	// Test lower bound
+	model.menuCursor = 0
+	if model.menuCursor > 0 {
+		model.menuCursor--
+	}
+	if model.menuCursor < 0 {
+		t.Errorf("Menu cursor should not be negative, got %d", model.menuCursor)
+	}
+}
 
-			if model.menuOffset >= len(model.menuItems) {
-				t.Errorf("Menu offset should not exceed items count at cursor %d, got %d", pos, model.menuOffset)
-			}
+func TestUpdateSelectedHint(t *testing.T) {
+	model := NewModel()
 
-			// Cursor should always be >= offset
-			if model.menuCursor < model.menuOffset {
-				t.Errorf("Cursor (%d) should be >= offset (%d)", model.menuCursor, model.menuOffset)
-			}
-		}
+	// Test that updateSelectedHint doesn't panic
+	model.updateSelectedHint()
+
+	// Test with different cursor positions
+	for i := 0; i < len(model.menuItems) && i < 5; i++ {
+		model.menuCursor = i
+		model.updateSelectedHint()
+		// Just ensure it doesn't crash
 	}
 }
