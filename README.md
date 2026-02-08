@@ -22,6 +22,8 @@ A modern terminal user interface (TUI) frontend for the `multiflexi-cli` tool, b
 - **Pagination Controls**: Navigate through large datasets with configurable limits
 - **Real-time Updates**: Refresh data with 'r' key for current state
 
+![Overview](docs/title-screenshot.png?raw=true)
+
 #### 🧭 **Comprehensive Navigation Menu**
 
 - **Complete Entity Access**: Status | RunTemplates | Jobs | Applications | Companies | Credentials | Tokens | Users | Artifacts | CredTypes | CrPrototypes | CompanyApps | Encryption | Queue | Prune | Commands | Help | Quit
