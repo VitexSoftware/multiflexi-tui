@@ -33,6 +33,16 @@ type companiesErrorMsg struct {
 	err error
 }
 
+// OpenCompanyDetailMsg is sent when a company detail view should be opened
+type OpenCompanyDetailMsg struct {
+	Company cli.Company
+}
+
+// OpenCompanyEditorMsg is sent when a company editor should be opened
+type OpenCompanyEditorMsg struct {
+	Company cli.Company
+}
+
 // NewCompaniesModel creates a new companies model
 func NewCompaniesModel() CompaniesModel {
 	return CompaniesModel{
@@ -98,6 +108,33 @@ func (m CompaniesModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.offset += m.limit
 				m.loading = true
 				return m, m.loadCompaniesCmd()
+			}
+
+		case " ":
+			// Space: Open detail view for selected company
+			if len(m.companies) > 0 && m.cursor >= 0 && m.cursor < len(m.companies) {
+				selectedCompany := m.companies[m.cursor]
+				return m, func() tea.Msg {
+					return OpenCompanyDetailMsg{Company: selectedCompany}
+				}
+			}
+
+		case "enter", "return":
+			// Enter: Open detail view for selected company
+			if len(m.companies) > 0 && m.cursor >= 0 && m.cursor < len(m.companies) {
+				selectedCompany := m.companies[m.cursor]
+				return m, func() tea.Msg {
+					return OpenCompanyDetailMsg{Company: selectedCompany}
+				}
+			}
+
+		case "e":
+			// E: Open editor for selected company
+			if len(m.companies) > 0 && m.cursor >= 0 && m.cursor < len(m.companies) {
+				selectedCompany := m.companies[m.cursor]
+				return m, func() tea.Msg {
+					return OpenCompanyEditorMsg{Company: selectedCompany}
+				}
 			}
 		}
 	}

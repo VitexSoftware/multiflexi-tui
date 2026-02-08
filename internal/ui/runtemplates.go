@@ -27,6 +27,11 @@ type OpenRunTemplateDetailMsg struct {
 	RunTemplate cli.RunTemplate
 }
 
+// OpenRunTemplateEditorMsg is sent when a run template editor should be opened
+type OpenRunTemplateEditorMsg struct {
+	RunTemplate cli.RunTemplate
+}
+
 // NewRunTemplatesModel creates a new run templates model
 func NewRunTemplatesModel() RunTemplatesModel {
 	config := TableConfig{
@@ -119,7 +124,7 @@ func (m RunTemplatesModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case tea.KeyMsg:
-		needsRefresh, needsNextPage, needsPrevPage, openDetail := m.table.HandleKeypress(msg.String())
+		needsRefresh, needsNextPage, needsPrevPage, openDetail, openEditor := m.table.HandleKeypress(msg.String())
 
 		if openDetail {
 			// Get the selected row and extract the full RunTemplate data
@@ -129,6 +134,20 @@ func (m RunTemplatesModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					if template, ok := fullData.(cli.RunTemplate); ok {
 						return m, func() tea.Msg {
 							return OpenRunTemplateDetailMsg{RunTemplate: template}
+						}
+					}
+				}
+			}
+		}
+
+		if openEditor {
+			// Get the selected row and extract the full RunTemplate data for editor
+			selectedRow := m.table.GetSelectedRow()
+			if selectedRow != nil {
+				if fullData, exists := selectedRow.Values["_full_data"]; exists {
+					if template, ok := fullData.(cli.RunTemplate); ok {
+						return m, func() tea.Msg {
+							return OpenRunTemplateEditorMsg{RunTemplate: template}
 						}
 					}
 				}

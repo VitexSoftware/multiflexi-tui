@@ -33,6 +33,16 @@ type jobsErrorMsg struct {
 	err error
 }
 
+// OpenJobDetailMsg is sent when a job detail view should be opened
+type OpenJobDetailMsg struct {
+	Job cli.Job
+}
+
+// OpenJobEditorMsg is sent when a job editor should be opened
+type OpenJobEditorMsg struct {
+	Job cli.Job
+}
+
 // ShowMenuMsg is a message to show the menu
 type ShowMenuMsg struct{}
 
@@ -98,6 +108,33 @@ func (m JobsModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.offset += m.limit
 				m.loading = true
 				return m, m.loadJobsCmd()
+			}
+
+		case " ":
+			// Space: Open detail view for selected job
+			if len(m.jobs) > 0 && m.cursor >= 0 && m.cursor < len(m.jobs) {
+				selectedJob := m.jobs[m.cursor]
+				return m, func() tea.Msg {
+					return OpenJobDetailMsg{Job: selectedJob}
+				}
+			}
+
+		case "enter", "return":
+			// Enter: Open detail view for selected job
+			if len(m.jobs) > 0 && m.cursor >= 0 && m.cursor < len(m.jobs) {
+				selectedJob := m.jobs[m.cursor]
+				return m, func() tea.Msg {
+					return OpenJobDetailMsg{Job: selectedJob}
+				}
+			}
+
+		case "e":
+			// E: Open editor for selected job
+			if len(m.jobs) > 0 && m.cursor >= 0 && m.cursor < len(m.jobs) {
+				selectedJob := m.jobs[m.cursor]
+				return m, func() tea.Msg {
+					return OpenJobEditorMsg{Job: selectedJob}
+				}
 			}
 		}
 	}

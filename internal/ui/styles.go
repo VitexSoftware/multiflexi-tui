@@ -4,14 +4,14 @@ import "github.com/charmbracelet/lipgloss"
 
 var (
 	// TurboVision Classic Colors
-	tvBlue       = lipgloss.Color("#0000AA")   // Classic blue background
-	tvCyan       = lipgloss.Color("#00AAAA")   // Cyan for highlights  
-	tvWhite      = lipgloss.Color("#FFFFFF")   // White text
-	tvLightGray  = lipgloss.Color("#CCCCCC")   // Light gray text
-	tvDarkGray   = lipgloss.Color("#808080")   // Dark gray for disabled
-	tvYellow     = lipgloss.Color("#FFFF00")   // Yellow for selections
-	tvRed        = lipgloss.Color("#FF0000")   // Red for errors
-	tvGreen      = lipgloss.Color("#00FF00")   // Green for success
+	tvBlue      = lipgloss.Color("#0000AA") // Classic blue background
+	tvCyan      = lipgloss.Color("#00AAAA") // Cyan for highlights
+	tvWhite     = lipgloss.Color("#FFFFFF") // White text
+	tvLightGray = lipgloss.Color("#CCCCCC") // Light gray text
+	tvDarkGray  = lipgloss.Color("#808080") // Dark gray for disabled
+	tvYellow    = lipgloss.Color("#FFFF00") // Yellow for selections
+	tvRed       = lipgloss.Color("#FF0000") // Red for errors
+	tvGreen     = lipgloss.Color("#00FF00") // Green for success
 
 	// Base styles
 	baseStyle = lipgloss.NewStyle().
@@ -51,7 +51,7 @@ var (
 				Foreground(tvLightGray).
 				Background(tvBlue)
 
-	// Viewer styles - TurboVision dialog box style  
+	// Viewer styles - TurboVision dialog box style
 	viewerStyle = lipgloss.NewStyle().
 			Border(lipgloss.DoubleBorder()).
 			BorderForeground(tvWhite).

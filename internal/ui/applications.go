@@ -7,7 +7,7 @@ import (
 
 // ApplicationsModel represents the applications listing view
 type ApplicationsModel struct {
-	table *TableWidget
+	table  *TableWidget
 	width  int
 	height int
 }
@@ -24,6 +24,11 @@ type applicationsErrorMsg struct {
 
 // OpenApplicationDetailMsg is sent when an application should be opened in detail view
 type OpenApplicationDetailMsg struct {
+	Application cli.Application
+}
+
+// OpenApplicationEditorMsg is sent when an application editor should be opened
+type OpenApplicationEditorMsg struct {
 	Application cli.Application
 }
 
@@ -96,7 +101,7 @@ func (m ApplicationsModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case tea.KeyMsg:
-		needsRefresh, needsNextPage, needsPrevPage, openDetail := m.table.HandleKeypress(msg.String())
+		needsRefresh, needsNextPage, needsPrevPage, openDetail, openEditor := m.table.HandleKeypress(msg.String())
 
 		if openDetail {
 			// Get the selected row and extract the full Application data
@@ -106,6 +111,20 @@ func (m ApplicationsModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					if app, ok := fullData.(cli.Application); ok {
 						return m, func() tea.Msg {
 							return OpenApplicationDetailMsg{Application: app}
+						}
+					}
+				}
+			}
+		}
+
+		if openEditor {
+			// Get the selected row and extract the full Application data for editor
+			selectedRow := m.table.GetSelectedRow()
+			if selectedRow != nil {
+				if fullData, exists := selectedRow.Values["_full_data"]; exists {
+					if app, ok := fullData.(cli.Application); ok {
+						return m, func() tea.Msg {
+							return OpenApplicationEditorMsg{Application: app}
 						}
 					}
 				}

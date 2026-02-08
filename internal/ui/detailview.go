@@ -65,6 +65,72 @@ func (m *DetailViewModel) SetApplication(app cli.Application) {
 	m.widget.SetData(fields, app)
 }
 
+// SetJob populates the detail view with data from a Job
+func (m *DetailViewModel) SetJob(job cli.Job) {
+	config := DetailConfig{
+		Title: fmt.Sprintf("Job: %s", job.Command),
+		Actions: []DetailAction{
+			{Label: "Edit", Key: "e", Command: "edit"},
+			{Label: "Clone", Key: "c", Command: "clone"},
+			{Label: "Delete", Key: "d", Command: "delete"},
+		},
+	}
+	m.widget = NewDetailWidget(config)
+
+	// Determine status based on exitcode and PID
+	status := "Running"
+	if job.PID == 0 {
+		if job.Exitcode == -1 {
+			status = "Scheduled"
+		} else if job.Exitcode == 0 {
+			status = "Success"
+		} else {
+			status = "Failed"
+		}
+	}
+
+	fields := []DetailField{
+		{Label: "ID", Value: fmt.Sprintf("%d", job.ID)},
+		{Label: "Command", Value: job.Command},
+		{Label: "Status", Value: status},
+		{Label: "PID", Value: fmt.Sprintf("%d", job.PID)},
+		{Label: "Exit Code", Value: fmt.Sprintf("%d", job.Exitcode)},
+		{Label: "Schedule", Value: job.Schedule},
+		{Label: "Begin", Value: job.Begin},
+		{Label: "End", Value: job.End},
+		{Label: "App ID", Value: fmt.Sprintf("%d", job.AppID)},
+		{Label: "Company ID", Value: fmt.Sprintf("%d", job.CompanyID)},
+	}
+	m.widget.SetData(fields, job)
+}
+
+// SetCompany populates the detail view with data from a Company
+func (m *DetailViewModel) SetCompany(company cli.Company) {
+	config := DetailConfig{
+		Title: fmt.Sprintf("Company: %s", company.Name),
+		Actions: []DetailAction{
+			{Label: "Edit", Key: "e", Command: "edit"},
+			{Label: "Clone", Key: "c", Command: "clone"},
+			{Label: "Delete", Key: "d", Command: "delete"},
+		},
+	}
+	m.widget = NewDetailWidget(config)
+
+	fields := []DetailField{
+		{Label: "ID", Value: fmt.Sprintf("%d", company.ID)},
+		{Label: "Name", Value: company.Name},
+		{Label: "IC", Value: company.IC},
+		{Label: "Email", Value: company.Email},
+		{Label: "Slug", Value: company.Slug},
+		{Label: "Enabled", Value: fmt.Sprintf("%d", company.Enabled)},
+		{Label: "Setup", Value: fmt.Sprintf("%d", company.Setup)},
+		{Label: "Server", Value: fmt.Sprintf("%d", company.Server)},
+		{Label: "Created", Value: company.DatCreate},
+		{Label: "Updated", Value: company.DatUpdate},
+	}
+	m.widget.SetData(fields, company)
+}
+
 // Init initializes the detail view model
 func (m DetailViewModel) Init() tea.Cmd {
 	return nil

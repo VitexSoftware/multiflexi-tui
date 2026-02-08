@@ -100,8 +100,18 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.state = MenuView
 
 	case ui.BackMsg:
-		// Switch back to the previous view
-		m.state = m.previousState
+		// Handle navigation back from detail/editor views
+		if m.state == DetailView {
+			// First ESC: go back to listing, keep focus on content
+			m.state = m.previousState
+			m.focus = false
+			return m, nil
+		} else if !m.focus {
+			// Second ESC: return focus to menu
+			m.focus = true
+			return m, nil
+		}
+		return m, nil
 
 	case ui.OpenRunTemplateDetailMsg:
 		// Switch to RunTemplate detail view
@@ -115,6 +125,44 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.previousState = m.state
 		m.state = DetailView
 		m.detailView.SetApplication(msg.Application)
+		return m, nil
+
+	case ui.OpenJobDetailMsg:
+		// Switch to Job detail view
+		m.previousState = m.state
+		m.state = DetailView
+		m.detailView.SetJob(msg.Job)
+		return m, nil
+
+	case ui.OpenCompanyDetailMsg:
+		// Switch to Company detail view
+		m.previousState = m.state
+		m.state = DetailView
+		m.detailView.SetCompany(msg.Company)
+		return m, nil
+
+	case ui.OpenRunTemplateEditorMsg:
+		// Switch to RunTemplate editor
+		m.previousState = m.state
+		m.state = RunTemplateEditorView
+		m.runTemplateEditor = ui.NewRunTemplateEditorModel(msg.RunTemplate)
+		return m, m.runTemplateEditor.Init()
+
+	case ui.OpenApplicationEditorMsg:
+		// Switch to Application editor
+		m.previousState = m.state
+		m.state = ApplicationEditorView
+		m.applicationEditor = ui.NewApplicationEditorModel(msg.Application)
+		return m, m.applicationEditor.Init()
+
+	case ui.OpenJobEditorMsg:
+		// TODO: Implement Job editor when available
+		m.statusMessage = "Job editor not yet implemented"
+		return m, nil
+
+	case ui.OpenCompanyEditorMsg:
+		// TODO: Implement Company editor when available
+		m.statusMessage = "Company editor not yet implemented"
 		return m, nil
 
 	case ui.SaveApplicationMsg:
@@ -178,34 +226,51 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.String() {
 		case "ctrl+c", "q":
 			return m, tea.Quit
+		case "esc":
+			// Handle ESC key for navigation hierarchy
+			if m.state == DetailView {
+				// First ESC: go back to listing, keep focus on content
+				m.state = m.previousState
+				m.focus = false
+				return m, nil
+			} else if !m.focus {
+				// Second ESC: return focus to menu (only from content views)
+				m.focus = true
+				return m, nil
+			}
 		case "f10":
 			m.state = MenuView
 			m.focus = true // Focus on menu when switching to menu view
 			return m, nil
 		case "tab":
-			m.focus = !m.focus
+			// Only allow tab to work from menu, not from content views
+			if m.focus {
+				m.focus = false
+			}
 			return m, nil
 		}
 
 		// Handle menu or view-specific navigation based on focus
-		if m.focus {
-			// Menu navigation
+		if m.focus && m.state != DetailView {
+			// Menu navigation (disabled in DetailView)
 			switch msg.String() {
 			case "left", "h":
 				if m.menuCursor > 0 {
 					m.menuCursor--
 					m.updateSelectedHint()
 				}
+				return m, nil // Prevent further processing
 			case "right", "l":
 				if m.menuCursor < len(m.menuItems)-1 {
 					m.menuCursor++
 					m.updateSelectedHint()
 				}
+				return m, nil // Prevent further processing
 			case "enter", "space":
 				return m.handleMenuSelection()
 			}
-		} else {
-			// Content view navigation
+		} else if !m.focus {
+			// Content view navigation (only when focus is NOT on menu)
 			switch m.state {
 			case RunTemplatesView:
 				var cmd tea.Cmd
@@ -509,9 +574,9 @@ func (m Model) renderMenuBar() string {
 
 		// Check if adding this item would exceed available width
 		itemWidth := len(item) + 2 + 1 // item + padding + space separator
-		if currentWidth + itemWidth > availableWidth && len(visibleMenuItems) > 0 {
+		if currentWidth+itemWidth > availableWidth && len(visibleMenuItems) > 0 {
 			// Add ellipsis to indicate more items
-			if currentWidth + 3 <= availableWidth {
+			if currentWidth+3 <= availableWidth {
 				visibleMenuItems = append(visibleMenuItems, "...")
 			}
 			break
@@ -527,9 +592,9 @@ func (m Model) renderMenuBar() string {
 	}
 
 	// TurboVision-style menu bar with double borders
-	menuLine := ui.GetTitleStyle().Render(" " + title + " ") + " " + strings.Join(visibleMenuItems, " ")
+	menuLine := ui.GetTitleStyle().Render(" "+title+" ") + " " + strings.Join(visibleMenuItems, " ")
 	hintLine := ui.GetItemDescriptionStyle().Render(" " + m.selectedHint + " ")
-	
+
 	// Double line separator in TurboVision style
 	separator := strings.Repeat("═", width)
 
@@ -549,7 +614,7 @@ func (m *Model) renderHelpFooter() string {
 	if m.focus {
 		helpLine = ui.GetFooterStyle().Render(" ←/→: navigate menu • enter: select • tab: switch to content • q: quit ")
 	} else {
-		helpLine = ui.GetFooterStyle().Render(" ↑/↓: navigate list • ←/→: paginate • tab: switch to menu • q: quit ")
+		helpLine = ui.GetFooterStyle().Render(" ↑/↓: rows • ←/→: pages • enter/space: detail • e: editor • tab: menu • q: quit ")
 	}
 
 	statusLine := ""
@@ -732,83 +797,101 @@ func (m *Model) updateSelectedHint() {
 
 // handleMenuSelection handles menu item selection
 func (m Model) handleMenuSelection() (tea.Model, tea.Cmd) {
+	// When selecting a menu item, switch focus to content for table views
 	switch m.menuCursor {
 	case 0: // Status
 		m.state = HomeView
+		m.focus = false // Focus on content
 		return m, nil
 	case 1: // RunTemplates
 		m.state = RunTemplatesView
+		m.focus = false // Focus on content
 		// Reset runTemplates model and trigger loading
 		m.runTemplates = ui.NewRunTemplatesModel()
 		return m, m.runTemplates.Init()
 	case 2: // Jobs
 		m.state = JobsView
+		m.focus = false // Focus on content
 		// Reset jobs model and trigger loading
 		m.jobs = ui.NewJobsModel()
 		return m, m.jobs.Init()
 	case 3: // Applications
 		m.state = ApplicationsView
+		m.focus = false // Focus on content
 		// Reset applications model and trigger loading
 		m.applications = ui.NewApplicationsModel()
 		return m, m.applications.Init()
 	case 4: // Companies
 		m.state = CompaniesView
+		m.focus = false // Focus on content
 		// Reset companies model and trigger loading
 		m.companies = ui.NewCompaniesModel()
 		return m, m.companies.Init()
 	case 5: // Credentials
 		m.state = CredentialsView
+		m.focus = false // Focus on content
 		// Reset credentials model and trigger loading
 		m.credentials = ui.NewCredentialsModel()
 		return m, m.credentials.Init()
 	case 6: // Tokens
 		m.state = TokensView
+		m.focus = false // Focus on content
 		// Reset tokens model and trigger loading
 		m.tokens = ui.NewTokensModel()
 		return m, m.tokens.Init()
 	case 7: // Users
 		m.state = UsersView
+		m.focus = false // Focus on content
 		// Reset users model and trigger loading
 		m.users = ui.NewUsersModel()
 		return m, m.users.Init()
 	case 8: // Artifacts
 		m.state = ArtifactsView
+		m.focus = false // Focus on content
 		// Reset artifacts model and trigger loading
 		m.artifacts = ui.NewArtifactsModel()
 		return m, m.artifacts.Init()
 	case 9: // CredTypes
 		m.state = CredTypesView
+		m.focus = false // Focus on content
 		// Reset credTypes model and trigger loading
 		m.credTypes = ui.NewCredTypesModel()
 		return m, m.credTypes.Init()
 	case 10: // CrPrototypes
 		m.state = CrPrototypesView
+		m.focus = false // Focus on content
 		// Reset crPrototypes model and trigger loading
 		m.crPrototypes = ui.NewCrPrototypesModel()
 		return m, m.crPrototypes.Init()
 	case 11: // CompanyApps
 		m.state = CompanyAppsView
+		m.focus = false // Focus on content
 		// Reset companyApps model and trigger loading
 		m.companyApps = ui.NewCompanyAppsModel()
 		return m, m.companyApps.Init()
 	case 12: // Encryption
 		m.state = EncryptionView
+		m.focus = false // Focus on content
 		m.encryption = ui.NewEncryptionModel(m.statusInfo.Encryption)
 		return m, nil
 	case 13: // Queue
 		m.state = QueueView
+		m.focus = false // Focus on content
 		// Reset queue model and trigger loading
 		m.queue = ui.NewQueueModel()
 		return m, m.queue.Init()
 	case 14: // Prune
 		m.state = PruneView
+		m.focus = false // Focus on content
 		m.prune = ui.NewPruneModel()
 		return m, nil
 	case 15: // Commands
 		m.state = MenuView
+		m.focus = true // Keep focus on menu for Commands
 		return m, nil
 	case 16: // Help
 		m.state = HelpView
+		m.focus = false // Focus on content
 		return m, m.loadHelpCmd("help")
 	case 17: // Quit
 		return m, tea.Quit

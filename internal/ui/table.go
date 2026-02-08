@@ -114,7 +114,7 @@ func (t *TableWidget) HasMore() bool {
 }
 
 // HandleKeypress processes keyboard input for navigation
-func (t *TableWidget) HandleKeypress(key string) (needsRefresh bool, needsNextPage bool, needsPrevPage bool, openDetail bool) {
+func (t *TableWidget) HandleKeypress(key string) (needsRefresh bool, needsNextPage bool, needsPrevPage bool, openDetail bool, openEditor bool) {
 	switch key {
 	case "up", "k":
 		if t.cursor > 0 {
@@ -124,17 +124,27 @@ func (t *TableWidget) HandleKeypress(key string) (needsRefresh bool, needsNextPa
 		if t.cursor < len(t.rows)-1 {
 			t.cursor++
 		}
-	case "enter":
-		// Open detail view for selected row
+	case " ":
+		// Space: Open detail view for selected row
 		if len(t.rows) > 0 && t.cursor >= 0 && t.cursor < len(t.rows) {
-			return false, false, false, true
+			return false, false, false, true, false
+		}
+	case "enter", "return":
+		// Enter: Open detail view for selected row
+		if len(t.rows) > 0 && t.cursor >= 0 && t.cursor < len(t.rows) {
+			return false, false, false, true, false
+		}
+	case "e":
+		// E: Open editor for selected row
+		if len(t.rows) > 0 && t.cursor >= 0 && t.cursor < len(t.rows) {
+			return false, false, false, false, true
 		}
 	case "right", "pgdown":
 		// Next page
 		if t.hasMore {
 			t.offset += t.limit
 			t.cursor = 0 // Reset cursor for new page
-			return false, true, false, false
+			return false, true, false, false, false
 		}
 	case "left", "pgup":
 		// Previous page
@@ -144,14 +154,14 @@ func (t *TableWidget) HandleKeypress(key string) (needsRefresh bool, needsNextPa
 				t.offset = 0
 			}
 			t.cursor = 0 // Reset cursor for new page
-			return false, false, true, false
+			return false, false, true, false, false
 		}
 	case "r":
 		// Refresh
 		t.cursor = 0
-		return true, false, false, false
+		return true, false, false, false, false
 	}
-	return false, false, false, false
+	return false, false, false, false, false
 }
 
 // View renders the table widget
@@ -231,14 +241,14 @@ func (t *TableWidget) View() string {
 		}
 
 		line := focusIndicator + strings.Join(rowParts, " ")
-		
+
 		// Apply TurboVision styling to the focused row
 		if i == t.cursor {
 			line = GetSelectedItemStyle().Render(line)
 		} else {
 			line = GetUnselectedItemStyle().Render(line)
 		}
-		
+
 		content.WriteString(line)
 		content.WriteString("\n")
 	}
