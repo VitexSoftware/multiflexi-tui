@@ -53,6 +53,59 @@ func TestCrPrototypesModelWithData(t *testing.T) {
 	}
 }
 
+func TestJobEditorModelInit(t *testing.T) {
+	job := cli.Job{ID: 42, Command: "test-cmd", Executor: "Native", ScheduleType: "hourly"}
+	model := NewJobEditorModel(job)
+
+	if model.job.ID != 42 {
+		t.Errorf("Expected job ID 42, got %d", model.job.ID)
+	}
+	if len(model.inputs) != 3 {
+		t.Errorf("Expected 3 input fields, got %d", len(model.inputs))
+	}
+	if len(model.labels) != 3 {
+		t.Errorf("Expected 3 labels, got %d", len(model.labels))
+	}
+	if model.cursor != 0 {
+		t.Errorf("Expected cursor at 0, got %d", model.cursor)
+	}
+}
+
+func TestCompanyEditorModelInit(t *testing.T) {
+	company := cli.Company{ID: 7, Name: "Test Co", Email: "a@b.cz", IC: "123", Slug: "test-co"}
+	model := NewCompanyEditorModel(company)
+
+	if model.company.ID != 7 {
+		t.Errorf("Expected company ID 7, got %d", model.company.ID)
+	}
+	if len(model.inputs) != 4 {
+		t.Errorf("Expected 4 input fields, got %d", len(model.inputs))
+	}
+	if len(model.labels) != 4 {
+		t.Errorf("Expected 4 labels, got %d", len(model.labels))
+	}
+}
+
+func TestConfirmDialogModel(t *testing.T) {
+	job := cli.Job{ID: 99, Command: "rm-all"}
+	model := NewConfirmDialogModel("Job: rm-all", job)
+
+	// Test View renders without panic
+	view := model.View()
+	if view == "" {
+		t.Error("Confirm dialog view should not be empty")
+	}
+}
+
+func TestActiveMenuItemStyle(t *testing.T) {
+	style := GetActiveMenuItemStyle()
+	// Verify it renders without panic
+	rendered := style.Render("Test")
+	if rendered == "" {
+		t.Error("Active menu item style should produce output")
+	}
+}
+
 func TestPaginationLogic(t *testing.T) {
 	// Test pagination calculations
 	limit := 10

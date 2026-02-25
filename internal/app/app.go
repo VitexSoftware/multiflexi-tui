@@ -101,15 +101,18 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case ui.BackMsg:
 		// Handle navigation back from detail/editor views
-		if m.state == DetailView {
-			// First ESC: go back to listing, keep focus on content
+		switch m.state {
+	case DetailView, RunTemplateEditorView, ApplicationEditorView, JobEditorView, CompanyEditorView, RunTemplateSchedulerView, ConfirmDeleteView:
+			// Go back to the previous listing view
 			m.state = m.previousState
 			m.focus = false
 			return m, nil
-		} else if !m.focus {
-			// Second ESC: return focus to menu
-			m.focus = true
-			return m, nil
+		default:
+			if !m.focus {
+				// Return focus to menu
+				m.focus = true
+				return m, nil
+			}
 		}
 		return m, nil
 
@@ -156,14 +159,18 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, m.applicationEditor.Init()
 
 	case ui.OpenJobEditorMsg:
-		// TODO: Implement Job editor when available
-		m.statusMessage = "Job editor not yet implemented"
-		return m, nil
+		// Switch to Job editor
+		m.previousState = m.state
+		m.state = JobEditorView
+		m.jobEditor = ui.NewJobEditorModel(msg.Job)
+		return m, m.jobEditor.Init()
 
 	case ui.OpenCompanyEditorMsg:
-		// TODO: Implement Company editor when available
-		m.statusMessage = "Company editor not yet implemented"
-		return m, nil
+		// Switch to Company editor
+		m.previousState = m.state
+		m.state = CompanyEditorView
+		m.companyEditor = ui.NewCompanyEditorModel(msg.Company)
+		return m, m.companyEditor.Init()
 
 	case ui.SaveApplicationMsg:
 		err := cli.UpdateApplication(msg.App)
@@ -171,6 +178,26 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.statusMessage = fmt.Sprintf("Error saving application: %v", err)
 		} else {
 			m.statusMessage = fmt.Sprintf("Saved application: %s", msg.App.Name)
+		}
+		m.state = m.previousState
+		return m, nil
+
+	case ui.SaveJobMsg:
+		err := cli.UpdateJob(msg.Job)
+		if err != nil {
+			m.statusMessage = fmt.Sprintf("Error saving job: %v", err)
+		} else {
+			m.statusMessage = fmt.Sprintf("Saved job: %d", msg.Job.ID)
+		}
+		m.state = m.previousState
+		return m, nil
+
+	case ui.SaveCompanyMsg:
+		err := cli.UpdateCompany(msg.Company)
+		if err != nil {
+			m.statusMessage = fmt.Sprintf("Error saving company: %v", err)
+		} else {
+			m.statusMessage = fmt.Sprintf("Saved company: %s", msg.Company.Name)
 		}
 		m.state = m.previousState
 		return m, nil
@@ -195,11 +222,68 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.previousState = m.state
 			m.state = RunTemplateEditorView
 			m.runTemplateEditor = ui.NewRunTemplateEditorModel(data)
+			return m, m.runTemplateEditor.Init()
 		case cli.Application:
 			m.previousState = m.state
 			m.state = ApplicationEditorView
 			m.applicationEditor = ui.NewApplicationEditorModel(data)
+			return m, m.applicationEditor.Init()
+		case cli.Job:
+			m.previousState = m.state
+			m.state = JobEditorView
+			m.jobEditor = ui.NewJobEditorModel(data)
+			return m, m.jobEditor.Init()
+		case cli.Company:
+			m.previousState = m.state
+			m.state = CompanyEditorView
+			m.companyEditor = ui.NewCompanyEditorModel(data)
+			return m, m.companyEditor.Init()
 		}
+		return m, nil
+
+	case ui.DeleteItemMsg:
+		// Show confirmation dialog before deleting
+		// Don't overwrite previousState — it still points to the listing view
+		// (set when DetailView was entered)
+		m.state = ConfirmDeleteView
+		m.confirmDialog = ui.NewConfirmDialogModel(msg.Label, msg.Data)
+		return m, nil
+
+	case ui.ConfirmDeleteYesMsg:
+		// User confirmed deletion — execute the delete
+		var err error
+		var label string
+		switch data := msg.Data.(type) {
+		case cli.Job:
+			err = cli.DeleteJob(data.ID)
+			label = fmt.Sprintf("Job %d", data.ID)
+		case cli.Application:
+			err = cli.DeleteApplication(data.ID)
+			label = fmt.Sprintf("Application %s", data.Name)
+		case cli.Company:
+			err = cli.DeleteCompany(data.ID)
+			label = fmt.Sprintf("Company %s", data.Name)
+		case cli.RunTemplate:
+			err = cli.DeleteRunTemplate(data.ID)
+			label = fmt.Sprintf("RunTemplate %s", data.Name)
+		default:
+			m.statusMessage = "Delete not supported for this item type"
+			m.state = m.previousState
+			return m, nil
+		}
+		if err != nil {
+			m.statusMessage = fmt.Sprintf("Error deleting %s: %v", label, err)
+		} else {
+			m.statusMessage = fmt.Sprintf("Deleted %s", label)
+		}
+		// Return to the listing view (previousState still points to the listing)
+		m.state = m.previousState
+		m.focus = false
+		return m, nil
+
+	case ui.ConfirmDeleteNoMsg:
+		// User cancelled — return to detail view
+		m.state = DetailView
 		return m, nil
 
 	case ui.ScheduleItemMsg:
@@ -221,7 +305,49 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.viewer.SetError(msg.err)
 		return m, nil
 
+	case tea.MouseMsg:
+		return m.handleMouse(msg)
+
 	case tea.KeyMsg:
+		// Editor views handle all keys themselves (including q, esc, tab)
+		switch m.state {
+	case ConfirmDeleteView:
+			if msg.String() == "ctrl+c" {
+				return m, tea.Quit
+			}
+			var cmd tea.Cmd
+			dialogModel, cmd := m.confirmDialog.Update(msg)
+			m.confirmDialog = dialogModel.(ui.ConfirmDialogModel)
+			return m, cmd
+		case RunTemplateEditorView, ApplicationEditorView, JobEditorView, CompanyEditorView:
+			if msg.String() == "ctrl+c" {
+				return m, tea.Quit
+			}
+			// Forward all other keys to the editor
+			switch m.state {
+			case RunTemplateEditorView:
+				var cmd tea.Cmd
+				editorModel, cmd := m.runTemplateEditor.Update(msg)
+				m.runTemplateEditor = editorModel.(ui.RunTemplateEditorModel)
+				return m, cmd
+			case ApplicationEditorView:
+				var cmd tea.Cmd
+				editorModel, cmd := m.applicationEditor.Update(msg)
+				m.applicationEditor = editorModel.(ui.ApplicationEditorModel)
+				return m, cmd
+			case JobEditorView:
+				var cmd tea.Cmd
+				editorModel, cmd := m.jobEditor.Update(msg)
+				m.jobEditor = editorModel.(ui.JobEditorModel)
+				return m, cmd
+			case CompanyEditorView:
+				var cmd tea.Cmd
+				editorModel, cmd := m.companyEditor.Update(msg)
+				m.companyEditor = editorModel.(ui.CompanyEditorModel)
+				return m, cmd
+			}
+		}
+
 		// Handle global keys that apply to all views
 		switch msg.String() {
 		case "ctrl+c", "q":
@@ -372,6 +498,16 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				editorModel, cmd := m.applicationEditor.Update(msg)
 				m.applicationEditor = editorModel.(ui.ApplicationEditorModel)
 				return m, cmd
+			case JobEditorView:
+				var cmd tea.Cmd
+				editorModel, cmd := m.jobEditor.Update(msg)
+				m.jobEditor = editorModel.(ui.JobEditorModel)
+				return m, cmd
+			case CompanyEditorView:
+				var cmd tea.Cmd
+				editorModel, cmd := m.companyEditor.Update(msg)
+				m.companyEditor = editorModel.(ui.CompanyEditorModel)
+				return m, cmd
 			}
 		}
 	}
@@ -474,6 +610,16 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		editorModel, cmd := m.applicationEditor.Update(msg)
 		m.applicationEditor = editorModel.(ui.ApplicationEditorModel)
 		return m, cmd
+	case JobEditorView:
+		var cmd tea.Cmd
+		editorModel, cmd := m.jobEditor.Update(msg)
+		m.jobEditor = editorModel.(ui.JobEditorModel)
+		return m, cmd
+	case CompanyEditorView:
+		var cmd tea.Cmd
+		editorModel, cmd := m.companyEditor.Update(msg)
+		m.companyEditor = editorModel.(ui.CompanyEditorModel)
+		return m, cmd
 	case RunTemplateSchedulerView:
 		var cmd tea.Cmd
 		schedulerModel, cmd := m.runTemplateScheduler.Update(msg)
@@ -534,6 +680,12 @@ func (m Model) View() string {
 		content = m.runTemplateScheduler.View()
 	case ApplicationEditorView:
 		content = m.applicationEditor.View()
+	case JobEditorView:
+		content = m.jobEditor.View()
+	case CompanyEditorView:
+		content = m.companyEditor.View()
+	case ConfirmDeleteView:
+		content = m.confirmDialog.View()
 
 	default:
 		content = "Unknown view"
@@ -566,8 +718,12 @@ func (m Model) renderMenuBar() string {
 	for i := m.menuOffset; i < len(m.menuItems); i++ {
 		item := m.menuItems[i]
 		var renderedItem string
-		if i == m.menuCursor {
+		if i == m.menuCursor && m.focus {
+			// Cursor is on this item and menu has focus — yellow highlight
 			renderedItem = style.Render(" " + item + " ")
+		} else if i == m.activeMenuItem {
+			// This is the active section — green highlight
+			renderedItem = ui.GetActiveMenuItemStyle().Render(" " + item + " ")
 		} else {
 			renderedItem = ui.GetUnselectedItemStyle().Render(" " + item + " ")
 		}
@@ -797,6 +953,8 @@ func (m *Model) updateSelectedHint() {
 
 // handleMenuSelection handles menu item selection
 func (m Model) handleMenuSelection() (tea.Model, tea.Cmd) {
+	// Track the active section for green menu highlight
+	m.activeMenuItem = m.menuCursor
 	// When selecting a menu item, switch focus to content for table views
 	switch m.menuCursor {
 	case 0: // Status
@@ -920,11 +1078,60 @@ func (m Model) handleDetailAction(actionCommand string) tea.Cmd {
 	}
 }
 
+// handleMouse processes mouse events for menu clicks and scroll wheel
+func (m Model) handleMouse(msg tea.MouseMsg) (tea.Model, tea.Cmd) {
+	switch msg.Type {
+	case tea.MouseLeft:
+		if msg.Y == 0 {
+			// Click on menu bar row — determine which item was clicked
+			title := "MultiFlexi TUI"
+			xPos := len(title) + 4 + 1 // title with padding + space
+
+			// Account for left ellipsis if scrolled
+			startIdx := m.menuOffset
+			if m.menuOffset > 0 {
+				xPos += 4 // "... "
+			}
+
+			for i := startIdx; i < len(m.menuItems); i++ {
+				itemWidth := len(m.menuItems[i]) + 3 // " item " + space separator
+				if msg.X >= xPos && msg.X < xPos+itemWidth {
+					m.menuCursor = i
+					m.updateSelectedHint()
+					return m.handleMenuSelection()
+				}
+				xPos += itemWidth
+			}
+		} else if msg.Y >= 3 {
+			// Click in the content area — switch focus to content
+			if m.focus {
+				m.focus = false
+			}
+		}
+
+	case tea.MouseWheelUp:
+		if !m.focus {
+			// Translate wheel up to "up" key in content view
+			keyMsg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'k'}}
+			return m.Update(keyMsg)
+		}
+
+	case tea.MouseWheelDown:
+		if !m.focus {
+			// Translate wheel down to "down" key in content view
+			keyMsg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'j'}}
+			return m.Update(keyMsg)
+		}
+	}
+
+	return m, nil
+}
+
 // Run starts the Bubbletea program
 func Run() error {
 	model := NewModel()
 
-	p := tea.NewProgram(model, tea.WithAltScreen())
+	p := tea.NewProgram(model, tea.WithAltScreen(), tea.WithMouseCellMotion())
 
 	_, err := p.Run()
 	if err != nil {

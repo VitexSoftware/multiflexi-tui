@@ -192,7 +192,7 @@ type Company struct {
 	Setup             int     `json:"setup"`
 	DatCreate         string  `json:"DatCreate"`
 	DatUpdate         string  `json:"DatUpdate"`
-	Customer          *string `json:"customer"`
+	Customer          *int    `json:"customer"`
 	Email             string  `json:"email"`
 	Slug              string  `json:"slug"`
 	ZabbixHost        *string `json:"zabbix_host"`
@@ -560,8 +560,16 @@ func Prune(logs, jobs bool, keep int) error {
 
 // Queue represents a queue item from multiflexi-cli
 type Queue struct {
-	ID      int    `json:"id"`
-	Message string `json:"message"`
+	ID              int    `json:"id"`
+	Job             int    `json:"job"`
+	ScheduleType    string `json:"schedule_type"`
+	RunTemplateID   int    `json:"runtemplate_id"`
+	RunTemplateName string `json:"runtemplate_name"`
+	AppID           int    `json:"app_id"`
+	AppName         string `json:"app_name"`
+	CompanyID       int    `json:"company_id"`
+	CompanyName     string `json:"company_name"`
+	After           string `json:"after"`
 }
 
 // GetQueue fetches queue items from multiflexi-cli with pagination
@@ -606,7 +614,7 @@ type Job struct {
 	Stdout            string  `json:"stdout"`
 	Stderr            string  `json:"stderr"`
 	LaunchedBy        int     `json:"launched_by"`
-	Env               string  `json:"env"`
+	Env               map[string]string `json:"env"`
 	Command           string  `json:"command"`
 	Schedule          string  `json:"schedule"`
 	Executor          string  `json:"executor"`
@@ -616,6 +624,80 @@ type Job struct {
 	PID               int     `json:"pid"`
 	RetentionUntil    *string `json:"retention_until"`
 	MarkedForDeletion int     `json:"marked_for_deletion"`
+}
+
+// UpdateJob updates a job using multiflexi-cli
+func UpdateJob(job Job) error {
+	args := []string{
+		"job", "update",
+		"--id", fmt.Sprintf("%d", job.ID),
+		"--executor", job.Executor,
+		"--schedule_type", job.ScheduleType,
+	}
+
+	cmd := exec.Command("multiflexi-cli", args...)
+	err := cmd.Run()
+	if err != nil {
+		return fmt.Errorf("failed to run multiflexi-cli job update: %w", err)
+	}
+
+	return nil
+}
+
+// UpdateCompany updates a company using multiflexi-cli
+func UpdateCompany(company Company) error {
+	args := []string{
+		"company", "update",
+		"--id", fmt.Sprintf("%d", company.ID),
+		"--name", company.Name,
+		"--email", company.Email,
+		"--ic", company.IC,
+		"--slug", company.Slug,
+	}
+
+	cmd := exec.Command("multiflexi-cli", args...)
+	err := cmd.Run()
+	if err != nil {
+		return fmt.Errorf("failed to run multiflexi-cli company update: %w", err)
+	}
+
+	return nil
+}
+
+// DeleteJob deletes a job using multiflexi-cli
+func DeleteJob(id int) error {
+	cmd := exec.Command("multiflexi-cli", "job", "delete", "--id", fmt.Sprintf("%d", id))
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to run multiflexi-cli job delete: %w", err)
+	}
+	return nil
+}
+
+// DeleteApplication deletes an application using multiflexi-cli
+func DeleteApplication(id int) error {
+	cmd := exec.Command("multiflexi-cli", "application", "delete", "--id", fmt.Sprintf("%d", id))
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to run multiflexi-cli application delete: %w", err)
+	}
+	return nil
+}
+
+// DeleteCompany removes a company using multiflexi-cli
+func DeleteCompany(id int) error {
+	cmd := exec.Command("multiflexi-cli", "company", "remove", "--id", fmt.Sprintf("%d", id))
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to run multiflexi-cli company remove: %w", err)
+	}
+	return nil
+}
+
+// DeleteRunTemplate deletes a run template using multiflexi-cli
+func DeleteRunTemplate(id int) error {
+	cmd := exec.Command("multiflexi-cli", "runtemplate", "delete", "--id", fmt.Sprintf("%d", id))
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to run multiflexi-cli runtemplate delete: %w", err)
+	}
+	return nil
 }
 
 // GetJobs fetches jobs from multiflexi-cli with pagination

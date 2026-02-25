@@ -5,12 +5,14 @@ A modern terminal user interface (TUI) frontend for the `multiflexi-cli` tool, b
 ## Features
 
 - **Comprehensive CLI Coverage**: Complete parity with all `multiflexi-cli --format=json` functionality
-- **Entity Management**: View and manage all MultiFlexi entities with full field coverage
+- **Entity Management**: View, edit, and delete all MultiFlexi entities with full field coverage
+- **Inline Editors**: Edit Jobs, Companies, Applications, and RunTemplates directly in the TUI
+- **Delete with Confirmation**: Safe deletion with Y/N confirmation dialog for all entity types
 - **Advanced Pagination**: Navigate through large datasets with limit/offset controls
 - **Real-time Status Panel**: Live system information from `multiflexi-cli status`
-- **Dynamic Menu System**: Access all entities through intuitive navigation
-- **Enhanced Data Views**: Complete field coverage for Artifacts, CredTypes, and new CrPrototypes
-- **Professional UI**: Responsive three-panel design with clean styling
+- **Dynamic Menu System**: Access all entities through intuitive navigation with active section indicator
+- **Mouse Support**: Click menu items, scroll lists with mouse wheel (GPM/xterm compatible)
+- **Professional UI**: TurboVision-inspired design with green active-section highlighting
 - **Keyboard Navigation**: Efficient controls for all operations
 
 ### Key Features
@@ -18,17 +20,26 @@ A modern terminal user interface (TUI) frontend for the `multiflexi-cli` tool, b
 #### 🎯 **Complete Entity Management**
 
 - **All MultiFlexi Entities**: Full coverage of Applications, Companies, Jobs, Users, RunTemplates, Credentials, Tokens, Artifacts, CredTypes, CrPrototypes, CompanyApps, Encryption, Queue, and Prune operations
-- **Enhanced Data Views**: Complete field coverage with proper JSON parsing
+- **Detail Views**: Press Enter/Space to view full record details with action buttons
+- **Inline Editors**: Press 'e' to edit records (Jobs, Companies, Applications, RunTemplates) with multi-field forms
+- **Delete with Confirmation**: Press 'd' in detail view to delete with Y/N safety prompt
 - **Pagination Controls**: Navigate through large datasets with configurable limits
-- **Real-time Updates**: Refresh data with 'r' key for current state
 
 ![Overview](docs/title-screenshot.png?raw=true)
 
 #### 🧭 **Comprehensive Navigation Menu**
 
 - **Complete Entity Access**: Status | RunTemplates | Jobs | Applications | Companies | Credentials | Tokens | Users | Artifacts | CredTypes | CrPrototypes | CompanyApps | Encryption | Queue | Prune | Commands | Help | Quit
+- **Active Section Indicator**: Currently active menu item highlighted in green at all times
 - **Context-Aware Hints**: Dynamic descriptions for each entity and operation
-- **Seamless Navigation**: Arrow key navigation with visual feedback and focus management
+- **Seamless Navigation**: Arrow key and mouse click navigation with visual feedback
+
+#### 🖱️ **Mouse Support**
+
+- **Menu Clicks**: Click menu items to navigate directly
+- **Content Focus**: Click content area to switch focus from menu
+- **Scroll Wheel**: Scroll through list items with mouse wheel
+- **GPM Compatible**: Works in Linux console via GPM and all xterm-compatible terminals
 
 #### 📊 **Real-time Status Panel**
 
@@ -39,19 +50,25 @@ A modern terminal user interface (TUI) frontend for the `multiflexi-cli` tool, b
 #### 🎨 **Professional UI Design**
 
 - **Three-Panel Layout**: Menu at top, content in middle, status at bottom
+- **Active Section Highlight**: Green menu item shows which section is in use
 - **Responsive Design**: Adapts to different terminal sizes
 - **Color-Coded Elements**: Clear visual hierarchy and status indication
-- **Consistent Styling**: Professional appearance throughout
+- **Consistent Styling**: TurboVision-inspired appearance throughout
 
 ### Navigation Summary
 
 | Key | Action | Context |
 |-----|--------|---------|
-| `←/→` or `h/l` | Navigate top menu | Global navigation |
-| `Enter` or `Space` | Select menu item | Menu selection |
-| `↑/↓` or `k/j` | Navigate within lists | Content navigation |
-| `Shift+←/→` | Previous/next job pages | Jobs pagination |
-| `Tab` | Switch between views | View switching |
+| `←/→` or `h/l` | Navigate top menu | Menu focused |
+| `Enter` or `Space` | Select menu item / Open detail | Menu / List |
+| `↑/↓` or `k/j` | Navigate within lists | Content focused |
+| `←/→` | Previous/next page | Content focused |
+| `e` | Open editor for selected record | List / Detail view |
+| `d` | Delete record (with confirmation) | Detail view |
+| `Tab` | Switch focus between menu and content | Global |
+| `Esc` | Go back (detail→list, editor→list) | Detail / Editor |
+| `Mouse click` | Select menu item or focus content | Global |
+| `Mouse wheel` | Scroll list up/down | Content focused |
 | `r` | Refresh status and data | Data refresh |
 | `q` or `Ctrl+C` | Quit application | Exit |
 
@@ -118,15 +135,7 @@ Simply run the application:
 multiflexi-tui
 ```
 
-## Usage
-
-Simply run the application:
-
-```bash
-multiflexi-tui
-```
-
-The application will launch with the Jobs dashboard as the default view. Use the keyboard navigation to explore different sections.
+The application will launch with the Status dashboard as the default view. Use keyboard or mouse to navigate between sections. The active section is highlighted in green in the menu bar.
 
 ## Project Structure
 
@@ -134,24 +143,33 @@ The application will launch with the Jobs dashboard as the default view. Use the
 multiflexi-tui/
 ├── cmd/
 │   └── multiflexi-tui/
-│       └── main.go          # Application entry point
+│       └── main.go              # Application entry point
 ├── internal/
 │   ├── app/
-│   │   └── app.go           # Application coordination and state management
+│   │   ├── app.go               # Application coordination, routing, mouse handling
+│   │   └── model.go             # Application state model and view states
 │   ├── cli/
-│   │   └── cli.go           # MultiFlexi CLI integration
+│   │   └── cli.go               # MultiFlexi CLI integration (CRUD operations)
 │   └── ui/
-│       ├── menu.go          # Command list interface
-│       ├── viewer.go        # Help text viewer
-│       └── styles.go        # UI styling with Lipgloss
-├── debian/                  # Debian packaging files
-│   ├── control
-│   ├── rules
-│   ├── install
-│   └── changelog
-├── go.mod                   # Go module definition
-├── Makefile                 # Build automation
-└── README.md               # This file
+│       ├── styles.go            # UI styling with Lipgloss (TurboVision theme)
+│       ├── detail.go            # Reusable detail widget
+│       ├── detailview.go        # Detail view model with edit/delete actions
+│       ├── job_editor.go        # Job editor (command, executor, schedule_type)
+│       ├── company_editor.go    # Company editor (name, email, IC, slug)
+│       ├── application_editor.go # Application editor
+│       ├── runtemplate_editor.go # RunTemplate editor
+│       ├── confirm_dialog.go    # Delete confirmation dialog (Y/N)
+│       ├── jobs.go              # Jobs listing view
+│       ├── companies.go         # Companies listing view
+│       ├── applications.go      # Applications listing view
+│       ├── runtemplates.go      # RunTemplates listing view
+│       ├── menu.go              # Command list interface
+│       ├── viewer.go            # Help text viewer
+│       └── ...                  # Other entity listing views
+├── debian/                      # Debian packaging files
+├── go.mod                       # Go module definition
+├── Makefile                     # Build automation
+└── README.md                    # This file
 ```
 
 ## Development
@@ -203,12 +221,12 @@ The application follows a clean modular architecture:
 
 ### Flow
 
-1. Application starts and loads commands using `multiflexi-cli describe`
-2. Commands are displayed in an interactive list
-3. User selects a command to view its help
-4. Help is loaded using `multiflexi-cli <command> --help`
-5. Help text is displayed in a scrollable viewer
-6. User can return to menu or exit
+1. Application starts and loads system status from `multiflexi-cli status`
+2. User navigates the menu bar to select an entity type (Jobs, Companies, etc.)
+3. Entity listings are loaded from `multiflexi-cli <entity> list --format=json`
+4. User can view details (Enter), edit (e), or delete (d) records
+5. Editors provide multi-field forms; deletions require Y/N confirmation
+6. All CRUD operations are executed via the corresponding `multiflexi-cli` commands
 
 ## Package Information
 

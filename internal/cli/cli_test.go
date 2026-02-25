@@ -108,6 +108,98 @@ func TestCrPrototypeStructure(t *testing.T) {
 	}
 }
 
+func TestJobStructure(t *testing.T) {
+	jsonData := `{
+		"id": 100,
+		"app_id": 55,
+		"command": "test-command",
+		"executor": "Native",
+		"schedule_type": "hourly",
+		"exitcode": 0,
+		"pid": 12345,
+		"env": {"FOO": "bar"},
+		"company_id": 3
+	}`
+
+	var job Job
+	err := json.Unmarshal([]byte(jsonData), &job)
+	if err != nil {
+		t.Fatalf("Failed to unmarshal Job: %v", err)
+	}
+
+	if job.ID != 100 {
+		t.Errorf("Expected ID 100, got %d", job.ID)
+	}
+	if job.Command != "test-command" {
+		t.Errorf("Expected Command 'test-command', got '%s'", job.Command)
+	}
+	if job.Env["FOO"] != "bar" {
+		t.Errorf("Expected Env[FOO]='bar', got '%s'", job.Env["FOO"])
+	}
+	if job.ScheduleType != "hourly" {
+		t.Errorf("Expected ScheduleType 'hourly', got '%s'", job.ScheduleType)
+	}
+}
+
+func TestCompanyStructure(t *testing.T) {
+	jsonData := `{
+		"id": 5,
+		"name": "Test Company",
+		"email": "test@example.com",
+		"ic": "12345678",
+		"slug": "test-company",
+		"enabled": 1,
+		"customer": null
+	}`
+
+	var company Company
+	err := json.Unmarshal([]byte(jsonData), &company)
+	if err != nil {
+		t.Fatalf("Failed to unmarshal Company: %v", err)
+	}
+
+	if company.ID != 5 {
+		t.Errorf("Expected ID 5, got %d", company.ID)
+	}
+	if company.Name != "Test Company" {
+		t.Errorf("Expected Name 'Test Company', got '%s'", company.Name)
+	}
+	if company.Customer != nil {
+		t.Errorf("Expected Customer nil, got %v", company.Customer)
+	}
+}
+
+func TestQueueStructure(t *testing.T) {
+	jsonData := `{
+		"id": 1,
+		"job": 42,
+		"schedule_type": "hourly",
+		"runtemplate_id": 10,
+		"runtemplate_name": "My Template",
+		"app_id": 5,
+		"app_name": "My App",
+		"company_id": 3,
+		"company_name": "My Company",
+		"after": "2026-01-01 12:00:00"
+	}`
+
+	var queue Queue
+	err := json.Unmarshal([]byte(jsonData), &queue)
+	if err != nil {
+		t.Fatalf("Failed to unmarshal Queue: %v", err)
+	}
+
+	if queue.Job != 42 {
+		t.Errorf("Expected Job 42, got %d", queue.Job)
+	}
+	if queue.RunTemplateName != "My Template" {
+		t.Errorf("Expected RunTemplateName 'My Template', got '%s'", queue.RunTemplateName)
+	}
+	if queue.AppName != "My App" {
+		t.Errorf("Expected AppName 'My App', got '%s'", queue.AppName)
+	}
+}
+
 func TestStatusInfoStructure(t *testing.T) {
 	// Test JSON unmarshaling for StatusInfo structure
 	jsonData := `{

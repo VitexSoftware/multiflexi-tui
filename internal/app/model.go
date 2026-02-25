@@ -29,7 +29,10 @@ const (
 	DetailView
 	RunTemplateEditorView
 	ApplicationEditorView
+	JobEditorView
+	CompanyEditorView
 	RunTemplateSchedulerView
+	ConfirmDeleteView
 )
 
 // StatusLoadedMsg is sent when status is loaded
@@ -46,6 +49,9 @@ type Model struct {
 	runTemplateEditor    ui.RunTemplateEditorModel
 	runTemplateScheduler ui.RunTemplateSchedulerModel
 	applicationEditor    ui.ApplicationEditorModel
+	jobEditor            ui.JobEditorModel
+	companyEditor        ui.CompanyEditorModel
+	confirmDialog        ui.ConfirmDialogModel
 	detailView           ui.DetailViewModel
 	applications         ui.ApplicationsModel
 	companies            ui.CompaniesModel
@@ -68,6 +74,7 @@ type Model struct {
 	menuItems            []string
 	menuCursor           int
 	menuOffset           int // For horizontal menu scrolling
+	activeMenuItem       int // Which menu item is currently "in use" (shown in green)
 	selectedHint         string
 	focus                bool // true for menu, false for content
 }
@@ -80,6 +87,8 @@ func NewModel() *Model {
 	runTemplateEditor := ui.NewRunTemplateEditorModel(cli.RunTemplate{})
 	runTemplateScheduler := ui.NewRunTemplateSchedulerModel(cli.RunTemplate{})
 	applicationEditor := ui.NewApplicationEditorModel(cli.Application{})
+	jobEditor := ui.NewJobEditorModel(cli.Job{})
+	companyEditor := ui.NewCompanyEditorModel(cli.Company{})
 	detailView := ui.NewDetailViewModel()
 	applications := ui.NewApplicationsModel()
 	companies := ui.NewCompaniesModel()
@@ -102,6 +111,8 @@ func NewModel() *Model {
 		runTemplateEditor:    runTemplateEditor,
 		runTemplateScheduler: runTemplateScheduler,
 		applicationEditor:    applicationEditor,
+		jobEditor:            jobEditor,
+		companyEditor:        companyEditor,
 		detailView:           detailView,
 		applications:         applications,
 		companies:            companies,

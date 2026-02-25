@@ -146,6 +146,12 @@ type ScheduleItemMsg struct {
 	Data interface{}
 }
 
+// DeleteItemMsg is sent when an item should be deleted (requires confirmation)
+type DeleteItemMsg struct {
+	Data  interface{}
+	Label string // Human-readable label for the confirmation prompt
+}
+
 // Update handles messages for the detail view model
 func (m DetailViewModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
@@ -170,9 +176,15 @@ func (m DetailViewModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return ScheduleItemMsg{Data: m.widget.GetData()}
 			}
 		}
+		if action == "delete" {
+			data := m.widget.GetData()
+			label := m.widget.title
+			return m, func() tea.Msg {
+				return DeleteItemMsg{Data: data, Label: label}
+			}
+		}
 		if action != "" {
-			// Handle actions like "clone", "delete"
-			// For now, we'll just send a message
+			// Handle other actions like "clone"
 			return m, func() tea.Msg {
 				return StatusMessage{Text: fmt.Sprintf("Action: %s on %T", action, m.widget.GetData())}
 			}

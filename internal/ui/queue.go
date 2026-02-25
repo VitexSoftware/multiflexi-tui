@@ -127,7 +127,7 @@ func (m QueueModel) View() string {
 
 	// Queue table header
 	headerStyle := GetSelectedItemStyle().Copy().Bold(true)
-	content.WriteString(headerStyle.Render(fmt.Sprintf("%-8s %-s", "ID", "Message")))
+	content.WriteString(headerStyle.Render(fmt.Sprintf("%-8s %-8s %-12s %-20s %-20s %-s", "ID", "Job", "Type", "App", "Company", "After")))
 	content.WriteString("\n")
 	content.WriteString(strings.Repeat("─", m.width))
 	content.WriteString("\n")
@@ -144,7 +144,15 @@ func (m QueueModel) View() string {
 				style = GetUnselectedItemStyle()
 			}
 
-			line := fmt.Sprintf("%-8d %-s", item.ID, item.Message)
+			appName := item.AppName
+			if len(appName) > 18 {
+				appName = appName[:15] + "..."
+			}
+			companyName := item.CompanyName
+			if len(companyName) > 18 {
+				companyName = companyName[:15] + "..."
+			}
+			line := fmt.Sprintf("%-8d %-8d %-12s %-20s %-20s %-s", item.ID, item.Job, item.ScheduleType, appName, companyName, item.After)
 			content.WriteString(style.Render(line))
 			content.WriteString("\n")
 		}

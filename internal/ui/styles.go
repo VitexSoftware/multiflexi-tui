@@ -47,6 +47,12 @@ var (
 				Background(tvBlue).
 				Padding(0, 1)
 
+	activeMenuItemStyle = lipgloss.NewStyle().
+				Foreground(tvGreen).
+				Background(tvBlue).
+				Bold(true).
+				Padding(0, 1)
+
 	itemDescriptionStyle = lipgloss.NewStyle().
 				Foreground(tvLightGray).
 				Background(tvBlue)
@@ -190,4 +196,9 @@ func GetStatusLabelStyle() lipgloss.Style {
 // GetStatusValueStyle returns the status value style
 func GetStatusValueStyle() lipgloss.Style {
 	return statusValueStyle
+}
+
+// GetActiveMenuItemStyle returns the active (in-use) menu item style (green)
+func GetActiveMenuItemStyle() lipgloss.Style {
+	return activeMenuItemStyle
 }
