@@ -19,7 +19,7 @@ func NewDetailViewModel() DetailViewModel {
 	return DetailViewModel{}
 }
 
-// SetContent populates the detail view with data from a RunTemplate
+// SetRunTemplate populates the detail view with RunTemplate data
 func (m *DetailViewModel) SetRunTemplate(template cli.RunTemplate) {
 	config := DetailConfig{
 		Title: fmt.Sprintf("Run Template: %s", template.Name),
@@ -31,7 +31,6 @@ func (m *DetailViewModel) SetRunTemplate(template cli.RunTemplate) {
 		},
 	}
 	m.widget = NewDetailWidget(config)
-
 	fields := []DetailField{
 		{Label: "ID", Value: fmt.Sprintf("%d", template.ID)},
 		{Label: "Name", Value: template.Name},
@@ -44,7 +43,7 @@ func (m *DetailViewModel) SetRunTemplate(template cli.RunTemplate) {
 	m.widget.SetData(fields, template)
 }
 
-// SetContent populates the detail view with data from an Application
+// SetApplication populates the detail view with Application data
 func (m *DetailViewModel) SetApplication(app cli.Application) {
 	config := DetailConfig{
 		Title: fmt.Sprintf("Application: %s", app.Name),
@@ -55,7 +54,6 @@ func (m *DetailViewModel) SetApplication(app cli.Application) {
 		},
 	}
 	m.widget = NewDetailWidget(config)
-
 	fields := []DetailField{
 		{Label: "ID", Value: fmt.Sprintf("%d", app.ID)},
 		{Label: "Name", Value: app.Name},
@@ -65,7 +63,7 @@ func (m *DetailViewModel) SetApplication(app cli.Application) {
 	m.widget.SetData(fields, app)
 }
 
-// SetJob populates the detail view with data from a Job
+// SetJob populates the detail view with Job data
 func (m *DetailViewModel) SetJob(job cli.Job) {
 	config := DetailConfig{
 		Title: fmt.Sprintf("Job: %s", job.Command),
@@ -77,7 +75,6 @@ func (m *DetailViewModel) SetJob(job cli.Job) {
 	}
 	m.widget = NewDetailWidget(config)
 
-	// Determine status based on exitcode and PID
 	status := "Running"
 	if job.PID == 0 {
 		if job.Exitcode == -1 {
@@ -104,7 +101,7 @@ func (m *DetailViewModel) SetJob(job cli.Job) {
 	m.widget.SetData(fields, job)
 }
 
-// SetCompany populates the detail view with data from a Company
+// SetCompany populates the detail view with Company data
 func (m *DetailViewModel) SetCompany(company cli.Company) {
 	config := DetailConfig{
 		Title: fmt.Sprintf("Company: %s", company.Name),
@@ -115,7 +112,6 @@ func (m *DetailViewModel) SetCompany(company cli.Company) {
 		},
 	}
 	m.widget = NewDetailWidget(config)
-
 	fields := []DetailField{
 		{Label: "ID", Value: fmt.Sprintf("%d", company.ID)},
 		{Label: "Name", Value: company.Name},
@@ -136,25 +132,8 @@ func (m DetailViewModel) Init() tea.Cmd {
 	return nil
 }
 
-// EditItemMsg is sent when an item should be edited
-type EditItemMsg struct {
-	Data interface{}
-}
-
-// ScheduleItemMsg is sent when an item should be scheduled
-type ScheduleItemMsg struct {
-	Data interface{}
-}
-
-// DeleteItemMsg is sent when an item should be deleted (requires confirmation)
-type DeleteItemMsg struct {
-	Data  interface{}
-	Label string // Human-readable label for the confirmation prompt
-}
-
 // Update handles messages for the detail view model
 func (m DetailViewModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	var cmds []tea.Cmd
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
@@ -163,35 +142,26 @@ func (m DetailViewModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		action, goBack := m.widget.HandleKeypress(msg.String())
 		if goBack {
-			// This will be handled by the main model to switch views
 			return m, func() tea.Msg { return BackMsg{} }
 		}
 		if action == "edit" {
-			return m, func() tea.Msg {
-				return EditItemMsg{Data: m.widget.GetData()}
-			}
+			return m, func() tea.Msg { return EditItemMsg{Data: m.widget.GetData()} }
 		}
 		if action == "schedule" {
-			return m, func() tea.Msg {
-				return ScheduleItemMsg{Data: m.widget.GetData()}
-			}
+			return m, func() tea.Msg { return ScheduleItemMsg{Data: m.widget.GetData()} }
 		}
 		if action == "delete" {
 			data := m.widget.GetData()
 			label := m.widget.title
-			return m, func() tea.Msg {
-				return DeleteItemMsg{Data: data, Label: label}
-			}
+			return m, func() tea.Msg { return DeleteItemMsg{Data: data, Label: label} }
 		}
 		if action != "" {
-			// Handle other actions like "clone"
 			return m, func() tea.Msg {
 				return StatusMessage{Text: fmt.Sprintf("Action: %s on %T", action, m.widget.GetData())}
 			}
 		}
 	}
-
-	return m, tea.Batch(cmds...)
+	return m, nil
 }
 
 // View renders the detail view model
@@ -200,12 +170,4 @@ func (m DetailViewModel) View() string {
 		return "No item selected."
 	}
 	return m.widget.View()
-}
-
-// BackMsg is sent to go back to the previous view
-type BackMsg struct{}
-
-// StatusMessage is sent to display a status message to the user
-type StatusMessage struct {
-	Text string
 }

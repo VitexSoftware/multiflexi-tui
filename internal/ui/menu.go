@@ -129,8 +129,3 @@ func (m MenuModel) View() string {
 
 	return content + "\n" + footer
 }
-
-// ShowHelpMsg is a message to show help for a command
-type ShowHelpMsg struct {
-	Command string
-}

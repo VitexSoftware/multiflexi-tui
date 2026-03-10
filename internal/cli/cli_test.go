@@ -27,8 +27,8 @@ func TestArtifactStructure(t *testing.T) {
 	if artifact.ID != 52779 {
 		t.Errorf("Expected ID 52779, got %d", artifact.ID)
 	}
-	if artifact.Job_ID != 143770 {
-		t.Errorf("Expected Job_ID 143770, got %d", artifact.Job_ID)
+	if artifact.JobID != 143770 {
+		t.Errorf("Expected JobID 143770, got %d", artifact.JobID)
 	}
 	if artifact.Filename != "stdout.txt" {
 		t.Errorf("Expected Filename 'stdout.txt', got '%s'", artifact.Filename)

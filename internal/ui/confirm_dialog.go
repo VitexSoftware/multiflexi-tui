@@ -7,13 +7,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-// ConfirmDeleteYesMsg is sent when the user confirms deletion
-type ConfirmDeleteYesMsg struct {
-	Data interface{}
-}
-
-// ConfirmDeleteNoMsg is sent when the user cancels deletion
-type ConfirmDeleteNoMsg struct{}
+// ConfirmDeleteYesMsg and ConfirmDeleteNoMsg are defined in messages.go
 
 // ConfirmDialogModel represents a confirmation dialog
 type ConfirmDialogModel struct {
