@@ -1,115 +1,70 @@
 package ui
 
 import (
-	"fmt"
-
-	"github.com/charmbracelet/bubbles/viewport"
+	"strings"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 )
 
-// ViewerModel represents the help text viewer screen
-type ViewerModel struct {
-	viewport    viewport.Model
-	content     string
-	commandName string
-	width       int
-	height      int
-	ready       bool
-	err         error
+// Viewer displays scrollable text content (help, docs).
+type Viewer struct {
+	title   string
+	content string
+	err     error
+	scroll  int
 }
 
-// NewViewerModel creates a new viewer model
-func NewViewerModel(commandName, content string) ViewerModel {
-	return ViewerModel{
-		content:     content,
-		commandName: commandName,
-	}
+func NewViewer(title string) *Viewer {
+	return &Viewer{title: title}
 }
 
-// Init initializes the viewer model
-func (m ViewerModel) Init() tea.Cmd {
-	return nil
-}
+func (m *Viewer) SetContent(title, content string) { m.title = title; m.content = content }
+func (m *Viewer) SetError(err error)                { m.err = err }
 
-// Update handles messages for the viewer model
-func (m ViewerModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m *Viewer) Init() tea.Cmd { return nil }
+
+func (m *Viewer) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case tea.WindowSizeMsg:
-		m.width = msg.Width
-		m.height = msg.Height
-
-		headerHeight := 4 // Title + borders + padding
-		footerHeight := 3 // Footer + margin
-		verticalMarginHeight := headerHeight + footerHeight
-
-		if !m.ready {
-			m.viewport = viewport.New(msg.Width-4, msg.Height-verticalMarginHeight)
-			m.viewport.YPosition = headerHeight
-			m.viewport.SetContent(m.content)
-			m.ready = true
-		} else {
-			m.viewport.Width = msg.Width - 4
-			m.viewport.Height = msg.Height - verticalMarginHeight
-		}
-
+	case HelpLoadedMsg:
+		m.title = msg.Command
+		m.content = msg.Content
 		return m, nil
-
+	case HelpErrorMsg:
+		m.err = msg.Err
+		return m, nil
 	case tea.KeyMsg:
-		switch keypress := msg.String(); keypress {
-		case "ctrl+c":
-			return m, tea.Quit
-		case "q", "esc":
-			return m, func() tea.Msg {
-				return BackToMenuMsg{}
-			}
+		switch msg.String() {
+		case "up", "k":
+			if m.scroll > 0 { m.scroll-- }
+		case "down", "j":
+			m.scroll++
+		case "esc", "q":
+			return m, func() tea.Msg { return NavigateBackMsg{} }
 		}
 	}
-
-	var cmd tea.Cmd
-	m.viewport, cmd = m.viewport.Update(msg)
-	return m, cmd
+	return m, nil
 }
 
-// View renders the viewer
-func (m ViewerModel) View() string {
+func (m *Viewer) View() string {
+	var b strings.Builder
+	b.WriteString(TitleStyle().Render(m.title))
+	b.WriteString("\n\n")
 	if m.err != nil {
-		return GetErrorStyle().Render(fmt.Sprintf("Error: %v", m.err))
+		b.WriteString(ErrorStyle().Render(m.err.Error()))
+		return b.String()
 	}
-
-	if !m.ready {
-		return "Loading..."
+	if m.content == "" {
+		b.WriteString(DescriptionStyle().Render("Loading..."))
+		return b.String()
 	}
-
-	title := GetTitleStyle().Render(fmt.Sprintf("Help: %s", m.commandName))
-
-	// Create a styled viewport container
-	viewportContent := GetViewerStyle().Render(m.viewport.View())
-
-	footer := GetFooterStyle().Render("↑/↓: scroll • q: back to menu • ctrl+c: quit")
-
-	return lipgloss.JoinVertical(
-		lipgloss.Left,
-		title,
-		viewportContent,
-		footer,
-	)
-}
-
-// BackToMenuMsg is a message to return to the menu
-type BackToMenuMsg struct{}
-
-// SetContent updates the viewer content
-func (m *ViewerModel) SetContent(commandName, content string) {
-	m.commandName = commandName
-	m.content = content
-	if m.ready {
-		m.viewport.SetContent(content)
-		m.viewport.GotoTop()
+	lines := strings.Split(m.content, "\n")
+	start := m.scroll
+	if start >= len(lines) { start = len(lines) - 1 }
+	if start < 0 { start = 0 }
+	end := start + 30
+	if end > len(lines) { end = len(lines) }
+	for _, line := range lines[start:end] {
+		b.WriteString(line + "\n")
 	}
-}
-
-// SetError sets an error to display
-func (m *ViewerModel) SetError(err error) {
-	m.err = err
+	b.WriteString("\n" + DescriptionStyle().Render("↑/↓: scroll • esc: back"))
+	return b.String()
 }

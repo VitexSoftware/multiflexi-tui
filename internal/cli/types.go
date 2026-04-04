@@ -1,6 +1,6 @@
 package cli
 
-// StatusInfo represents comprehensive system status
+// StatusInfo represents comprehensive system status.
 type StatusInfo struct {
 	VersionCli      string `json:"version-cli"`
 	DbMigration     string `json:"db-migration"`
@@ -24,20 +24,20 @@ type StatusInfo struct {
 	Timestamp       string `json:"timestamp"`
 }
 
-// Command represents a single command from multiflexi-cli describe
+// Command represents a CLI command from multiflexi-cli describe.
 type Command struct {
 	Name        string `json:"name"`
 	Description string `json:"description"`
 }
 
-// CommandInfo represents the command information structure from multiflexi-cli describe
+// CommandInfo is the raw structure from multiflexi-cli describe.
 type CommandInfo struct {
 	Description string      `json:"description"`
 	Arguments   interface{} `json:"arguments,omitempty"`
 	Options     interface{} `json:"options,omitempty"`
 }
 
-// Application represents an application from multiflexi-cli
+// Application represents an application.
 type Application struct {
 	ID           int     `json:"id"`
 	Enabled      int     `json:"enabled"`
@@ -61,7 +61,7 @@ type Application struct {
 	Artifacts    string  `json:"artifacts"`
 }
 
-// Company represents a company from multiflexi-cli
+// Company represents a company.
 type Company struct {
 	ID                int     `json:"id"`
 	Enabled           int     `json:"enabled"`
@@ -81,7 +81,7 @@ type Company struct {
 	MarkedForDeletion int     `json:"marked_for_deletion"`
 }
 
-// RunTemplate represents a run template from multiflexi-cli
+// RunTemplate represents a run template.
 type RunTemplate struct {
 	ID                  int     `json:"id"`
 	AppID               int     `json:"app_id"`
@@ -104,7 +104,7 @@ type RunTemplate struct {
 	FailedJobsCount     int     `json:"failed_jobs_count"`
 }
 
-// Job represents a job from multiflexi-cli
+// Job represents a job.
 type Job struct {
 	ID                int               `json:"id"`
 	AppID             int               `json:"app_id"`
@@ -127,7 +127,7 @@ type Job struct {
 	MarkedForDeletion int               `json:"marked_for_deletion"`
 }
 
-// Credential represents a credential from multiflexi-cli
+// Credential represents a credential.
 type Credential struct {
 	ID               int    `json:"id"`
 	Name             string `json:"name"`
@@ -135,14 +135,14 @@ type Credential struct {
 	CredentialTypeID int    `json:"credential_type_id"`
 }
 
-// Token represents a token from multiflexi-cli
+// Token represents a token.
 type Token struct {
 	ID    int    `json:"id"`
 	User  string `json:"user"`
 	Token string `json:"token"`
 }
 
-// User represents a user from multiflexi-cli
+// User represents a user.
 type User struct {
 	ID                  int     `json:"id"`
 	Enabled             int     `json:"enabled"`
@@ -171,7 +171,7 @@ type User struct {
 	RetentionUntil      *string `json:"retention_until"`
 }
 
-// Artifact represents an artifact from multiflexi-cli
+// Artifact represents an artifact.
 type Artifact struct {
 	ID          int    `json:"id"`
 	JobID       int    `json:"job_id"`
@@ -182,7 +182,7 @@ type Artifact struct {
 	Note        string `json:"note"`
 }
 
-// CredType represents a credential type from multiflexi-cli
+// CredType represents a credential type.
 type CredType struct {
 	ID        int    `json:"id"`
 	UUID      string `json:"uuid"`
@@ -194,7 +194,7 @@ type CredType struct {
 	Version   int    `json:"version"`
 }
 
-// CrPrototype represents a credential prototype from multiflexi-cli
+// CrPrototype represents a credential prototype.
 type CrPrototype struct {
 	ID          int    `json:"id"`
 	UUID        string `json:"uuid"`
@@ -208,14 +208,14 @@ type CrPrototype struct {
 	UpdatedAt   string `json:"updated_at"`
 }
 
-// CompanyApp represents a company-application relation from multiflexi-cli
+// CompanyApp represents a company-application relation.
 type CompanyApp struct {
 	ID        int `json:"id"`
 	CompanyID int `json:"company_id"`
 	AppID     int `json:"app_id"`
 }
 
-// Queue represents a queue item from multiflexi-cli
+// Queue represents a queue item.
 type Queue struct {
 	ID              int    `json:"id"`
 	Job             int    `json:"job"`
@@ -227,4 +227,31 @@ type Queue struct {
 	CompanyID       int    `json:"company_id"`
 	CompanyName     string `json:"company_name"`
 	After           string `json:"after"`
+}
+
+// EventSource represents an event source (webhook adapter DB connection).
+type EventSource struct {
+	ID           int    `json:"id"`
+	Name         string `json:"name"`
+	AdapterType  string `json:"adapter_type"`
+	DbConnection string `json:"db_connection"`
+	DbHost       string `json:"db_host"`
+	DbPort       string `json:"db_port"`
+	DbDatabase   string `json:"db_database"`
+	DbUsername   string `json:"db_username"`
+	DbPassword   string `json:"db_password"`
+	PollInterval int    `json:"poll_interval"`
+	Enabled      int    `json:"enabled"`
+}
+
+// EventRule represents an event-to-RunTemplate mapping.
+type EventRule struct {
+	ID            int    `json:"id"`
+	EventSourceID int    `json:"event_source_id"`
+	Evidence      string `json:"evidence"`
+	Operation     string `json:"operation"`
+	RunTemplateID int    `json:"runtemplate_id"`
+	Priority      int    `json:"priority"`
+	Enabled       int    `json:"enabled"`
+	EnvMapping    string `json:"env_mapping"`
 }

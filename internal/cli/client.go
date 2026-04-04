@@ -8,9 +8,56 @@ import (
 	"strings"
 )
 
-// RunCLI executes multiflexi-cli with the given arguments and returns raw output.
-func RunCLI(args ...string) ([]byte, error) {
-	cmd := exec.Command("multiflexi-cli", args...)
+// Client abstracts multiflexi-cli operations for testability.
+type Client interface {
+	// RunRaw executes multiflexi-cli with raw args, returns stdout.
+	RunRaw(args ...string) ([]byte, error)
+
+	// List fetches a paginated list. Target must be a pointer to a slice.
+	List(entity string, limit, offset int, target interface{}) error
+
+	// Get fetches a single entity by ID. Target must be a pointer to a struct.
+	Get(entity string, id int, target interface{}) error
+
+	// Create runs a create action and returns the raw JSON response.
+	Create(entity string, args ...string) ([]byte, error)
+
+	// Update runs an update action with the given args.
+	Update(entity string, args ...string) error
+
+	// Delete runs a delete/remove action for the entity with the given ID.
+	// deleteAction should be "delete" or "remove" (varies per entity).
+	Delete(entity string, deleteAction string, id int) error
+
+	// GetStatus returns system status.
+	GetStatus() (*StatusInfo, error)
+
+	// GetCommands returns the list of available CLI commands.
+	GetCommands() ([]Command, error)
+
+	// GetCommandHelp returns help text for a specific command.
+	GetCommandHelp(name string) (string, error)
+}
+
+// CLIClient implements Client using exec.Command("multiflexi-cli", ...).
+type CLIClient struct {
+	Binary string // path to multiflexi-cli binary; defaults to "multiflexi-cli"
+}
+
+// NewCLIClient creates a CLIClient with the default binary name.
+func NewCLIClient() *CLIClient {
+	return &CLIClient{Binary: "multiflexi-cli"}
+}
+
+func (c *CLIClient) binary() string {
+	if c.Binary != "" {
+		return c.Binary
+	}
+	return "multiflexi-cli"
+}
+
+func (c *CLIClient) RunRaw(args ...string) ([]byte, error) {
+	cmd := exec.Command(c.binary(), args...)
 	output, err := cmd.Output()
 	if err != nil {
 		return nil, fmt.Errorf("multiflexi-cli %s: %w", strings.Join(args, " "), err)
@@ -18,10 +65,8 @@ func RunCLI(args ...string) ([]byte, error) {
 	return output, nil
 }
 
-// fetchList is a generic helper that runs "multiflexi-cli <entity> list --format=json ..."
-// and unmarshals into the provided target slice pointer.
-func fetchList(entity string, limit, offset int, target interface{}) error {
-	output, err := RunCLI(entity, "list",
+func (c *CLIClient) List(entity string, limit, offset int, target interface{}) error {
+	output, err := c.RunRaw(entity, "list",
 		"--format=json",
 		"--order=D",
 		fmt.Sprintf("--limit=%d", limit),
@@ -36,10 +81,38 @@ func fetchList(entity string, limit, offset int, target interface{}) error {
 	return nil
 }
 
-// --- Status ---
+func (c *CLIClient) Get(entity string, id int, target interface{}) error {
+	output, err := c.RunRaw(entity, "get",
+		"--format=json",
+		fmt.Sprintf("--id=%d", id),
+	)
+	if err != nil {
+		return err
+	}
+	if err := json.Unmarshal(output, target); err != nil {
+		return fmt.Errorf("parse %s get JSON: %w", entity, err)
+	}
+	return nil
+}
 
-func GetStatusInfo() (*StatusInfo, error) {
-	output, err := RunCLI("status", "--format=json")
+func (c *CLIClient) Create(entity string, args ...string) ([]byte, error) {
+	fullArgs := append([]string{entity, "create", "--format=json"}, args...)
+	return c.RunRaw(fullArgs...)
+}
+
+func (c *CLIClient) Update(entity string, args ...string) error {
+	fullArgs := append([]string{entity, "update", "--format=json"}, args...)
+	_, err := c.RunRaw(fullArgs...)
+	return err
+}
+
+func (c *CLIClient) Delete(entity string, deleteAction string, id int) error {
+	_, err := c.RunRaw(entity, deleteAction, "--format=json", "--id", fmt.Sprintf("%d", id))
+	return err
+}
+
+func (c *CLIClient) GetStatus() (*StatusInfo, error) {
+	output, err := c.RunRaw("status", "--format=json")
 	if err != nil {
 		return nil, err
 	}
@@ -50,10 +123,8 @@ func GetStatusInfo() (*StatusInfo, error) {
 	return status, nil
 }
 
-// --- Commands ---
-
-func GetCommands() ([]Command, error) {
-	output, err := RunCLI("describe")
+func (c *CLIClient) GetCommands() ([]Command, error) {
+	output, err := c.RunRaw("describe")
 	if err != nil {
 		return nil, err
 	}
@@ -74,151 +145,10 @@ func GetCommands() ([]Command, error) {
 	return commands, nil
 }
 
-func GetCommandHelp(commandName string) (string, error) {
-	output, err := RunCLI(commandName, "--help")
+func (c *CLIClient) GetCommandHelp(name string) (string, error) {
+	output, err := c.RunRaw(name, "--help")
 	if err != nil {
 		return "", err
 	}
 	return strings.TrimSpace(string(output)), nil
-}
-
-// --- List operations ---
-
-func GetApplications(limit, offset int) ([]Application, error) {
-	var apps []Application
-	return apps, fetchList("application", limit, offset, &apps)
-}
-
-func GetCompanies(limit, offset int) ([]Company, error) {
-	var items []Company
-	return items, fetchList("company", limit, offset, &items)
-}
-
-func GetRunTemplates(limit, offset int) ([]RunTemplate, error) {
-	var items []RunTemplate
-	return items, fetchList("runtemplate", limit, offset, &items)
-}
-
-func GetJobs(limit, offset int) ([]Job, error) {
-	var items []Job
-	return items, fetchList("job", limit, offset, &items)
-}
-
-func GetCredentials(limit, offset int) ([]Credential, error) {
-	var items []Credential
-	return items, fetchList("credential", limit, offset, &items)
-}
-
-func GetTokens(limit, offset int) ([]Token, error) {
-	var items []Token
-	return items, fetchList("token", limit, offset, &items)
-}
-
-func GetUsers(limit, offset int) ([]User, error) {
-	var items []User
-	return items, fetchList("user", limit, offset, &items)
-}
-
-func GetArtifacts(limit, offset int) ([]Artifact, error) {
-	var items []Artifact
-	return items, fetchList("artifact", limit, offset, &items)
-}
-
-func GetCredTypes(limit, offset int) ([]CredType, error) {
-	var items []CredType
-	return items, fetchList("credtype", limit, offset, &items)
-}
-
-func GetCrPrototypes(limit, offset int) ([]CrPrototype, error) {
-	var items []CrPrototype
-	return items, fetchList("crprototype", limit, offset, &items)
-}
-
-func GetCompanyApps(limit, offset int) ([]CompanyApp, error) {
-	var items []CompanyApp
-	return items, fetchList("companyapp", limit, offset, &items)
-}
-
-func GetQueue(limit, offset int) ([]Queue, error) {
-	var items []Queue
-	return items, fetchList("queue", limit, offset, &items)
-}
-
-// --- Update operations ---
-
-func UpdateApplication(app Application) error {
-	_, err := RunCLI("application", "update", fmt.Sprintf("%d", app.ID), "--name", app.Name)
-	return err
-}
-
-func UpdateRunTemplate(template RunTemplate) error {
-	_, err := RunCLI("runtemplate", "update", fmt.Sprintf("%d", template.ID), "--name", template.Name)
-	return err
-}
-
-func UpdateJob(job Job) error {
-	_, err := RunCLI("job", "update",
-		"--id", fmt.Sprintf("%d", job.ID),
-		"--executor", job.Executor,
-		"--schedule_type", job.ScheduleType,
-	)
-	return err
-}
-
-func UpdateCompany(company Company) error {
-	_, err := RunCLI("company", "update",
-		"--id", fmt.Sprintf("%d", company.ID),
-		"--name", company.Name,
-		"--email", company.Email,
-		"--ic", company.IC,
-		"--slug", company.Slug,
-	)
-	return err
-}
-
-// --- Delete operations ---
-
-func DeleteJob(id int) error {
-	_, err := RunCLI("job", "delete", "--id", fmt.Sprintf("%d", id))
-	return err
-}
-
-func DeleteApplication(id int) error {
-	_, err := RunCLI("application", "delete", "--id", fmt.Sprintf("%d", id))
-	return err
-}
-
-func DeleteCompany(id int) error {
-	_, err := RunCLI("company", "remove", "--id", fmt.Sprintf("%d", id))
-	return err
-}
-
-func DeleteRunTemplate(id int) error {
-	_, err := RunCLI("runtemplate", "delete", "--id", fmt.Sprintf("%d", id))
-	return err
-}
-
-// --- Special operations ---
-
-func InitEncryption() error {
-	_, err := RunCLI("encryption", "init")
-	return err
-}
-
-func TruncateQueue() error {
-	_, err := RunCLI("queue", "truncate")
-	return err
-}
-
-func Prune(logs, jobs bool, keep int) error {
-	args := []string{"prune"}
-	if logs {
-		args = append(args, "--logs")
-	}
-	if jobs {
-		args = append(args, "--jobs")
-	}
-	args = append(args, "--keep", fmt.Sprintf("%d", keep))
-	_, err := RunCLI(args...)
-	return err
 }
