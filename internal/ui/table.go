@@ -5,67 +5,39 @@ import (
 	"strings"
 )
 
-// TableColumn represents a column in the table
-type TableColumn struct {
-	Header string
-	Width  int
-	Field  string // Field name or identifier
-}
-
-// TableRow represents a single row of data
-type TableRow struct {
-	ID     int                    // Unique identifier for the row
-	Values map[string]interface{} // Column values keyed by Field name
-}
-
-// TableWidget is a reusable table component for displaying listings
+// TableWidget renders a paginated table with cursor selection.
 type TableWidget struct {
-	title      string
-	columns    []TableColumn
-	rows       []TableRow
-	cursor     int
-	offset     int
-	limit      int
-	loading    bool
-	err        error
-	hasMore    bool
-	pageNum    int
-	totalShown int
-	helpText   string
+	title    string
+	columns  []TableColumn
+	rows     []TableRow
+	cursor   int
+	offset   int
+	limit    int
+	loading  bool
+	err      error
+	hasMore  bool
+	pageNum  int
+	helpText string
 }
 
-// TableConfig contains configuration for creating a table
-type TableConfig struct {
-	Title    string
-	Columns  []TableColumn
-	Limit    int
-	HelpText string
-}
-
-// NewTableWidget creates a new table widget
-func NewTableWidget(config TableConfig) *TableWidget {
+// NewTableWidget creates a new table widget.
+func NewTableWidget(title string, columns []TableColumn, limit int, helpText string) *TableWidget {
 	return &TableWidget{
-		title:    config.Title,
-		columns:  config.Columns,
-		rows:     []TableRow{},
-		cursor:   0,
-		offset:   0,
-		limit:    config.Limit,
+		title:    title,
+		columns:  columns,
+		limit:    limit,
+		helpText: helpText,
 		loading:  true,
-		helpText: config.HelpText,
 	}
 }
 
-// SetData updates the table with new data
+// SetData updates the table with fresh data.
 func (t *TableWidget) SetData(rows []TableRow) {
 	t.rows = rows
 	t.loading = false
 	t.err = nil
 	t.hasMore = len(rows) >= t.limit
 	t.pageNum = (t.offset / t.limit) + 1
-	t.totalShown = len(rows)
-
-	// Reset cursor if it's beyond the data
 	if t.cursor >= len(rows) && len(rows) > 0 {
 		t.cursor = len(rows) - 1
 	}
@@ -74,47 +46,22 @@ func (t *TableWidget) SetData(rows []TableRow) {
 	}
 }
 
-// SetLoading sets the loading state
-func (t *TableWidget) SetLoading(loading bool) {
-	t.loading = loading
-}
+func (t *TableWidget) SetLoading(l bool) { t.loading = l }
+func (t *TableWidget) SetError(e error)  { t.err = e; t.loading = false }
+func (t *TableWidget) Cursor() int       { return t.cursor }
+func (t *TableWidget) Offset() int       { return t.offset }
+func (t *TableWidget) Limit() int        { return t.limit }
 
-// SetError sets the error state
-func (t *TableWidget) SetError(err error) {
-	t.err = err
-	t.loading = false
-}
-
-// GetCursor returns the current cursor position
-func (t *TableWidget) GetCursor() int {
-	return t.cursor
-}
-
-// GetSelectedRow returns the currently selected row, or nil if none
-func (t *TableWidget) GetSelectedRow() *TableRow {
-	if len(t.rows) == 0 || t.cursor >= len(t.rows) || t.cursor < 0 {
+// SelectedRow returns the row at the cursor, or nil.
+func (t *TableWidget) SelectedRow() *TableRow {
+	if len(t.rows) == 0 || t.cursor < 0 || t.cursor >= len(t.rows) {
 		return nil
 	}
 	return &t.rows[t.cursor]
 }
 
-// GetOffset returns the current offset
-func (t *TableWidget) GetOffset() int {
-	return t.offset
-}
-
-// GetLimit returns the current limit
-func (t *TableWidget) GetLimit() int {
-	return t.limit
-}
-
-// HasMore returns whether there are more pages
-func (t *TableWidget) HasMore() bool {
-	return t.hasMore
-}
-
-// HandleKeypress processes keyboard input for navigation
-func (t *TableWidget) HandleKeypress(key string) (needsRefresh bool, needsNextPage bool, needsPrevPage bool, openDetail bool, openEditor bool) {
+// HandleKey processes navigation keys. Returns action flags.
+func (t *TableWidget) HandleKey(key string) (refresh, nextPage, prevPage, openDetail, openEditor, openCreate bool) {
 	switch key {
 	case "up", "k":
 		if t.cursor > 0 {
@@ -124,167 +71,122 @@ func (t *TableWidget) HandleKeypress(key string) (needsRefresh bool, needsNextPa
 		if t.cursor < len(t.rows)-1 {
 			t.cursor++
 		}
-	case " ":
-		// Space: Open detail view for selected row
-		if len(t.rows) > 0 && t.cursor >= 0 && t.cursor < len(t.rows) {
-			return false, false, false, true, false
-		}
-	case "enter", "return":
-		// Enter: Open detail view for selected row
-		if len(t.rows) > 0 && t.cursor >= 0 && t.cursor < len(t.rows) {
-			return false, false, false, true, false
+	case "enter", " ":
+		if len(t.rows) > 0 {
+			return false, false, false, true, false, false
 		}
 	case "e":
-		// E: Open editor for selected row
-		if len(t.rows) > 0 && t.cursor >= 0 && t.cursor < len(t.rows) {
-			return false, false, false, false, true
+		if len(t.rows) > 0 {
+			return false, false, false, false, true, false
 		}
+	case "n":
+		return false, false, false, false, false, true
 	case "right", "pgdown":
-		// Next page
 		if t.hasMore {
 			t.offset += t.limit
-			t.cursor = 0 // Reset cursor for new page
-			return false, true, false, false, false
+			t.cursor = 0
+			return false, true, false, false, false, false
 		}
 	case "left", "pgup":
-		// Previous page
 		if t.offset > 0 {
 			t.offset -= t.limit
 			if t.offset < 0 {
 				t.offset = 0
 			}
-			t.cursor = 0 // Reset cursor for new page
-			return false, false, true, false, false
+			t.cursor = 0
+			return false, false, true, false, false, false
 		}
 	case "r":
-		// Refresh
 		t.cursor = 0
-		return true, false, false, false, false
+		return true, false, false, false, false, false
 	}
-	return false, false, false, false, false
+	return false, false, false, false, false, false
 }
 
-// View renders the table widget
+// View renders the table.
 func (t *TableWidget) View() string {
-	var content strings.Builder
+	var b strings.Builder
 
-	// Title
 	if t.title != "" {
-		content.WriteString(GetTitleStyle().Render(t.title))
-		content.WriteString("\n\n")
+		b.WriteString(TitleStyle().Render(t.title))
+		b.WriteString("\n\n")
 	}
 
 	if t.loading {
-		content.WriteString(GetItemDescriptionStyle().Render("Loading..."))
-		content.WriteString("\n")
-		return content.String()
+		b.WriteString(DescriptionStyle().Render("Loading..."))
+		b.WriteString("\n")
+		return b.String()
 	}
-
 	if t.err != nil {
-		content.WriteString(GetItemDescriptionStyle().Render(fmt.Sprintf("Error: %v", t.err)))
-		content.WriteString("\n")
-		return content.String()
+		b.WriteString(ErrorStyle().Render(fmt.Sprintf("Error: %v", t.err)))
+		b.WriteString("\n")
+		return b.String()
 	}
-
 	if len(t.rows) == 0 {
-		content.WriteString(GetItemDescriptionStyle().Render("No data found"))
-		content.WriteString("\n")
-		return content.String()
+		b.WriteString(DescriptionStyle().Render("No data found"))
+		b.WriteString("\n")
+		return b.String()
 	}
 
-	// Calculate total width for separator
+	// Header
 	totalWidth := 0
-	for _, col := range t.columns {
-		totalWidth += col.Width + 1 // +1 for spacing
-	}
-
-	// Table header - plain text
-	headerParts := make([]string, len(t.columns))
+	parts := make([]string, len(t.columns))
 	for i, col := range t.columns {
-		format := fmt.Sprintf("%%-%ds", col.Width)
-		headerParts[i] = fmt.Sprintf(format, col.Header)
+		parts[i] = fmt.Sprintf("%-*s", col.Width, col.Header)
+		totalWidth += col.Width + 1
 	}
-	content.WriteString(strings.Join(headerParts, " "))
-	content.WriteString("\n")
+	b.WriteString(strings.Join(parts, " "))
+	b.WriteString("\n")
+	b.WriteString(strings.Repeat("═", totalWidth))
+	b.WriteString("\n")
 
-	// Separator - TurboVision double line style
-	content.WriteString(strings.Repeat("═", totalWidth))
-	content.WriteString("\n")
-
-	// Table rows - plain text with TurboVision-style focus indicator
+	// Rows
 	for i, row := range t.rows {
 		rowParts := make([]string, len(t.columns))
-
 		for j, col := range t.columns {
-			value := ""
-			if val, exists := row.Values[col.Field]; exists {
-				value = fmt.Sprintf("%v", val)
-			}
-
-			// Truncate if too long
-			if len(value) > col.Width {
+			val := row.Values[col.Field]
+			if len(val) > col.Width {
 				if col.Width > 3 {
-					value = value[:col.Width-3] + "..."
+					val = val[:col.Width-3] + "..."
 				} else {
-					value = value[:col.Width]
+					val = val[:col.Width]
 				}
 			}
-
-			format := fmt.Sprintf("%%-%ds", col.Width)
-			rowParts[j] = fmt.Sprintf(format, value)
+			rowParts[j] = fmt.Sprintf("%-*s", col.Width, val)
 		}
 
-		// TurboVision-style focus indicator
-		focusIndicator := " "
+		indicator := " "
 		if i == t.cursor {
-			focusIndicator = "►" // TurboVision-style arrow
+			indicator = "►"
 		}
-
-		line := focusIndicator + strings.Join(rowParts, " ")
-
-		// Apply TurboVision styling to the focused row
+		line := indicator + strings.Join(rowParts, " ")
 		if i == t.cursor {
-			line = GetSelectedItemStyle().Render(line)
+			line = SelectedStyle().Render(line)
 		} else {
-			line = GetUnselectedItemStyle().Render(line)
+			line = UnselectedStyle().Render(line)
 		}
-
-		content.WriteString(line)
-		content.WriteString("\n")
+		b.WriteString(line)
+		b.WriteString("\n")
 	}
 
-	content.WriteString("\n")
-
-	// Pagination info
-	content.WriteString(fmt.Sprintf("Page %d • Showing %d items • Offset %d",
-		t.pageNum, t.totalShown, t.offset))
-	content.WriteString("\n\n")
+	b.WriteString("\n")
+	b.WriteString(fmt.Sprintf("Page %d • %d items • Offset %d\n\n", t.pageNum, len(t.rows), t.offset))
 
 	// Pagination controls
-	var prevText, nextText string
+	prev := DescriptionStyle().Render("[←] Prev")
 	if t.offset > 0 {
-		prevText = GetSelectedItemStyle().Render("[←] Prev")
-	} else {
-		prevText = GetItemDescriptionStyle().Render("[←] Prev")
+		prev = SelectedStyle().Render("[←] Prev")
 	}
-
+	next := DescriptionStyle().Render("[→] Next")
 	if t.hasMore {
-		nextText = GetSelectedItemStyle().Render("[→] Next")
-	} else {
-		nextText = GetItemDescriptionStyle().Render("[→] Next")
+		next = SelectedStyle().Render("[→] Next")
 	}
+	b.WriteString(prev + "  " + next + "\n\n")
 
-	pageInfo := GetItemDescriptionStyle().Render(fmt.Sprintf("Page %d", t.pageNum))
-
-	content.WriteString(prevText + "  " + nextText + "    " + pageInfo)
-	content.WriteString("\n\n")
-
-	// Help text
 	if t.helpText != "" {
-		content.WriteString("\n")
-		content.WriteString(GetItemDescriptionStyle().Render(t.helpText))
-		content.WriteString("\n")
+		b.WriteString(DescriptionStyle().Render(t.helpText))
+		b.WriteString("\n")
 	}
 
-	return content.String()
+	return b.String()
 }

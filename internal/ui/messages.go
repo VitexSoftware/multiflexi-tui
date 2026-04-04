@@ -1,56 +1,87 @@
 package ui
 
-import "github.com/VitexSoftware/multiflexi-tui/internal/cli"
+import tea "github.com/charmbracelet/bubbletea"
 
-// --- Navigation messages ---
-
-// BackMsg requests navigation back to the previous view
-type BackMsg struct{}
-
-// ShowHelpMsg requests showing help for a CLI command
-type ShowHelpMsg struct {
-	Command string
+// NavigateToMsg tells the app to push a new view onto the navigation stack.
+type NavigateToMsg struct {
+	View tea.Model
 }
 
-// ShowMenuMsg requests showing the command menu
-type ShowMenuMsg struct{}
+// NavigateBackMsg tells the app to pop the current view off the stack.
+type NavigateBackMsg struct{}
 
-// StatusMessage displays a transient message in the footer
-type StatusMessage struct {
+// StatusMsg displays a transient message in the footer.
+type StatusMsg struct {
 	Text string
 }
 
-// --- Detail view messages ---
+// ConfirmMsg is sent when the user confirms an action.
+type ConfirmMsg struct {
+	Label  string
+	Action func() tea.Msg
+}
 
-// OpenDetailMsg requests opening a detail view for any entity
-type OpenDetailMsg struct {
+// ConfirmYesMsg is sent when user confirms.
+type ConfirmYesMsg struct {
+	Action func() tea.Msg
+}
+
+// ConfirmNoMsg is sent when user cancels.
+type ConfirmNoMsg struct{}
+
+// HelpLoadedMsg carries loaded help text.
+type HelpLoadedMsg struct {
+	Command string
+	Content string
+}
+
+// HelpErrorMsg carries a help load error.
+type HelpErrorMsg struct {
+	Command string
+	Err     error
+}
+
+// DataLoadedMsg carries async-loaded data.
+type DataLoadedMsg struct {
 	Data interface{}
 }
 
-// EditItemMsg requests opening an editor for an item
-type EditItemMsg struct {
-	Data interface{}
+// DataErrorMsg carries a data loading error.
+type DataErrorMsg struct {
+	Err error
 }
 
-// ScheduleItemMsg requests opening a scheduler for an item
-type ScheduleItemMsg struct {
-	Data interface{}
-}
-
-// DeleteItemMsg requests deletion (will show confirmation first)
-type DeleteItemMsg struct {
-	Data  interface{}
+// DetailField is a single label-value pair for detail views.
+type DetailField struct {
 	Label string
+	Value string
 }
 
-// --- Save messages (one per editable entity) ---
+// EditorField defines one form field.
+type EditorField struct {
+	Label       string
+	Placeholder string
+	Value       string
+	Required    bool
+}
 
-type SaveApplicationMsg struct{ App cli.Application }
-type SaveJobMsg struct{ Job cli.Job }
-type SaveCompanyMsg struct{ Company cli.Company }
-type SaveRunTemplateMsg struct{ Template cli.RunTemplate }
+// ActionDef defines an action button on a detail view.
+type ActionDef struct {
+	Label   string
+	Key     string // shortcut key
+	Command string // action identifier
+}
 
-// --- Confirm dialog messages ---
+// TableColumn defines a column in a table.
+type TableColumn struct {
+	Header string
+	Width  int
+	Field  string
+}
 
-type ConfirmDeleteYesMsg struct{ Data interface{} }
-type ConfirmDeleteNoMsg struct{}
+// TableRow holds one row of table data.
+type TableRow struct {
+	ID       int
+	Values   map[string]string
+	FullData interface{} // original typed entity
+}

@@ -7,65 +7,38 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-// ConfirmDeleteYesMsg and ConfirmDeleteNoMsg are defined in messages.go
-
-// ConfirmDialogModel represents a confirmation dialog
-type ConfirmDialogModel struct {
+// ConfirmDialog presents a Y/N confirmation prompt.
+type ConfirmDialog struct {
 	label  string
-	data   interface{}
-	width  int
-	height int
+	action func() tea.Msg
 }
 
-// NewConfirmDialogModel creates a new confirmation dialog
-func NewConfirmDialogModel(label string, data interface{}) ConfirmDialogModel {
-	return ConfirmDialogModel{
-		label: label,
-		data:  data,
-	}
+// NewConfirmDialog creates a confirmation dialog.
+func NewConfirmDialog(label string, action func() tea.Msg) *ConfirmDialog {
+	return &ConfirmDialog{label: label, action: action}
 }
 
-// Init initializes the confirmation dialog
-func (m ConfirmDialogModel) Init() tea.Cmd {
-	return nil
-}
+func (m *ConfirmDialog) Init() tea.Cmd { return nil }
 
-// Update handles messages for the confirmation dialog
-func (m ConfirmDialogModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m *ConfirmDialog) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case tea.WindowSizeMsg:
-		m.width = msg.Width
-		m.height = msg.Height
-		return m, nil
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "y", "Y":
-			data := m.data
-			return m, func() tea.Msg {
-				return ConfirmDeleteYesMsg{Data: data}
-			}
-		case "n", "N", "esc", "q":
-			return m, func() tea.Msg {
-				return ConfirmDeleteNoMsg{}
-			}
+			return m, func() tea.Msg { return ConfirmYesMsg{Action: m.action} }
+		case "n", "N", "esc":
+			return m, func() tea.Msg { return ConfirmNoMsg{} }
 		}
 	}
 	return m, nil
 }
 
-// View renders the confirmation dialog
-func (m ConfirmDialogModel) View() string {
-	var content strings.Builder
-
-	content.WriteString("\n")
-	content.WriteString(GetTitleStyle().Render("⚠  Confirm Delete"))
-	content.WriteString("\n\n")
-	content.WriteString(fmt.Sprintf("  Are you sure you want to delete %s?\n", m.label))
-	content.WriteString("\n")
-	content.WriteString("  " + GetSelectedItemStyle().Render(" [y] Yes ") + "   " + GetUnselectedItemStyle().Render(" [n] No "))
-	content.WriteString("\n\n")
-	content.WriteString(GetItemDescriptionStyle().Render("  This action cannot be undone."))
-	content.WriteString("\n")
-
-	return content.String()
+func (m *ConfirmDialog) View() string {
+	var b strings.Builder
+	b.WriteString(TitleStyle().Render("⚠️  Confirm"))
+	b.WriteString("\n\n")
+	b.WriteString(fmt.Sprintf("%s\n\n", m.label))
+	b.WriteString(SelectedStyle().Render("[Y] Yes") + "   " + UnselectedStyle().Render("[N] No"))
+	b.WriteString("\n")
+	return b.String()
 }
