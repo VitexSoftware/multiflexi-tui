@@ -27,8 +27,8 @@ clean:
 
 # Install binary locally (for testing)
 install: build
-	@echo "Installing $(BINARY_NAME) to /usr/local/bin..."
-	sudo cp $(BUILD_DIR)/$(BINARY_NAME) /usr/local/bin/
+	@echo "Installing $(BINARY_NAME) to /usr/bin..."
+	sudo cp $(BUILD_DIR)/$(BINARY_NAME) /usr/bin/
 
 # Run tests
 test:
