@@ -1,3 +1,20 @@
+multiflexi-tui (2.1.0) unstable; urgency=medium
+
+  [ Vitex Software ]
+  * Architecture rewrite: entity registry, CLI Client interface,
+    navigation stack
+
+  [ vitex ]
+  * Add EventSource and EventRule entities (new in multiflexi-cli)
+  * Add create operations for Company, Job, Application, RunTemplate
+  * Replace God-object Model with lean App and data-driven EntityDef
+    registry
+  * Replace package-level CLI functions with testable Client interface
+  * Fix delete verb per entity (remove vs delete) matching CLI
+  * 22 tests across 4 packages
+
+ -- Vitex Software <info@vitexsoftware.cz>  Sat, 04 Apr 2026 14:07:22 +0200
+
 multiflexi-tui (2.0.0) unstable; urgency=medium
 
   * Complete MultiFlexi CLI parity achieved (100% coverage)
