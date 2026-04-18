@@ -84,6 +84,15 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case ui.NavigateBackMsg:
 		return a.goBack()
 
+	case ui.NavigateBackAndRefreshMsg:
+		m, cmd := a.goBack()
+		app := m.(*App)
+		if app.activeView != nil {
+			initCmd := app.activeView.Init()
+			return app, tea.Batch(cmd, initCmd)
+		}
+		return m, cmd
+
 	case ui.StatusMsg:
 		a.statusMessage = msg.Text
 		return a, nil

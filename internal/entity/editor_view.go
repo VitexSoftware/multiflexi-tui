@@ -139,8 +139,7 @@ func (m *EditorView) save() (tea.Model, tea.Cmd) {
 			return ui.StatusMsg{Text: fmt.Sprintf("Error saving %s: %v", label, err)}
 		}
 
-		// Navigate back after save
-		return ui.NavigateBackMsg{}
+		return ui.NavigateBackAndRefreshMsg{}
 	}
 }
 

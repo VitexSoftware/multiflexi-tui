@@ -13,6 +13,10 @@ type NavigateToMsg struct {
 // NavigateBackMsg tells the app to pop the current view off the stack.
 type NavigateBackMsg struct{}
 
+// NavigateBackAndRefreshMsg pops the current view and re-initialises the revealed view.
+// Use this after a successful create or update so the parent list reloads.
+type NavigateBackAndRefreshMsg struct{}
+
 // StatusMsg displays a transient message in the footer.
 type StatusMsg struct {
 	Text string
