@@ -2,6 +2,8 @@
 
 A modern terminal user interface for [multiflexi-cli](https://github.com/VitexSoftware/multiflexi-cli), built with the [Charmbracelet Bubbletea](https://github.com/charmbracelet/bubbletea) framework.
 
+![Title Screen](docs/title-screenshot.png?raw=true)
+
 ## Features
 
 - **Full Entity CRUD**: List, view details, create, edit, and delete all 14 MultiFlexi entity types
