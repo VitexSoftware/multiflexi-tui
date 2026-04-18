@@ -42,6 +42,9 @@ var (
 
 	disabledStatusStyle = lipgloss.NewStyle().
 				Foreground(lipgloss.Color("9"))
+
+	debugStyle = lipgloss.NewStyle().
+			Foreground(lipgloss.Color("11")) // bright yellow — visible but clearly secondary
 )
 
 // Public accessors for styles.
@@ -55,3 +58,4 @@ func ErrorStyle() lipgloss.Style          { return errorStyle }
 func ButtonStyle() lipgloss.Style         { return buttonStyle }
 func ActiveStatusStyle() lipgloss.Style   { return activeStatusStyle }
 func DisabledStatusStyle() lipgloss.Style { return disabledStatusStyle }
+func DebugStyle() lipgloss.Style          { return debugStyle }

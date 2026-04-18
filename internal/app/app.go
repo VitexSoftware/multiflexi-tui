@@ -402,11 +402,17 @@ func (a *App) renderFooter() string {
 	} else {
 		helpLine = ui.FooterStyle().Render(" ↑/↓: rows • ←/→: pages • enter: detail • e: edit • n: new • esc: back • tab: menu ")
 	}
-	statusLine := ""
+
+	var lines []string
+	lines = append(lines, sep)
 	if a.statusMessage != "" {
-		statusLine = ui.FooterStyle().Render(" " + a.statusMessage + " ")
+		lines = append(lines, ui.FooterStyle().Render(" "+a.statusMessage+" "))
 	}
-	return sep + "\n" + statusLine + "\n" + helpLine
+	if cmd := a.Client.LastCmd(); cmd != "" {
+		lines = append(lines, ui.DebugStyle().Render(" $ "+cmd+" "))
+	}
+	lines = append(lines, helpLine)
+	return strings.Join(lines, "\n")
 }
 
 func (a *App) renderStatus() string {

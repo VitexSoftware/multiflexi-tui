@@ -37,11 +37,15 @@ type Client interface {
 
 	// GetCommandHelp returns help text for a specific command.
 	GetCommandHelp(name string) (string, error)
+
+	// LastCmd returns the most recently executed CLI command string (for debug display).
+	LastCmd() string
 }
 
 // CLIClient implements Client using exec.Command("multiflexi-cli", ...).
 type CLIClient struct {
-	Binary string // path to multiflexi-cli binary; defaults to "multiflexi-cli"
+	Binary  string // path to multiflexi-cli binary; defaults to "multiflexi-cli"
+	lastCmd string // last executed command string, for debug display
 }
 
 // NewCLIClient creates a CLIClient with the default binary name.
@@ -57,13 +61,19 @@ func (c *CLIClient) binary() string {
 }
 
 func (c *CLIClient) RunRaw(args ...string) ([]byte, error) {
+	c.lastCmd = c.binary() + " " + strings.Join(args, " ")
 	cmd := exec.Command(c.binary(), args...)
-	output, err := cmd.Output()
+	out, err := cmd.Output()
 	if err != nil {
+		if exitErr, ok := err.(*exec.ExitError); ok {
+			c.lastCmd += "  [exit " + fmt.Sprintf("%d", exitErr.ExitCode()) + "] " + strings.TrimSpace(string(exitErr.Stderr))
+		}
 		return nil, fmt.Errorf("multiflexi-cli %s: %w", strings.Join(args, " "), err)
 	}
-	return output, nil
+	return out, nil
 }
+
+func (c *CLIClient) LastCmd() string { return c.lastCmd }
 
 func (c *CLIClient) List(entity string, limit, offset int, target interface{}) error {
 	output, err := c.RunRaw(entity, "list",
