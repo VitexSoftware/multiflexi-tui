@@ -56,6 +56,7 @@ var QueueDef = &EntityDef{
 						return ui.StatusMsg{Text: fmt.Sprintf("Queue fix failed: %v", err)}
 					}
 					viewer := ui.NewViewer("Queue Fix Result")
+					viewer.RefreshOnBack = true
 					viewer.SetContent("Queue Fix Result", string(output))
 					return ui.NavigateToMsg{View: viewer}
 				}
@@ -71,7 +72,7 @@ var QueueDef = &EntityDef{
 					if err != nil {
 						return ui.StatusMsg{Text: fmt.Sprintf("Queue truncate failed: %v", err)}
 					}
-					return ui.StatusMsg{Text: "Queue truncated. Press r to refresh."}
+					return ui.RefreshCurrentMsg{Status: "Queue truncated"}
 				}
 			},
 		},

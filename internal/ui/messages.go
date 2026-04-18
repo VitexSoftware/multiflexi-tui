@@ -13,9 +13,22 @@ type NavigateToMsg struct {
 // NavigateBackMsg tells the app to pop the current view off the stack.
 type NavigateBackMsg struct{}
 
-// NavigateBackAndRefreshMsg pops the current view and re-initialises the revealed view.
-// Use this after a successful create or update so the parent list reloads.
-type NavigateBackAndRefreshMsg struct{}
+// NavigateBackAndRefreshMsg pops views until a Refreshable ancestor is found, then refreshes it.
+// Use this after any successful create, update, or delete.
+type NavigateBackAndRefreshMsg struct {
+	Status string // optional status text to show in the footer
+}
+
+// RefreshCurrentMsg refreshes the currently active view without navigating away.
+// Use this when a list-level action completes and the list is already visible.
+type RefreshCurrentMsg struct {
+	Status string
+}
+
+// Refreshable is implemented by views that can reload their data on demand.
+type Refreshable interface {
+	Refresh() tea.Cmd
+}
 
 // StatusMsg displays a transient message in the footer.
 type StatusMsg struct {

@@ -34,6 +34,12 @@ func (m *ListView) Init() tea.Cmd {
 	return m.fetchCmd()
 }
 
+// Refresh satisfies ui.Refreshable — reloads data from the first page.
+func (m *ListView) Refresh() tea.Cmd {
+	m.table.SetLoading(true)
+	return m.fetchCmd()
+}
+
 func (m *ListView) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:

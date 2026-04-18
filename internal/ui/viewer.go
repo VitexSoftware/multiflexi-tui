@@ -12,11 +12,12 @@ const viewerOverhead = 2
 
 // Viewer displays scrollable text content (help, job output, action results).
 type Viewer struct {
-	title   string
-	content string
-	err     error
-	scroll  int
-	height  int // available content-area height (set via WindowSizeMsg)
+	title         string
+	content       string
+	err           error
+	scroll        int
+	height        int  // available content-area height (set via WindowSizeMsg)
+	RefreshOnBack bool // if true, Esc/q returns RefreshCurrentMsg instead of NavigateBackMsg
 }
 
 func NewViewer(title string) *Viewer {
@@ -88,6 +89,9 @@ func (m *Viewer) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "end", "G":
 			m.scroll = maxScroll
 		case "esc", "q":
+			if m.RefreshOnBack {
+				return m, func() tea.Msg { return NavigateBackAndRefreshMsg{} }
+			}
 			return m, func() tea.Msg { return NavigateBackMsg{} }
 		}
 	}

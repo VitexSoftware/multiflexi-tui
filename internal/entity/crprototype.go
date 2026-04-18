@@ -105,6 +105,7 @@ var CrPrototypeDef = &EntityDef{
 						return ui.StatusMsg{Text: fmt.Sprintf("Sync failed: %v", err)}
 					}
 					viewer := ui.NewViewer("CrPrototype Sync Result")
+					viewer.RefreshOnBack = true
 					viewer.SetContent("CrPrototype Sync Result", string(output))
 					return ui.NavigateToMsg{View: viewer}
 				}

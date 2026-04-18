@@ -135,7 +135,7 @@ func (m *DetailView) executeActionByCommand(command string) (tea.Model, tea.Cmd)
 						if err != nil {
 							return ui.StatusMsg{Text: fmt.Sprintf("Error deleting %s: %v", label, err)}
 						}
-						return ui.StatusMsg{Text: fmt.Sprintf("Deleted %s", label)}
+						return ui.NavigateBackAndRefreshMsg{Status: fmt.Sprintf("Deleted %s", label)}
 					},
 				}
 			}

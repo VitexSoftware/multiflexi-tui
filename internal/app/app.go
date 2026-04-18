@@ -85,16 +85,40 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return a.goBack()
 
 	case ui.NavigateBackAndRefreshMsg:
-		m, cmd := a.goBack()
-		app := m.(*App)
-		if app.activeView != nil {
-			initCmd := app.activeView.Init()
-			return app, tea.Batch(cmd, initCmd)
+		if msg.Status != "" {
+			a.statusMessage = msg.Status
 		}
-		return m, cmd
+		// Pop views until we land on one that can refresh itself.
+		for {
+			prev, ok := a.nav.Pop()
+			if !ok {
+				a.activeView = nil
+				a.menuFocus = true
+				return a, nil
+			}
+			a.activeView = prev.View
+			if prev.View == nil {
+				a.menuFocus = true
+				return a, nil
+			}
+			if r, ok := prev.View.(ui.Refreshable); ok {
+				return a, r.Refresh()
+			}
+		}
 
 	case ui.StatusMsg:
 		a.statusMessage = msg.Text
+		return a, nil
+
+	case ui.RefreshCurrentMsg:
+		if msg.Status != "" {
+			a.statusMessage = msg.Status
+		}
+		if a.activeView != nil {
+			if r, ok := a.activeView.(ui.Refreshable); ok {
+				return a, r.Refresh()
+			}
+		}
 		return a, nil
 
 	case ui.ConfirmMsg:
