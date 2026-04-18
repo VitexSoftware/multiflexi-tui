@@ -100,8 +100,32 @@ func (m *DetailView) executeActionByCommand(command string) (tea.Model, tea.Cmd)
 			}
 		}
 	default:
+		for _, action := range m.actions {
+			if action.Command != command || action.Handler == nil {
+				continue
+			}
+			if action.Confirm != "" {
+				handler := action.Handler
+				client := m.client
+				data := m.data
+				label := action.Confirm
+				return m, func() tea.Msg {
+					return ui.ConfirmMsg{
+						Label: label,
+						Action: func() tea.Msg {
+							cmd := handler(client, data)
+							if cmd != nil {
+								return cmd()
+							}
+							return nil
+						},
+					}
+				}
+			}
+			return m, action.Handler(m.client, m.data)
+		}
 		return m, func() tea.Msg {
-			return ui.StatusMsg{Text: fmt.Sprintf("Action '%s' not yet implemented", command)}
+			return ui.StatusMsg{Text: fmt.Sprintf("Action '%s' not implemented", command)}
 		}
 	}
 	return m, nil

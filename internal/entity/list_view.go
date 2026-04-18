@@ -6,7 +6,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-const defaultHelp = "↑/↓: navigate • ←/→: paginate • r: refresh • enter: detail • e: edit • n: new"
+const defaultHelp = "↑/↓: navigate • ←/→: paginate • r: refresh • enter: detail • e: edit • n: new • (entity actions shown below)"
 
 // ListView is a generic list view driven by an EntityDef.
 type ListView struct {
@@ -48,6 +48,30 @@ func (m *ListView) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case tea.KeyMsg:
+		for _, la := range m.def.ListActions {
+			if la.Key != msg.String() {
+				continue
+			}
+			if la.Confirm != "" {
+				handler := la.Handler
+				client := m.client
+				label := la.Confirm
+				return m, func() tea.Msg {
+					return ui.ConfirmMsg{
+						Label: label,
+						Action: func() tea.Msg {
+							cmd := handler(client)
+							if cmd != nil {
+								return cmd()
+							}
+							return nil
+						},
+					}
+				}
+			}
+			return m, la.Handler(m.client)
+		}
+
 		refresh, nextPage, prevPage, openDetail, openEditor, openCreate := m.table.HandleKey(msg.String())
 
 		if openDetail {

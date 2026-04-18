@@ -2,14 +2,22 @@ package entity
 
 import (
 	"fmt"
+
 	"github.com/VitexSoftware/multiflexi-tui/internal/cli"
 	"github.com/VitexSoftware/multiflexi-tui/internal/ui"
+	tea "github.com/charmbracelet/bubbletea"
 )
 
 func jobStatus(j cli.Job) string {
-	if j.PID != 0 { return "Running" }
-	if j.Exitcode == -1 { return "Scheduled" }
-	if j.Exitcode == 0 { return "Success" }
+	if j.PID != 0 {
+		return "Running"
+	}
+	if j.Exitcode == -1 {
+		return "Scheduled"
+	}
+	if j.Exitcode == 0 {
+		return "Success"
+	}
 	return "Failed"
 }
 
@@ -23,11 +31,15 @@ var JobDef = &EntityDef{
 	},
 	Fetch: func(c cli.Client, limit, offset int) ([]ui.TableRow, error) {
 		var items []cli.Job
-		if err := c.List("job", limit, offset, &items); err != nil { return nil, err }
+		if err := c.List("job", limit, offset, &items); err != nil {
+			return nil, err
+		}
 		rows := make([]ui.TableRow, len(items))
 		for i, j := range items {
 			sched := j.Schedule
-			if len(sched) >= 16 { sched = sched[11:16] }
+			if len(sched) >= 16 {
+				sched = sched[11:16]
+			}
 			rows[i] = ui.TableRow{ID: j.ID, Values: map[string]string{
 				"id": fmt.Sprintf("%d", j.ID), "command": j.Command,
 				"status": jobStatus(j), "schedule": sched,
@@ -74,14 +86,52 @@ var JobDef = &EntityDef{
 	},
 	CreateArgs: func(fields map[string]string) []string {
 		args := []string{"--runtemplate_id", fields["RunTemplate ID"], "--scheduled", fields["Scheduled"]}
-		if v := fields["Executor"]; v != "" { args = append(args, "--executor", v) }
-		if v := fields["Schedule Type"]; v != "" { args = append(args, "--schedule_type", v) }
+		if v := fields["Executor"]; v != "" {
+			args = append(args, "--executor", v)
+		}
+		if v := fields["Schedule Type"]; v != "" {
+			args = append(args, "--schedule_type", v)
+		}
 		return args
 	},
-	GetID: func(data interface{}) int { return data.(cli.Job).ID },
+	GetID:    func(data interface{}) int { return data.(cli.Job).ID },
 	GetLabel: func(data interface{}) string { return fmt.Sprintf("Job %d", data.(cli.Job).ID) },
 	Actions: []ui.ActionDef{
 		{Label: "Edit", Key: "e", Command: "edit"},
+		{
+			Label:   "Stdout",
+			Key:     "o",
+			Command: "stdout",
+			Handler: func(_ cli.Client, data interface{}) tea.Cmd {
+				j := data.(cli.Job)
+				return func() tea.Msg {
+					content := j.Stdout
+					if content == "" {
+						content = "(empty)"
+					}
+					viewer := ui.NewViewer(fmt.Sprintf("Job %d — Stdout", j.ID))
+					viewer.SetContent(fmt.Sprintf("Job %d — Stdout", j.ID), content)
+					return ui.NavigateToMsg{View: viewer}
+				}
+			},
+		},
+		{
+			Label:   "Stderr",
+			Key:     "r",
+			Command: "stderr",
+			Handler: func(_ cli.Client, data interface{}) tea.Cmd {
+				j := data.(cli.Job)
+				return func() tea.Msg {
+					content := j.Stderr
+					if content == "" {
+						content = "(empty)"
+					}
+					viewer := ui.NewViewer(fmt.Sprintf("Job %d — Stderr", j.ID))
+					viewer.SetContent(fmt.Sprintf("Job %d — Stderr", j.ID), content)
+					return ui.NavigateToMsg{View: viewer}
+				}
+			},
+		},
 		{Label: "Delete", Key: "d", Command: "delete"},
 	},
 }

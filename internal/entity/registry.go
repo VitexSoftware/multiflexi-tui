@@ -42,6 +42,9 @@ type EntityDef struct {
 
 	// Actions for the detail view (edit, delete, plus entity-specific ones).
 	Actions []ui.ActionDef
+
+	// ListActions are global actions available from the list view (not per-row).
+	ListActions []ui.ListActionDef
 }
 
 // Entry is a menu-compatible wrapper around an EntityDef.
