@@ -1,3 +1,16 @@
+multiflexi-tui (2.2.0) unstable; urgency=medium
+
+  [ CyberVitexus ]
+  * Full entity CRUD with special per-entity actions (schedule, stdout/stderr,
+    generate token, show config, save artifact, sync, test event source)
+  * Dynamic terminal viewport: tables and viewers fill full screen height
+    (Midnight Commander style), all views reflow on resize
+  * Scrollable menu bar: focused item always kept in viewport
+  * CLI command debug bar: shows last multiflexi-cli invocation in footer
+  * Auto-refresh after every create, update, delete and list action
+
+ -- Vitex Software <info@vitexsoftware.cz>  Fri, 18 Apr 2026 12:00:00 +0200
+
 multiflexi-tui (2.1.0) unstable; urgency=medium
 
   [ Vitex Software ]
