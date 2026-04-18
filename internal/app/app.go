@@ -62,8 +62,10 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		a.height = msg.Height
 		a.adjustMenuViewport()
 		if a.activeView != nil {
+			// menuBar=3 lines, footer=2 lines → content area = height - 5
+			contentMsg := tea.WindowSizeMsg{Width: msg.Width, Height: msg.Height - 5}
 			var cmd tea.Cmd
-			a.activeView, cmd = a.activeView.Update(msg)
+			a.activeView, cmd = a.activeView.Update(contentMsg)
 			return a, cmd
 		}
 		return a, nil
