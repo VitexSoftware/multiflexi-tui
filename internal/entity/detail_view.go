@@ -9,6 +9,9 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
+// detailOverhead: title(1) + blank(1) + blank(1) + actions(1) + blank(1) + footer(1) = 6
+const detailOverhead = 6
+
 // DetailView shows the details of a single entity with action buttons.
 type DetailView struct {
 	client         cli.Client
@@ -17,6 +20,8 @@ type DetailView struct {
 	fields         []ui.DetailField
 	actions        []ui.ActionDef
 	selectedAction int
+	height         int // available content-area height (set via WindowSizeMsg)
+	scroll         int // first visible field index
 }
 
 // NewDetailView creates a detail view for the given entity data.
@@ -31,15 +36,33 @@ func NewDetailView(c cli.Client, def *EntityDef, data interface{}) *DetailView {
 		data:    data,
 		fields:  fields,
 		actions: def.Actions,
+		height:  40,
 	}
 }
 
 func (m *DetailView) Init() tea.Cmd { return nil }
 
+func (m *DetailView) visibleFields() int {
+	v := m.height - detailOverhead
+	if v < 3 {
+		v = 3
+	}
+	return v
+}
+
 func (m *DetailView) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+		m.height = msg.Height
+		return m, nil
+
 	case tea.KeyMsg:
 		key := msg.String()
+		vis := m.visibleFields()
+		maxScroll := len(m.fields) - vis
+		if maxScroll < 0 {
+			maxScroll = 0
+		}
 		switch key {
 		case "esc", "q":
 			return m, func() tea.Msg { return ui.NavigateBackMsg{} }
@@ -50,6 +73,24 @@ func (m *DetailView) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "left":
 			if len(m.actions) > 0 {
 				m.selectedAction = (m.selectedAction - 1 + len(m.actions)) % len(m.actions)
+			}
+		case "up", "k":
+			if m.scroll > 0 {
+				m.scroll--
+			}
+		case "down", "j":
+			if m.scroll < maxScroll {
+				m.scroll++
+			}
+		case "pgup":
+			m.scroll -= vis
+			if m.scroll < 0 {
+				m.scroll = 0
+			}
+		case "pgdown":
+			m.scroll += vis
+			if m.scroll > maxScroll {
+				m.scroll = maxScroll
 			}
 		case "enter":
 			return m.executeAction()
@@ -100,8 +141,32 @@ func (m *DetailView) executeActionByCommand(command string) (tea.Model, tea.Cmd)
 			}
 		}
 	default:
+		for _, action := range m.actions {
+			if action.Command != command || action.Handler == nil {
+				continue
+			}
+			if action.Confirm != "" {
+				handler := action.Handler
+				client := m.client
+				data := m.data
+				label := action.Confirm
+				return m, func() tea.Msg {
+					return ui.ConfirmMsg{
+						Label: label,
+						Action: func() tea.Msg {
+							cmd := handler(client, data)
+							if cmd != nil {
+								return cmd()
+							}
+							return nil
+						},
+					}
+				}
+			}
+			return m, action.Handler(m.client, m.data)
+		}
 		return m, func() tea.Msg {
-			return ui.StatusMsg{Text: fmt.Sprintf("Action '%s' not yet implemented", command)}
+			return ui.StatusMsg{Text: fmt.Sprintf("Action '%s' not implemented", command)}
 		}
 	}
 	return m, nil
@@ -117,15 +182,33 @@ func (m *DetailView) View() string {
 	b.WriteString(ui.TitleStyle().Render(label))
 	b.WriteString("\n\n")
 
-	// Fields
+	// Fields (scrollable)
 	maxW := 0
 	for _, f := range m.fields {
 		if len(f.Label) > maxW {
 			maxW = len(f.Label)
 		}
 	}
-	for _, f := range m.fields {
+	vis := m.visibleFields()
+	start := m.scroll
+	if start > len(m.fields) {
+		start = len(m.fields)
+	}
+	end := start + vis
+	if end > len(m.fields) {
+		end = len(m.fields)
+	}
+	for _, f := range m.fields[start:end] {
 		b.WriteString(fmt.Sprintf("%-*s: %s\n", maxW, f.Label, f.Value))
+	}
+	if len(m.fields) > vis {
+		maxScroll := len(m.fields) - vis
+		pct := 0
+		if maxScroll > 0 {
+			pct = (m.scroll * 100) / maxScroll
+		}
+		b.WriteString(ui.FooterStyle().Render(fmt.Sprintf(" ↑/↓/PgUp/PgDn: scroll [%3d%%]", pct)))
+		b.WriteString("\n")
 	}
 	b.WriteString("\n")
 

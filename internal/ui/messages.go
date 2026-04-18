@@ -1,6 +1,9 @@
 package ui
 
-import tea "github.com/charmbracelet/bubbletea"
+import (
+	"github.com/VitexSoftware/multiflexi-tui/internal/cli"
+	tea "github.com/charmbracelet/bubbletea"
+)
 
 // NavigateToMsg tells the app to push a new view onto the navigation stack.
 type NavigateToMsg struct {
@@ -69,7 +72,22 @@ type EditorField struct {
 type ActionDef struct {
 	Label   string
 	Key     string // shortcut key
-	Command string // action identifier
+	Command string // "edit", "delete", or custom identifier
+
+	// Handler, if non-nil, is called when this action fires instead of built-in dispatch.
+	// It receives the CLI client and the entity's FullData, and returns a tea.Cmd.
+	Handler func(client cli.Client, data interface{}) tea.Cmd
+
+	// Confirm, if non-empty, shows a yes/no dialog with this message before calling Handler.
+	Confirm string
+}
+
+// ListActionDef defines a list-level action (not per-row).
+type ListActionDef struct {
+	Label   string
+	Key     string
+	Handler func(client cli.Client) tea.Cmd
+	Confirm string // if non-empty, prompts before calling Handler
 }
 
 // TableColumn defines a column in a table.

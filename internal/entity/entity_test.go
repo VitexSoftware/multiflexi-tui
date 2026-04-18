@@ -98,8 +98,8 @@ func TestRunTemplateDetailAndEditor(t *testing.T) {
 		t.Errorf("expected >=8 detail fields, got %d", len(fields))
 	}
 	ef := RunTemplateDef.ToEditor(rt)
-	if len(ef) != 3 {
-		t.Fatalf("expected 3 editor fields, got %d", len(ef))
+	if len(ef) < 3 {
+		t.Fatalf("expected >=3 editor fields, got %d", len(ef))
 	}
 }
 

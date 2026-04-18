@@ -1,64 +1,104 @@
 # MultiFlexi TUI
 
-A modern terminal user interface (TUI) frontend for the `multiflexi-cli` tool, built with the [Charmbracelet Bubbletea](https://github.com/charmbracelet/bubbletea) framework.
+A modern terminal user interface for [multiflexi-cli](https://github.com/VitexSoftware/multiflexi-cli), built with the [Charmbracelet Bubbletea](https://github.com/charmbracelet/bubbletea) framework.
 
 ## Features
 
-- **Complete Entity Management**: List, view details, create, edit, and delete all MultiFlexi entities
-- **14 Entity Types**: Applications, Companies, Jobs, RunTemplates, Credentials, Tokens, Users, Artifacts, CredTypes, CrPrototypes, CompanyApps, Queue, EventSources, EventRules
-- **Create Operations**: Create new entities directly from the TUI (Companies, Jobs, Applications, RunTemplates)
-- **Inline Editors**: Multi-field forms for editing records with Tab/Arrow key navigation
-- **Delete with Confirmation**: Safe deletion with Y/N confirmation dialog
-- **Pagination**: Navigate through large datasets with limit/offset controls
+- **Full Entity CRUD**: List, view details, create, edit, and delete all 14 MultiFlexi entity types
+- **Entity-specific Actions**: Beyond CRUD — schedule runs, view stdout/stderr, generate tokens, test event sources, save artifacts, sync credential prototypes, and more
+- **Dynamic Terminal Viewport**: Tables and viewers fill the full terminal height automatically (Midnight Commander style); all views reflow on resize
+- **Scrollable Menu Bar**: When menu items exceed screen width, the bar scrolls to keep the focused item visible
+- **Navigation Stack**: Full back-navigation history (list → detail → editor → confirm → back)
+- **Delete with Confirmation**: Y/N confirmation dialog for all destructive operations
+- **Pagination**: Navigate large datasets with limit/offset controls auto-sized to terminal height
 - **Status Dashboard**: Live system information from `multiflexi-cli status`
-- **Data-Driven Menu**: Dynamic menu bar with active section highlighting
-- **Navigation Stack**: Full back-navigation history (list → detail → editor → confirm)
-- **Mouse Support**: Click menu items, scroll lists with mouse wheel (GPM/xterm compatible)
-- **TurboVision Theme**: Professional TurboVision-inspired design
+- **Mouse Support**: Click menu items, scroll lists with mouse wheel
+- **TurboVision Theme**: Classic TurboVision-inspired colour scheme
 
-### Navigation
+## Entity Types and Capabilities
 
-| Key | Action | Context |
-|-----|--------|---------|
-| `←/→` or `h/l` | Navigate top menu | Menu focused |
-| `Enter` or `Space` | Select menu item / Open detail | Menu / List |
-| `↑/↓` or `k/j` | Navigate within lists | Content focused |
-| `←/→` | Previous/next page | Content focused |
-| `e` | Edit selected record | List / Detail view |
-| `n` | Create new record | List view |
-| `d` | Delete record (with confirmation) | Detail view |
-| `Tab` | Switch focus between menu and content | Global |
-| `Esc` | Go back to previous view | Any nested view |
-| `Mouse click` | Select menu item or focus content | Global |
-| `Mouse wheel` | Scroll list up/down | Content focused |
-| `r` | Refresh data | List view |
-| `q` or `Ctrl+C` | Quit application | Global |
+| Entity | List | Detail | Create | Edit | Delete | Special Actions |
+|--------|------|--------|--------|------|--------|-----------------|
+| Companies | ✅ | ✅ | ✅ | ✅ | ✅ | — |
+| Applications | ✅ | ✅ | ✅ | ✅ | ✅ | Show Config (`s`) |
+| RunTemplates | ✅ | ✅ | ✅ | ✅ | ✅ | Schedule (`s`) |
+| Jobs | ✅ | ✅ | ✅ | ✅ | ✅ | View Stdout (`o`), View Stderr (`e`) |
+| Credentials | ✅ | ✅ | ✅ | ✅ | ✅ | — |
+| Tokens | ✅ | ✅ | ✅ | ✅ | ✅ | Generate (`g`) |
+| Users | ✅ | ✅ | ✅ | ✅ | ✅ | — |
+| Artifacts | ✅ | ✅ | — | — | ✅ | Save to file (`s`) |
+| CredTypes | ✅ | ✅ | ✅ | ✅ | — | — |
+| CrPrototypes | ✅ | ✅ | ✅ | ✅ | ✅ | Sync All (list: `S`) |
+| CompanyApps | ✅ | ✅ | ✅ | ✅ | ✅ | — |
+| Queue | ✅ | ✅ | — | — | — | Fix (`f`), Truncate (`T`) |
+| EventSources | ✅ | ✅ | ✅ | ✅ | ✅ | Test (`t`) |
+| EventRules | ✅ | ✅ | ✅ | ✅ | ✅ | — |
 
-### Menu Options
+## Keyboard Reference
 
-- **Status**: System dashboard with live information
-- **Companies**: Company management (list, detail, create, edit, delete)
-- **Jobs**: Job management (list, detail, create, edit, delete)
-- **Applications**: Application catalog (list, detail, create, edit, delete)
-- **RunTemplates**: Execution templates (list, detail, create, edit, delete)
-- **Credentials**: Credential management (list, detail, delete)
-- **Tokens**: API token management (list, detail, delete)
-- **Users**: User account management (list, detail, delete)
-- **Artifacts**: Job artifacts and output files (list, detail)
-- **CredTypes**: Credential type definitions (list, detail)
-- **CrPrototypes**: Credential prototypes (list, detail)
-- **CompanyApps**: Company-application relationships (list, detail, delete)
-- **Queue**: Job queue (list, detail)
-- **EventSources**: Event source adapters (list, detail, delete)
-- **EventRules**: Event-to-RunTemplate mappings (list, detail, delete)
-- **Help**: Application usage documentation
-- **Quit**: Exit the application
+### Global
+
+| Key | Action |
+|-----|--------|
+| `Tab` | Toggle focus between menu bar and content |
+| `Esc` | Go back to previous view |
+| `Ctrl+C` | Quit |
+| `q` | Quit (when menu focused) |
+
+### Menu Bar (focused)
+
+| Key | Action |
+|-----|--------|
+| `←/→` or `h/l` | Navigate menu items |
+| `Enter` or `Space` | Open selected menu item |
+
+### List View (content focused)
+
+| Key | Action |
+|-----|--------|
+| `↑/↓` or `k/j` | Move cursor up/down |
+| `←/→` or `PgUp/PgDn` | Previous/next page |
+| `Enter` or `Space` | Open detail view |
+| `e` | Edit selected record |
+| `n` | Create new record |
+| `r` | Refresh / reload data |
+| Entity-specific keys | See table above |
+
+### Detail View
+
+| Key | Action |
+|-----|--------|
+| `↑/↓` or `k/j` | Scroll field list (when fields exceed screen) |
+| `PgUp/PgDn` | Scroll field list by page |
+| `Tab` or `→` | Cycle to next action button |
+| `←` | Cycle to previous action button |
+| `Enter` | Execute selected action |
+| `d` | Delete (with confirmation) |
+| `e` | Edit |
+| Entity-specific keys | See table above |
+
+### Editor / Form View
+
+| Key | Action |
+|-----|--------|
+| `Tab` or `↓` | Next field |
+| `Shift+Tab` or `↑` | Previous field |
+| `Enter` | Save / submit |
+| `Esc` | Cancel, go back |
+
+### Viewer (stdout, stderr, help, config output)
+
+| Key | Action |
+|-----|--------|
+| `↑/↓` or `k/j` | Scroll one line |
+| `PgUp/PgDn` | Scroll one page |
+| `g` / `G` | Jump to top / bottom |
+| `Esc` or `q` | Go back |
 
 ## Prerequisites
 
 - Go 1.21 or later
-- `multiflexi-cli` installed and available in PATH
-- For Debian packaging: `debhelper-compat`, `golang-any`, `dpkg-dev`
+- `multiflexi-cli` installed and available in `PATH`
 
 ## Installation
 
@@ -68,7 +108,7 @@ A modern terminal user interface (TUI) frontend for the `multiflexi-cli` tool, b
 git clone https://github.com/VitexSoftware/multiflexi-tui.git
 cd multiflexi-tui
 make build
-make install  # optional
+sudo make install
 ```
 
 ### Debian Package
@@ -84,121 +124,93 @@ sudo dpkg -i ../multiflexi-tui_*.deb
 multiflexi-tui
 ```
 
-The application launches with the Status dashboard. Use keyboard or mouse to navigate.
+The application opens with the Status dashboard. Use the keyboard or mouse to navigate.
 
 ## Project Structure
 
-```text
+```
 multiflexi-tui/
 ├── cmd/multiflexi-tui/
-│   └── main.go                  # Entry point — wires CLI client, entity registry, and menu
+│   └── main.go              # Entry point — wires client, registry, and menu
 ├── internal/
 │   ├── app/
-│   │   ├── app.go               # Lean app model (~370 lines) — Update/View/menu/mouse/keys
-│   │   ├── navigator.go         # Navigation stack for back-navigation
-│   │   └── menu.go              # MenuItem data type
+│   │   ├── app.go           # Root model: menu bar, nav stack, message routing
+│   │   ├── navigator.go     # Navigation stack (push/pop view states)
+│   │   └── menu.go          # MenuItem type
 │   ├── cli/
-│   │   ├── client.go            # Client interface + CLIClient (exec.Command wrapper)
-│   │   └── types.go             # All entity structs (14 types + StatusInfo)
+│   │   ├── client.go        # Client interface + CLIClient (exec.Command wrapper)
+│   │   └── types.go         # All entity structs (14 types + StatusInfo)
 │   ├── entity/
-│   │   ├── registry.go          # EntityDef + global registry
-│   │   ├── list_view.go         # Generic ListView (works with any EntityDef)
-│   │   ├── detail_view.go       # Generic DetailView with action buttons
-│   │   ├── editor_view.go       # Generic EditorView (create + update mode)
-│   │   ├── company.go           # Company entity definition
-│   │   ├── job.go               # Job entity definition
-│   │   ├── application.go       # Application entity definition
-│   │   ├── runtemplate.go       # RunTemplate entity definition
-│   │   ├── credential.go        # Credential entity definition
-│   │   ├── token.go             # Token entity definition
-│   │   ├── user.go              # User entity definition
-│   │   ├── artifact.go          # Artifact entity definition
-│   │   ├── credtype.go          # CredType entity definition
-│   │   ├── crprototype.go       # CrPrototype entity definition
-│   │   ├── companyapp.go        # CompanyApp entity definition
-│   │   ├── queue.go             # Queue entity definition
-│   │   ├── eventsource.go       # EventSource entity definition (NEW)
-│   │   └── eventrule.go         # EventRule entity definition (NEW)
+│   │   ├── registry.go      # EntityDef struct + global registry
+│   │   ├── list_view.go     # Generic ListView — works with any EntityDef
+│   │   ├── detail_view.go   # Generic DetailView with scrollable fields + action buttons
+│   │   ├── editor_view.go   # Generic EditorView (create + update modes)
+│   │   ├── action_form.go   # Generic action form (prompted input → CLI command)
+│   │   ├── company.go
+│   │   ├── job.go
+│   │   ├── application.go
+│   │   ├── runtemplate.go
+│   │   ├── credential.go
+│   │   ├── token.go
+│   │   ├── user.go
+│   │   ├── artifact.go
+│   │   ├── credtype.go
+│   │   ├── crprototype.go
+│   │   ├── companyapp.go
+│   │   ├── queue.go
+│   │   ├── eventsource.go
+│   │   └── eventrule.go
 │   └── ui/
-│       ├── messages.go          # Shared message types (NavigateToMsg, etc.)
-│       ├── styles.go            # TurboVision theme styles
-│       ├── table.go             # Reusable table widget with pagination
-│       ├── confirm_dialog.go    # Y/N confirmation dialog
-│       └── viewer.go            # Scrollable help text viewer
-├── debian/                      # Debian packaging files
-├── go.mod                       # Go module definition
-├── Makefile                     # Build automation
-└── README.md                    # This file
+│       ├── messages.go      # Shared message types (NavigateToMsg, ConfirmMsg, …)
+│       ├── styles.go        # TurboVision theme (lipgloss)
+│       ├── table.go         # Paginated table widget — height-adaptive
+│       ├── confirm_dialog.go
+│       └── viewer.go        # Scrollable text viewer — height-adaptive
+├── docs/
+│   ├── ARCHITECTURE.md      # Architecture and entity extension guide
+│   └── CLI_STRUCTURES.md    # CLI data structures reference
+├── debian/                  # Debian packaging
+├── go.mod
+├── Makefile
+└── README.md
 ```
 
 ## Architecture
 
 The application uses a **data-driven entity registry** pattern:
 
-1. **CLI Layer** (`internal/cli`): `Client` interface wraps `multiflexi-cli`. All operations use `--format=json`. Testable via mock implementation.
-2. **Entity Registry** (`internal/entity`): Each entity is a self-contained `EntityDef` with callbacks for fetch, detail rendering, editor fields, CLI args building, and actions. Adding a new entity requires only one ~40-line file.
-3. **Generic Views** (`internal/entity`): `ListView`, `DetailView`, and `EditorView` are entity-agnostic — they render any `EntityDef` with zero type switches.
-4. **App Layer** (`internal/app`): Lean coordinator (~370 lines) with a navigation stack, data-driven menu bar, and message routing.
-5. **UI Layer** (`internal/ui`): Shared widgets (table, confirm dialog, viewer) and styles.
+1. **CLI Layer** (`internal/cli`): `Client` interface wraps `multiflexi-cli`. All operations use `--format=json`. Fully mockable for tests.
+2. **Entity Registry** (`internal/entity`): Each entity is a self-contained `EntityDef` with callbacks for fetch, detail rendering, editor fields, CLI arg building, and action handlers. Each entity registers itself via `init()`.
+3. **Generic Views**: `ListView`, `DetailView`, and `EditorView` are entity-agnostic — they render any `EntityDef` with no type switches.
+4. **Dynamic Viewport**: Every view handles `tea.WindowSizeMsg`. The app passes a content-area height (`terminal height − 5 chrome lines`) so tables and viewers fill available space exactly.
+5. **App Layer** (`internal/app`): Lean coordinator (~460 lines) with navigation stack, scrollable menu bar, and message routing.
 
-### Adding a New Entity
-
-Create a single file in `internal/entity/` (e.g. `myentity.go`):
-
-```go
-package entity
-
-var MyEntityDef = &EntityDef{
-    Name: "My Entity", CLIEntity: "myentity", DeleteAction: "delete", Limit: 10,
-    Columns: []ui.TableColumn{...},
-    Fetch: func(c cli.Client, limit, offset int) ([]ui.TableRow, error) { ... },
-    ToDetail: func(data interface{}) []ui.DetailField { ... },
-    // Optional: ToEditor, UpdateArgs, NewFields, CreateArgs for edit/create support
-    GetID: func(data interface{}) int { ... },
-    GetLabel: func(data interface{}) string { ... },
-    Actions: []ui.ActionDef{...},
-}
-
-func init() {
-    Register(Entry{Label: "MyEntity", Hint: "Description", Def: MyEntityDef})
-}
-```
-
-The entity automatically appears in the menu — no changes needed elsewhere.
+See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the full guide including how to add a new entity.
 
 ## Development
 
 ```bash
-make dev        # Development build
 make build      # Production build (optimized)
+make dev        # Development build
 make test       # Run tests
+make run        # Build and run
 make clean      # Clean build artifacts
 make deps       # Download and tidy dependencies
-make run        # Build and run
 make deb        # Build Debian package
 make check-deps # Verify required tools
 ```
 
-### Dependencies
-
-Packages available in Debian stable repositories:
-
-- `github.com/charmbracelet/bubbletea` — TUI framework
-- `github.com/charmbracelet/bubbles` — TUI components (textinput)
-- `github.com/charmbracelet/lipgloss` — Styling library
-
 ## Package Information
 
-- **Source**: multiflexi-tui
 - **Section**: utils
 - **Priority**: optional
 - **Maintainer**: Vitex Software <info@vitexsoftware.cz>
 - **Homepage**: https://github.com/VitexSoftware/multiflexi-tui
-- **Dependencies**: `multiflexi-cli`
+- **Runtime dependency**: `multiflexi-cli`
 
 ## License
 
-This project follows the same license as the MultiFlexi project.
+Same license as the MultiFlexi project.
 
 ## Contributing
 
@@ -210,4 +222,4 @@ This project follows the same license as the MultiFlexi project.
 
 ## Support
 
-For issues and questions, visit the [GitHub repository](https://github.com/VitexSoftware/multiflexi-tui) or contact Vitex Software at <info@vitexsoftware.cz>.
+For issues and questions visit the [GitHub repository](https://github.com/VitexSoftware/multiflexi-tui) or contact Vitex Software at <info@vitexsoftware.cz>.

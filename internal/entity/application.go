@@ -2,8 +2,10 @@ package entity
 
 import (
 	"fmt"
+
 	"github.com/VitexSoftware/multiflexi-tui/internal/cli"
 	"github.com/VitexSoftware/multiflexi-tui/internal/ui"
+	tea "github.com/charmbracelet/bubbletea"
 )
 
 var ApplicationDef = &EntityDef{
@@ -14,10 +16,15 @@ var ApplicationDef = &EntityDef{
 	},
 	Fetch: func(c cli.Client, limit, offset int) ([]ui.TableRow, error) {
 		var items []cli.Application
-		if err := c.List("application", limit, offset, &items); err != nil { return nil, err }
+		if err := c.List("application", limit, offset, &items); err != nil {
+			return nil, err
+		}
 		rows := make([]ui.TableRow, len(items))
 		for i, a := range items {
-			status := "Disabled"; if a.Enabled == 1 { status = "Enabled" }
+			status := "Disabled"
+			if a.Enabled == 1 {
+				status = "Enabled"
+			}
 			rows[i] = ui.TableRow{ID: a.ID, Values: map[string]string{
 				"id": fmt.Sprintf("%d", a.ID), "name": a.Name, "version": a.Version, "status": status,
 			}, FullData: a}
@@ -47,10 +54,18 @@ var ApplicationDef = &EntityDef{
 	UpdateArgs: func(data interface{}, fields map[string]string) []string {
 		a := data.(cli.Application)
 		args := []string{"--id", fmt.Sprintf("%d", a.ID), "--name", fields["Name"]}
-		if v := fields["Description"]; v != "" { args = append(args, "--description", v) }
-		if v := fields["Executable"]; v != "" { args = append(args, "--executable", v) }
-		if v := fields["Homepage"]; v != "" { args = append(args, "--homepage", v) }
-		if v := fields["Topics"]; v != "" { args = append(args, "--topics", v) }
+		if v := fields["Description"]; v != "" {
+			args = append(args, "--description", v)
+		}
+		if v := fields["Executable"]; v != "" {
+			args = append(args, "--executable", v)
+		}
+		if v := fields["Homepage"]; v != "" {
+			args = append(args, "--homepage", v)
+		}
+		if v := fields["Topics"]; v != "" {
+			args = append(args, "--topics", v)
+		}
 		return args
 	},
 	NewFields: func() []ui.EditorField {
@@ -64,15 +79,40 @@ var ApplicationDef = &EntityDef{
 	},
 	CreateArgs: func(fields map[string]string) []string {
 		args := []string{"--name", fields["Name"], "--uuid", fields["UUID"], "--executable", fields["Executable"]}
-		if v := fields["Description"]; v != "" { args = append(args, "--description", v) }
-		if v := fields["Homepage"]; v != "" { args = append(args, "--homepage", v) }
+		if v := fields["Description"]; v != "" {
+			args = append(args, "--description", v)
+		}
+		if v := fields["Homepage"]; v != "" {
+			args = append(args, "--homepage", v)
+		}
 		return args
 	},
-	GetID: func(data interface{}) int { return data.(cli.Application).ID },
+	GetID:    func(data interface{}) int { return data.(cli.Application).ID },
 	GetLabel: func(data interface{}) string { return fmt.Sprintf("App: %s", data.(cli.Application).Name) },
 	Actions: []ui.ActionDef{
-		{Label: "Edit", Key: "e", Command: "edit"}, {Label: "Delete", Key: "d", Command: "delete"},
+		{Label: "Edit", Key: "e", Command: "edit"},
+		{
+			Label:   "Config",
+			Key:     "c",
+			Command: "showconfig",
+			Handler: func(c cli.Client, data interface{}) tea.Cmd {
+				a := data.(cli.Application)
+				return func() tea.Msg {
+					output, err := c.RunRaw("application", "showconfig", "--format=json", "--id", fmt.Sprintf("%d", a.ID))
+					viewer := ui.NewViewer(fmt.Sprintf("Config: %s", a.Name))
+					if err != nil {
+						viewer.SetContent(fmt.Sprintf("Config: %s", a.Name), fmt.Sprintf("Error: %v", err))
+					} else {
+						viewer.SetContent(fmt.Sprintf("Config: %s", a.Name), string(output))
+					}
+					return ui.NavigateToMsg{View: viewer}
+				}
+			},
+		},
+		{Label: "Delete", Key: "d", Command: "delete"},
 	},
 }
 
-func init() { Register(Entry{Label: "Applications", Hint: "Browse applications", Def: ApplicationDef}) }
+func init() {
+	Register(Entry{Label: "Applications", Hint: "Browse applications", Def: ApplicationDef})
+}
