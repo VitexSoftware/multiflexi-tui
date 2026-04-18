@@ -5,6 +5,13 @@ import (
 	"strings"
 )
 
+// tableOverhead is the number of non-data lines rendered by View():
+// title(1) + col-header(1) + top-sep(1) + bottom-sep(1) + pagination(1) = 5
+const tableOverhead = 5
+
+// minTableRows is the minimum number of data rows the table will display.
+const minTableRows = 3
+
 // TableWidget renders a paginated table with cursor selection.
 type TableWidget struct {
 	title    string
@@ -22,6 +29,9 @@ type TableWidget struct {
 
 // NewTableWidget creates a new table widget.
 func NewTableWidget(title string, columns []TableColumn, limit int, helpText string) *TableWidget {
+	if limit < minTableRows {
+		limit = minTableRows
+	}
 	return &TableWidget{
 		title:    title,
 		columns:  columns,
@@ -29,6 +39,20 @@ func NewTableWidget(title string, columns []TableColumn, limit int, helpText str
 		helpText: helpText,
 		loading:  true,
 	}
+}
+
+// SetContentHeight adjusts the row limit to fill the given content-area height.
+// Returns true when the limit changed and the caller should re-fetch.
+func (t *TableWidget) SetContentHeight(h int) bool {
+	newLimit := h - tableOverhead
+	if newLimit < minTableRows {
+		newLimit = minTableRows
+	}
+	if newLimit == t.limit {
+		return false
+	}
+	t.limit = newLimit
+	return true
 }
 
 // SetData updates the table with fresh data.
@@ -103,90 +127,94 @@ func (t *TableWidget) HandleKey(key string) (refresh, nextPage, prevPage, openDe
 	return false, false, false, false, false, false
 }
 
-// View renders the table.
+// View renders the table filling available height.
 func (t *TableWidget) View() string {
 	var b strings.Builder
 
+	// Title
 	if t.title != "" {
 		b.WriteString(TitleStyle().Render(t.title))
-		b.WriteString("\n\n")
+		b.WriteString("\n")
 	}
 
 	if t.loading {
-		b.WriteString(DescriptionStyle().Render("Loading..."))
+		b.WriteString(DescriptionStyle().Render("  Loading..."))
 		b.WriteString("\n")
 		return b.String()
 	}
 	if t.err != nil {
-		b.WriteString(ErrorStyle().Render(fmt.Sprintf("Error: %v", t.err)))
-		b.WriteString("\n")
-		return b.String()
-	}
-	if len(t.rows) == 0 {
-		b.WriteString(DescriptionStyle().Render("No data found"))
+		b.WriteString(ErrorStyle().Render(fmt.Sprintf("  Error: %v", t.err)))
 		b.WriteString("\n")
 		return b.String()
 	}
 
-	// Header
-	totalWidth := 0
+	// Compute total column width for separators
+	totalWidth := 1 // leading indicator char
+	for _, col := range t.columns {
+		totalWidth += col.Width + 1
+	}
+	sep := strings.Repeat("─", totalWidth)
+
+	// Column headers
 	parts := make([]string, len(t.columns))
 	for i, col := range t.columns {
 		parts[i] = fmt.Sprintf("%-*s", col.Width, col.Header)
-		totalWidth += col.Width + 1
 	}
-	b.WriteString(strings.Join(parts, " "))
-	b.WriteString("\n")
-	b.WriteString(strings.Repeat("═", totalWidth))
-	b.WriteString("\n")
+	b.WriteString(" " + strings.Join(parts, " ") + "\n")
+	b.WriteString(sep + "\n")
 
-	// Rows
-	for i, row := range t.rows {
-		rowParts := make([]string, len(t.columns))
-		for j, col := range t.columns {
-			val := row.Values[col.Field]
-			if len(val) > col.Width {
-				if col.Width > 3 {
-					val = val[:col.Width-3] + "..."
-				} else {
-					val = val[:col.Width]
+	// Data rows
+	if len(t.rows) == 0 {
+		b.WriteString(DescriptionStyle().Render("  (no items)") + "\n")
+	} else {
+		count := len(t.rows)
+		if count > t.limit {
+			count = t.limit
+		}
+		for i := 0; i < count; i++ {
+			row := t.rows[i]
+			rowParts := make([]string, len(t.columns))
+			for j, col := range t.columns {
+				val := row.Values[col.Field]
+				if len(val) > col.Width {
+					if col.Width > 3 {
+						val = val[:col.Width-3] + "..."
+					} else {
+						val = val[:col.Width]
+					}
 				}
+				rowParts[j] = fmt.Sprintf("%-*s", col.Width, val)
 			}
-			rowParts[j] = fmt.Sprintf("%-*s", col.Width, val)
+			indicator := " "
+			if i == t.cursor {
+				indicator = "►"
+			}
+			line := indicator + strings.Join(rowParts, " ")
+			if i == t.cursor {
+				b.WriteString(SelectedStyle().Render(line))
+			} else {
+				b.WriteString(UnselectedStyle().Render(line))
+			}
+			b.WriteString("\n")
 		}
-
-		indicator := " "
-		if i == t.cursor {
-			indicator = "►"
-		}
-		line := indicator + strings.Join(rowParts, " ")
-		if i == t.cursor {
-			line = SelectedStyle().Render(line)
-		} else {
-			line = UnselectedStyle().Render(line)
-		}
-		b.WriteString(line)
-		b.WriteString("\n")
 	}
 
-	b.WriteString("\n")
-	b.WriteString(fmt.Sprintf("Page %d • %d items • Offset %d\n\n", t.pageNum, len(t.rows), t.offset))
-
-	// Pagination controls
-	prev := DescriptionStyle().Render("[←] Prev")
+	// Pagination bar
+	b.WriteString(sep + "\n")
+	prevStr := DescriptionStyle().Render("[←]")
 	if t.offset > 0 {
-		prev = SelectedStyle().Render("[←] Prev")
+		prevStr = SelectedStyle().Render("[←]")
 	}
-	next := DescriptionStyle().Render("[→] Next")
+	nextStr := DescriptionStyle().Render("[→]")
 	if t.hasMore {
-		next = SelectedStyle().Render("[→] Next")
+		nextStr = SelectedStyle().Render("[→]")
 	}
-	b.WriteString(prev + "  " + next + "\n\n")
-
+	hint := ""
 	if t.helpText != "" {
-		b.WriteString(DescriptionStyle().Render(t.helpText))
-		b.WriteString("\n")
+		hint = "  " + DescriptionStyle().Render(t.helpText)
 	}
+	b.WriteString(fmt.Sprintf(" %s pg%d  %d items  %s%s\n",
+		prevStr, t.pageNum, len(t.rows), nextStr, hint))
 
 	return b.String()
 }

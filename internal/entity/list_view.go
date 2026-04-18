@@ -6,13 +6,14 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-const defaultHelp = "↑/↓: navigate • ←/→: paginate • r: refresh • enter: detail • e: edit • n: new • (entity actions shown below)"
+const defaultHelp = "r: refresh • enter: detail • e: edit • n: new"
 
 // ListView is a generic list view driven by an EntityDef.
 type ListView struct {
 	client cli.Client
 	def    *EntityDef
 	table  *ui.TableWidget
+	height int // available content area height (updated by WindowSizeMsg)
 }
 
 // NewListView creates a new ListView for the given entity.
@@ -36,6 +37,12 @@ func (m *ListView) Init() tea.Cmd {
 func (m *ListView) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
+		m.height = msg.Height
+		// Resize table; re-fetch if the row limit changed
+		if m.table.SetContentHeight(msg.Height) {
+			m.table.SetLoading(true)
+			return m, m.fetchCmd()
+		}
 		return m, nil
 
 	case ui.DataLoadedMsg:
@@ -48,6 +55,7 @@ func (m *ListView) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case tea.KeyMsg:
+		// List-level actions defined on the entity
 		for _, la := range m.def.ListActions {
 			if la.Key != msg.String() {
 				continue
