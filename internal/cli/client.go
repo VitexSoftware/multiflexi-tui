@@ -76,7 +76,7 @@ func (c *CLIClient) RunRaw(args ...string) ([]byte, error) {
 func (c *CLIClient) LastCmd() string { return c.lastCmd }
 
 func (c *CLIClient) List(entity string, limit, offset int, target interface{}) error {
-	output, err := c.RunRaw(entity, "list",
+	output, err := c.RunRaw(entity+":list",
 		"--format=json",
 		"--order=D",
 		fmt.Sprintf("--limit=%d", limit),
@@ -92,7 +92,7 @@ func (c *CLIClient) List(entity string, limit, offset int, target interface{}) e
 }
 
 func (c *CLIClient) Get(entity string, id int, target interface{}) error {
-	output, err := c.RunRaw(entity, "get",
+	output, err := c.RunRaw(entity+":get",
 		"--format=json",
 		fmt.Sprintf("--id=%d", id),
 	)
@@ -106,18 +106,18 @@ func (c *CLIClient) Get(entity string, id int, target interface{}) error {
 }
 
 func (c *CLIClient) Create(entity string, args ...string) ([]byte, error) {
-	fullArgs := append([]string{entity, "create", "--format=json"}, args...)
+	fullArgs := append([]string{entity + ":create", "--format=json"}, args...)
 	return c.RunRaw(fullArgs...)
 }
 
 func (c *CLIClient) Update(entity string, args ...string) error {
-	fullArgs := append([]string{entity, "update", "--format=json"}, args...)
+	fullArgs := append([]string{entity + ":update", "--format=json"}, args...)
 	_, err := c.RunRaw(fullArgs...)
 	return err
 }
 
 func (c *CLIClient) Delete(entity string, deleteAction string, id int) error {
-	_, err := c.RunRaw(entity, deleteAction, "--format=json", "--id", fmt.Sprintf("%d", id))
+	_, err := c.RunRaw(entity+":"+deleteAction, "--format=json", "--id", fmt.Sprintf("%d", id))
 	return err
 }
 
