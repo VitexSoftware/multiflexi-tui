@@ -295,6 +295,18 @@ multiflexi-cli <entity> update --id=N --name="..."
 multiflexi-cli <entity> delete --id=N   # or: remove --id=N
 ```
 
+### CompanyApp assign / unassign pattern
+```bash
+# Assign application to company (creates a default RunTemplate)
+multiflexi-cli companyapp assign --company_id=N --app_id=M --format=json
+
+# Unassign application from company (removes RunTemplates and actionconfigs)
+multiflexi-cli companyapp unassign --company_id=N --app_id=M --format=json
+
+# List RunTemplates for a specific company-app pair
+multiflexi-cli companyapp list --company_id=N --app_id=M --format=json
+```
+
 ### Validate JSON output
 ```bash
 multiflexi-cli <entity> list --format=json | jq .

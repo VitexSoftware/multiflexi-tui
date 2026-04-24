@@ -135,6 +135,46 @@ func TestAllEntitiesDeleteAction(t *testing.T) {
 	}
 }
 
+func TestCompanyAppListActions(t *testing.T) {
+	if len(CompanyAppDef.ListActions) != 2 {
+		t.Fatalf("expected 2 ListActions (assign, unassign), got %d", len(CompanyAppDef.ListActions))
+	}
+
+	assign := CompanyAppDef.ListActions[0]
+	if assign.Key != "a" {
+		t.Errorf("assign key = %q, want 'a'", assign.Key)
+	}
+	if assign.Label != "Assign" {
+		t.Errorf("assign label = %q, want 'Assign'", assign.Label)
+	}
+
+	unassign := CompanyAppDef.ListActions[1]
+	if unassign.Key != "u" {
+		t.Errorf("unassign key = %q, want 'u'", unassign.Key)
+	}
+	if unassign.Label != "Unassign" {
+		t.Errorf("unassign label = %q, want 'Unassign'", unassign.Label)
+	}
+
+	if len(CompanyAppDef.Actions) != 0 {
+		t.Errorf("expected 0 row Actions, got %d", len(CompanyAppDef.Actions))
+	}
+}
+
+func TestCompanyAppToDetail(t *testing.T) {
+	ca := cli.CompanyApp{ID: 7, CompanyID: 3, AppID: 5}
+	fields := CompanyAppDef.ToDetail(ca)
+	if len(fields) != 3 {
+		t.Fatalf("expected 3 detail fields, got %d", len(fields))
+	}
+	if fields[0].Label != "ID" || fields[0].Value != "7" {
+		t.Errorf("first field: %+v", fields[0])
+	}
+	if CompanyAppDef.GetID(ca) != 7 {
+		t.Errorf("GetID = %d", CompanyAppDef.GetID(ca))
+	}
+}
+
 func TestConfirmDialog(t *testing.T) {
 	called := false
 	action := func() ui.StatusMsg {
