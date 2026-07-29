@@ -1,4 +1,5 @@
 # MultiFlexi TUI
+![Packaging: deb](https://img.shields.io/badge/packaging-.deb-red?logo=debian&logoColor=white)
 
 A modern terminal user interface for [multiflexi-cli](https://github.com/VitexSoftware/multiflexi-cli), built with the [Charmbracelet Bubbletea](https://github.com/charmbracelet/bubbletea) framework.
 
