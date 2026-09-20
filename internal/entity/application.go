@@ -11,8 +11,10 @@ import (
 var ApplicationDef = &EntityDef{
 	Name: "📦 Applications", CLIEntity: "application", DeleteAction: "delete", Limit: 10,
 	Columns: []ui.TableColumn{
-		{Header: "ID", Width: 5, Field: "id"}, {Header: "Name", Width: 30, Field: "name"},
-		{Header: "Version", Width: 15, Field: "version"}, {Header: "Status", Width: 10, Field: "status"},
+		{Header: "ID", Width: 5, Field: "id"},
+		{Header: "Name", Width: 30, Field: "name", Flex: true},
+		{Header: "Version", Width: 15, Field: "version"},
+		{Header: "Status", Width: 10, Field: "status"},
 	},
 	Fetch: func(c cli.Client, limit, offset int) ([]ui.TableRow, error) {
 		var items []cli.Application
@@ -37,7 +39,7 @@ var ApplicationDef = &EntityDef{
 			{Label: "ID", Value: fmt.Sprintf("%d", a.ID)}, {Label: "Name", Value: a.Name},
 			{Label: "Version", Value: a.Version}, {Label: "UUID", Value: a.UUID},
 			{Label: "Executable", Value: a.Executable}, {Label: "Description", Value: a.Description},
-			{Label: "Homepage", Value: a.Homepage}, {Label: "Topics", Value: a.Topics},
+			{Label: "Homepage", Value: a.Homepage}, {Label: "Tags", Value: a.Tags},
 			{Label: "Enabled", Value: fmt.Sprintf("%d", a.Enabled)},
 		}
 	},
@@ -48,7 +50,7 @@ var ApplicationDef = &EntityDef{
 			{Label: "Description", Placeholder: "Description", Value: a.Description},
 			{Label: "Executable", Placeholder: "Executable path", Value: a.Executable},
 			{Label: "Homepage", Placeholder: "Homepage URL", Value: a.Homepage},
-			{Label: "Topics", Placeholder: "Topics", Value: a.Topics},
+			{Label: "Tags", Placeholder: "Tags", Value: a.Tags},
 		}
 	},
 	UpdateArgs: func(data interface{}, fields map[string]string) []string {
@@ -63,8 +65,8 @@ var ApplicationDef = &EntityDef{
 		if v := fields["Homepage"]; v != "" {
 			args = append(args, "--homepage", v)
 		}
-		if v := fields["Topics"]; v != "" {
-			args = append(args, "--topics", v)
+		if v := fields["Tags"]; v != "" {
+			args = append(args, "--tags", v)
 		}
 		return args
 	},
@@ -94,18 +96,12 @@ var ApplicationDef = &EntityDef{
 		{
 			Label:   "Config",
 			Key:     "c",
-			Command: "showconfig",
+			Command: "show-config",
 			Handler: func(c cli.Client, data interface{}) tea.Cmd {
 				a := data.(cli.Application)
 				return func() tea.Msg {
-					output, err := c.RunRaw("application", "showconfig", "--format=json", "--id", fmt.Sprintf("%d", a.ID))
-					viewer := ui.NewViewer(fmt.Sprintf("Config: %s", a.Name))
-					if err != nil {
-						viewer.SetContent(fmt.Sprintf("Config: %s", a.Name), fmt.Sprintf("Error: %v", err))
-					} else {
-						viewer.SetContent(fmt.Sprintf("Config: %s", a.Name), string(output))
-					}
-					return ui.NavigateToMsg{View: viewer}
+					def := NewConfFieldDef(a.ID, a.Name)
+					return ui.NavigateToMsg{View: NewListViewForEntity(c, def)}
 				}
 			},
 		},
@@ -114,5 +110,5 @@ var ApplicationDef = &EntityDef{
 }
 
 func init() {
-	Register(Entry{Label: "Applications", Hint: "Browse applications", Def: ApplicationDef})
+	Register(Entry{Label: "Applications", Hint: "Browse applications • c: config fields", Def: ApplicationDef})
 }

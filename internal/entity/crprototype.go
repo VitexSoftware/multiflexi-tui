@@ -9,14 +9,14 @@ import (
 )
 
 var CrPrototypeDef = &EntityDef{
-	Name: "🧬 Credential Prototypes", CLIEntity: "crprototype", DeleteAction: "delete", Limit: 10,
+	Name: "🧬 Credential Prototypes", CLIEntity: "credential-prototype", DeleteAction: "delete", Limit: 10,
 	Columns: []ui.TableColumn{
 		{Header: "ID", Width: 6, Field: "id"}, {Header: "Code", Width: 20, Field: "code"},
 		{Header: "Name", Width: 30, Field: "name"}, {Header: "Version", Width: 10, Field: "version"},
 	},
 	Fetch: func(c cli.Client, limit, offset int) ([]ui.TableRow, error) {
 		var items []cli.CrPrototype
-		if err := c.List("crprototype", limit, offset, &items); err != nil {
+		if err := c.List("credential-prototype", limit, offset, &items); err != nil {
 			return nil, err
 		}
 		rows := make([]ui.TableRow, len(items))
@@ -37,6 +37,8 @@ var CrPrototypeDef = &EntityDef{
 			{Label: "Description", Value: p.Description},
 			{Label: "Version", Value: p.Version},
 			{Label: "URL", Value: p.URL},
+			{Label: "Homepage", Value: p.Homepage},
+			{Label: "Tags", Value: p.Tags},
 			{Label: "Created At", Value: p.CreatedAt},
 			{Label: "Updated At", Value: p.UpdatedAt},
 		}
@@ -100,7 +102,7 @@ var CrPrototypeDef = &EntityDef{
 			Confirm: "Sync all credential prototypes from remote?",
 			Handler: func(c cli.Client) tea.Cmd {
 				return func() tea.Msg {
-					output, err := c.RunRaw("crprototype", "sync", "--format=json")
+					output, err := c.RunRaw("credential-prototype:sync", "--format=json")
 					if err != nil {
 						return ui.StatusMsg{Text: fmt.Sprintf("Sync failed: %v", err)}
 					}

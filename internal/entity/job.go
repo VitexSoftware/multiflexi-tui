@@ -9,13 +9,19 @@ import (
 )
 
 func jobStatus(j cli.Job) string {
+	if j.Exitcode == nil {
+		if j.Begin != "" {
+			return "Running"
+		}
+		return "Scheduled"
+	}
 	if j.PID != 0 {
 		return "Running"
 	}
-	if j.Exitcode == -1 {
+	if *j.Exitcode == -1 {
 		return "Scheduled"
 	}
-	if j.Exitcode == 0 {
+	if *j.Exitcode == 0 {
 		return "Success"
 	}
 	return "Failed"
@@ -25,7 +31,8 @@ var JobDef = &EntityDef{
 	Name: "💼 Jobs", CLIEntity: "job", DeleteAction: "delete", Limit: 10,
 	Columns: []ui.TableColumn{
 		{Header: "ID", Width: 8, Field: "id"},
-		{Header: "Command", Width: 25, Field: "command"},
+		{Header: "Exit", Width: 12, Field: "exitcode"},
+		{Header: "Command", Width: 25, Field: "command", Flex: true},
 		{Header: "Status", Width: 12, Field: "status"},
 		{Header: "Schedule", Width: 20, Field: "schedule"},
 	},
@@ -41,20 +48,23 @@ var JobDef = &EntityDef{
 				sched = sched[11:16]
 			}
 			rows[i] = ui.TableRow{ID: j.ID, Values: map[string]string{
-				"id": fmt.Sprintf("%d", j.ID), "command": j.Command,
-				"status": jobStatus(j), "schedule": sched,
+				"id":       fmt.Sprintf("%d", j.ID),
+				"exitcode": ui.FormatExitCode(j.Exitcode),
+				"command":  j.Command,
+				"status":   jobStatus(j),
+				"schedule": sched,
 			}, FullData: j}
 		}
 		return rows, nil
 	},
 	ToDetail: func(data interface{}) []ui.DetailField {
 		j := data.(cli.Job)
-		return []ui.DetailField{
+		fields := []ui.DetailField{
 			{Label: "ID", Value: fmt.Sprintf("%d", j.ID)},
 			{Label: "Command", Value: j.Command},
 			{Label: "Status", Value: jobStatus(j)},
 			{Label: "PID", Value: fmt.Sprintf("%d", j.PID)},
-			{Label: "Exit Code", Value: fmt.Sprintf("%d", j.Exitcode)},
+			{Label: "Exit Code", Value: ui.FormatExitCodePlain(j.Exitcode)},
 			{Label: "Executor", Value: j.Executor},
 			{Label: "Schedule Type", Value: j.ScheduleType},
 			{Label: "Schedule", Value: j.Schedule},
@@ -64,6 +74,13 @@ var JobDef = &EntityDef{
 			{Label: "Company ID", Value: fmt.Sprintf("%d", j.CompanyID)},
 			{Label: "RunTemplate ID", Value: fmt.Sprintf("%d", j.RunTemplateID)},
 		}
+		if j.TaskID != nil {
+			fields = append(fields, ui.DetailField{Label: "Task ID", Value: fmt.Sprintf("%d", *j.TaskID)})
+		}
+		if j.BlockReason != nil && *j.BlockReason != "" {
+			fields = append(fields, ui.DetailField{Label: "Block Reason", Value: *j.BlockReason})
+		}
+		return fields
 	},
 	ToEditor: func(data interface{}) []ui.EditorField {
 		j := data.(cli.Job)
@@ -102,10 +119,14 @@ var JobDef = &EntityDef{
 			Label:   "Stdout",
 			Key:     "o",
 			Command: "stdout",
-			Handler: func(_ cli.Client, data interface{}) tea.Cmd {
+			Handler: func(c cli.Client, data interface{}) tea.Cmd {
 				j := data.(cli.Job)
 				return func() tea.Msg {
-					content := j.Stdout
+					var full cli.Job
+					if err := c.Get("job", j.ID, &full); err != nil {
+						return ui.StatusMsg{Text: fmt.Sprintf("Failed to load job: %v", err)}
+					}
+					content := full.Stdout
 					if content == "" {
 						content = "(empty)"
 					}
@@ -119,10 +140,14 @@ var JobDef = &EntityDef{
 			Label:   "Stderr",
 			Key:     "r",
 			Command: "stderr",
-			Handler: func(_ cli.Client, data interface{}) tea.Cmd {
+			Handler: func(c cli.Client, data interface{}) tea.Cmd {
 				j := data.(cli.Job)
 				return func() tea.Msg {
-					content := j.Stderr
+					var full cli.Job
+					if err := c.Get("job", j.ID, &full); err != nil {
+						return ui.StatusMsg{Text: fmt.Sprintf("Failed to load job: %v", err)}
+					}
+					content := full.Stderr
 					if content == "" {
 						content = "(empty)"
 					}

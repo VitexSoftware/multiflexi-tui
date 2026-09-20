@@ -8,7 +8,7 @@ import (
 )
 
 var EventRuleDef = &EntityDef{
-	Name: "📌 Event Rules", CLIEntity: "eventrule", DeleteAction: "remove", Limit: 10,
+	Name: "📌 Event Rules", CLIEntity: "event-rule", DeleteAction: "remove", Limit: 10,
 	Columns: []ui.TableColumn{
 		{Header: "ID", Width: 5, Field: "id"}, {Header: "Source", Width: 8, Field: "source"},
 		{Header: "Evidence", Width: 20, Field: "evidence"}, {Header: "Operation", Width: 10, Field: "op"},
@@ -16,7 +16,7 @@ var EventRuleDef = &EntityDef{
 	},
 	Fetch: func(c cli.Client, limit, offset int) ([]ui.TableRow, error) {
 		var items []cli.EventRule
-		if err := c.List("eventrule", limit, offset, &items); err != nil {
+		if err := c.List("event-rule", limit, offset, &items); err != nil {
 			return nil, err
 		}
 		rows := make([]ui.TableRow, len(items))

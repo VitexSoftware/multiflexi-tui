@@ -108,10 +108,13 @@ type ListActionDef struct {
 }
 
 // TableColumn defines a column in a table.
+// Width is the minimum width. Columns with Flex=true (or Width >= 20 when none
+// are marked Flex) expand to fill leftover terminal width.
 type TableColumn struct {
 	Header string
 	Width  int
 	Field  string
+	Flex   bool
 }
 
 // TableRow holds one row of table data.

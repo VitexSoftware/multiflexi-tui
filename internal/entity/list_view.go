@@ -44,6 +44,7 @@ func (m *ListView) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.height = msg.Height
+		m.table.SetContentWidth(msg.Width)
 		// Resize table; re-fetch if the row limit changed
 		if m.table.SetContentHeight(msg.Height) {
 			m.table.SetLoading(true)

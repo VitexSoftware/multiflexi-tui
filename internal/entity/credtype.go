@@ -8,21 +8,21 @@ import (
 )
 
 var CredTypeDef = &EntityDef{
-	Name: "🏷️ Credential Types", CLIEntity: "credtype", DeleteAction: "delete", Limit: 10,
+	Name: "🏷️ Credential Types", CLIEntity: "credential-type", DeleteAction: "delete", Limit: 10,
 	Columns: []ui.TableColumn{
 		{Header: "ID", Width: 6, Field: "id"}, {Header: "Name", Width: 30, Field: "name"},
-		{Header: "Class", Width: 35, Field: "class"}, {Header: "Version", Width: 8, Field: "version"},
+		{Header: "Prototype", Width: 35, Field: "prototype"}, {Header: "Version", Width: 8, Field: "version"},
 	},
 	Fetch: func(c cli.Client, limit, offset int) ([]ui.TableRow, error) {
 		var items []cli.CredType
-		if err := c.List("credtype", limit, offset, &items); err != nil {
+		if err := c.List("credential-type", limit, offset, &items); err != nil {
 			return nil, err
 		}
 		rows := make([]ui.TableRow, len(items))
 		for i, t := range items {
 			rows[i] = ui.TableRow{ID: t.ID, Values: map[string]string{
 				"id": fmt.Sprintf("%d", t.ID), "name": t.Name,
-				"class": t.Class, "version": fmt.Sprintf("%d", t.Version),
+				"prototype": t.Prototype, "version": fmt.Sprintf("%d", t.Version),
 			}, FullData: t}
 		}
 		return rows, nil
@@ -33,7 +33,7 @@ var CredTypeDef = &EntityDef{
 			{Label: "ID", Value: fmt.Sprintf("%d", t.ID)},
 			{Label: "UUID", Value: t.UUID},
 			{Label: "Name", Value: t.Name},
-			{Label: "Class", Value: t.Class},
+			{Label: "Prototype", Value: t.Prototype},
 			{Label: "Company ID", Value: fmt.Sprintf("%d", t.CompanyID)},
 			{Label: "URL", Value: t.URL},
 			{Label: "Version", Value: fmt.Sprintf("%d", t.Version)},
@@ -43,7 +43,7 @@ var CredTypeDef = &EntityDef{
 		t := data.(cli.CredType)
 		return []ui.EditorField{
 			{Label: "Name", Placeholder: "Credential type name", Value: t.Name},
-			{Label: "Class", Placeholder: "PHP class name", Value: t.Class},
+			{Label: "Class", Placeholder: "Prototype code / class", Value: t.Prototype},
 		}
 	},
 	UpdateArgs: func(data interface{}, fields map[string]string) []string {
@@ -52,14 +52,12 @@ var CredTypeDef = &EntityDef{
 	},
 	NewFields: func() []ui.EditorField {
 		return []ui.EditorField{
-			{Label: "Name", Placeholder: "Credential type name", Required: true},
 			{Label: "Company ID", Placeholder: "Company ID", Required: true},
-			{Label: "Class", Placeholder: "PHP class name", Required: true},
+			{Label: "Class", Placeholder: "Prototype code / class", Required: true},
 		}
 	},
 	CreateArgs: func(fields map[string]string) []string {
 		return []string{
-			"--name", fields["Name"],
 			"--company-id", fields["Company ID"],
 			"--class", fields["Class"],
 		}

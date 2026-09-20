@@ -10,6 +10,9 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
+// menuBarLines is the fixed height of renderMenuBar() (title, hint, separator).
+const menuBarLines = 3
+
 // App is the top-level bubbletea model.
 type App struct {
 	Client cli.Client
@@ -62,10 +65,8 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		a.height = msg.Height
 		a.adjustMenuViewport()
 		if a.activeView != nil {
-			// menuBar=3 lines, footer=2 lines → content area = height - 5
-			contentMsg := tea.WindowSizeMsg{Width: msg.Width, Height: msg.Height - 5}
 			var cmd tea.Cmd
-			a.activeView, cmd = a.activeView.Update(contentMsg)
+			a.activeView, cmd = a.activeView.Update(a.contentSizeMsg())
 			return a, cmd
 		}
 		return a, nil
@@ -77,9 +78,9 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case ui.NavigateToMsg:
 		// Push current view onto stack, switch to new view
 		a.nav.Push(ViewState{View: a.activeView, MenuIdx: a.activeMenuItem})
-		a.activeView = msg.View
+		a.activeView = a.applyContentSize(msg.View)
 		a.menuFocus = false
-		return a, msg.View.Init()
+		return a, a.activeView.Init()
 
 	case ui.NavigateBackMsg:
 		return a.goBack()
@@ -180,14 +181,8 @@ func (a *App) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		if a.menuFocus {
 			return a, tea.Quit
 		}
-	case "esc":
-		if !a.menuFocus {
-			if a.nav.Depth() > 0 {
-				return a.goBack()
-			}
-			a.menuFocus = true
-			return a, nil
-		}
+	case "esc", "escape":
+		return a.handleEsc()
 	case "tab":
 		a.menuFocus = !a.menuFocus
 		return a, nil
@@ -320,7 +315,40 @@ func (a *App) goBack() (tea.Model, tea.Cmd) {
 	a.activeView = prev.View
 	if prev.View == nil {
 		a.menuFocus = true
+	} else {
+		a.menuFocus = false
 	}
+	return a, nil
+}
+
+// handleEsc implements global Escape: back one view, or close the top-level
+// list and return to the status dashboard with the menu focused.
+func (a *App) handleEsc() (tea.Model, tea.Cmd) {
+	// Nested view (detail, editor, viewer, …)
+	if a.nav.Depth() > 0 {
+		if v, ok := a.activeView.(*ui.Viewer); ok && v.RefreshOnBack {
+			prev, _ := a.nav.Pop()
+			a.activeView = prev.View
+			a.menuFocus = prev.View == nil
+			if prev.View != nil {
+				if r, ok := prev.View.(ui.Refreshable); ok {
+					return a, r.Refresh()
+				}
+			}
+			return a, nil
+		}
+		return a.goBack()
+	}
+
+	// Top-level list/help opened from the menu — leave it and show status
+	if a.activeView != nil {
+		a.activeView = nil
+		a.menuFocus = true
+		return a, nil
+	}
+
+	// Already on the status home screen
+	a.menuFocus = true
 	return a, nil
 }
 
@@ -334,14 +362,50 @@ func (a *App) selectMenuItem() (tea.Model, tea.Cmd) {
 		// Clear nav stack when selecting from menu
 		a.nav.Clear()
 		view, cmd := item.Action(a)
-		a.activeView = view
+		a.activeView = a.applyContentSize(view)
 		a.menuFocus = false
-		if view != nil && cmd == nil {
-			cmd = view.Init()
+		if a.activeView != nil && cmd == nil {
+			cmd = a.activeView.Init()
 		}
 		return a, cmd
 	}
 	return a, nil
+}
+
+// footerLines returns how many lines renderFooter() currently occupies.
+func (a *App) footerLines() int {
+	n := 2 // separator + help
+	if a.statusMessage != "" {
+		n++
+	}
+	if a.Client != nil && a.Client.LastCmd() != "" {
+		n++
+	}
+	return n
+}
+
+// contentSizeMsg is the WindowSizeMsg forwarded to child views (menu + footer reserved).
+func (a *App) contentSizeMsg() tea.WindowSizeMsg {
+	h := a.height - menuBarLines - a.footerLines()
+	if h < 1 {
+		h = 1
+	}
+	w := a.width
+	if w < 1 {
+		w = 80
+	}
+	return tea.WindowSizeMsg{Width: w, Height: h}
+}
+
+// applyContentSize sizes a newly activated view using the known terminal size
+// so list fetches use the full content area instead of the default page size.
+// The re-fetch Cmd from WindowSizeMsg is discarded; the caller runs Init/Refresh.
+func (a *App) applyContentSize(view tea.Model) tea.Model {
+	if view == nil || a.height == 0 {
+		return view
+	}
+	sized, _ := view.Update(a.contentSizeMsg())
+	return sized
 }
 
 // View renders the full UI.
@@ -461,6 +525,7 @@ func (a *App) renderStatus() string {
 	s := a.statusInfo
 	rows := []struct{ icon, label, value string }{
 		{"", "CLI Version", s.VersionCli},
+		{"", "Core Version", s.VersionCore},
 		{"", "DB Migration", s.DbMigration},
 		{"", "User", s.User},
 		{"", "PHP", s.PHP},

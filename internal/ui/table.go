@@ -3,6 +3,8 @@ package ui
 import (
 	"fmt"
 	"strings"
+
+	"github.com/charmbracelet/lipgloss"
 )
 
 // tableOverhead is the number of non-data lines rendered by View():
@@ -12,6 +14,9 @@ const tableOverhead = 5
 // minTableRows is the minimum number of data rows the table will display.
 const minTableRows = 3
 
+// indicatorWidth is the leading cursor glyph column (" " or "►").
+const indicatorWidth = 1
+
 // TableWidget renders a paginated table with cursor selection.
 type TableWidget struct {
 	title    string
@@ -20,6 +25,7 @@ type TableWidget struct {
 	cursor   int
 	offset   int
 	limit    int
+	width    int // available content-area width (0 = use column mins only)
 	loading  bool
 	err      error
 	hasMore  bool
@@ -53,6 +59,101 @@ func (t *TableWidget) SetContentHeight(h int) bool {
 	}
 	t.limit = newLimit
 	return true
+}
+
+// SetContentWidth stores the available content-area width so flex columns can expand.
+func (t *TableWidget) SetContentWidth(w int) {
+	if w < 0 {
+		w = 0
+	}
+	t.width = w
+}
+
+// effectiveWidths returns per-column widths after distributing leftover terminal
+// space across flex columns (explicit Flex, or auto-picked wide columns).
+func (t *TableWidget) effectiveWidths() []int {
+	n := len(t.columns)
+	widths := make([]int, n)
+	if n == 0 {
+		return widths
+	}
+
+	flex := make([]int, 0, n)
+	for i, c := range t.columns {
+		w := c.Width
+		if w < len(c.Header) {
+			w = len(c.Header)
+		}
+		if w < 1 {
+			w = 1
+		}
+		widths[i] = w
+		if c.Flex {
+			flex = append(flex, i)
+		}
+	}
+	if len(flex) == 0 {
+		// Auto-flex: every column with Width >= 20, else the single widest.
+		maxW, maxI := 0, 0
+		for i, c := range t.columns {
+			if c.Width > maxW {
+				maxW, maxI = c.Width, i
+			}
+			if c.Width >= 20 {
+				flex = append(flex, i)
+			}
+		}
+		if len(flex) == 0 {
+			flex = []int{maxI}
+		}
+	}
+
+	// indicator + sum(widths) + space between columns
+	used := indicatorWidth + n // n gaps: after indicator and between cols... actually
+	// layout is: indicator + col0 + " " + col1 + " " + ...
+	// so spaces = n (one after indicator is baked into joining: indicator+join(parts," "))
+	// View does: indicator + strings.Join(rowParts, " ") → spaces between cols = n-1, plus indicator = 1 char
+	used = indicatorWidth
+	for i, w := range widths {
+		used += w
+		if i < n-1 {
+			used++ // gap between columns
+		}
+	}
+
+	extra := t.width - used
+	if extra <= 0 || len(flex) == 0 {
+		return widths
+	}
+
+	share := extra / len(flex)
+	rem := extra % len(flex)
+	for i, idx := range flex {
+		widths[idx] += share
+		if i < rem {
+			widths[idx]++
+		}
+	}
+	return widths
+}
+
+// truncateCell truncates/pads by visible width (ANSI/emoji-aware).
+func truncateCell(val string, width int) string {
+	if width <= 0 {
+		return ""
+	}
+	w := lipgloss.Width(val)
+	if w == width {
+		return val
+	}
+	if w < width {
+		return val + strings.Repeat(" ", width-w)
+	}
+	if width <= 3 {
+		return lipgloss.NewStyle().MaxWidth(width).Render(val)
+	}
+	trimmed := lipgloss.NewStyle().MaxWidth(width - 3).Render(val)
+	return trimmed + "..."
 }
 
 // SetData updates the table with fresh data.
@@ -127,11 +228,10 @@ func (t *TableWidget) HandleKey(key string) (refresh, nextPage, prevPage, openDe
 	return false, false, false, false, false, false
 }
 
-// View renders the table filling available height.
+// View renders the table filling available height and width.
 func (t *TableWidget) View() string {
 	var b strings.Builder
 
-	// Title
 	if t.title != "" {
 		b.WriteString(TitleStyle().Render(t.title))
 		b.WriteString("\n")
@@ -148,22 +248,26 @@ func (t *TableWidget) View() string {
 		return b.String()
 	}
 
-	// Compute total column width for separators
-	totalWidth := 1 // leading indicator char
-	for _, col := range t.columns {
-		totalWidth += col.Width + 1
+	widths := t.effectiveWidths()
+	totalWidth := indicatorWidth
+	for i, w := range widths {
+		totalWidth += w
+		if i < len(widths)-1 {
+			totalWidth++
+		}
+	}
+	if t.width > totalWidth {
+		totalWidth = t.width
 	}
 	sep := strings.Repeat("─", totalWidth)
 
-	// Column headers
 	parts := make([]string, len(t.columns))
 	for i, col := range t.columns {
-		parts[i] = fmt.Sprintf("%-*s", col.Width, col.Header)
+		parts[i] = fmt.Sprintf("%-*s", widths[i], truncateCell(col.Header, widths[i]))
 	}
 	b.WriteString(" " + strings.Join(parts, " ") + "\n")
 	b.WriteString(sep + "\n")
 
-	// Data rows
 	if len(t.rows) == 0 {
 		b.WriteString(DescriptionStyle().Render("  (no items)") + "\n")
 	} else {
@@ -173,33 +277,29 @@ func (t *TableWidget) View() string {
 		}
 		for i := 0; i < count; i++ {
 			row := t.rows[i]
+			selected := i == t.cursor
+			indicator := " "
+			if selected {
+				indicator = SelectedStyle().Render("►")
+			}
 			rowParts := make([]string, len(t.columns))
 			for j, col := range t.columns {
-				val := row.Values[col.Field]
-				if len(val) > col.Width {
-					if col.Width > 3 {
-						val = val[:col.Width-3] + "..."
+				val := truncateCell(row.Values[col.Field], widths[j])
+				// Preserve per-cell colours (e.g. exit-code badges); style plain cells.
+				if !hasANSI(val) {
+					if selected {
+						val = SelectedStyle().Render(val)
 					} else {
-						val = val[:col.Width]
+						val = UnselectedStyle().Render(val)
 					}
 				}
-				rowParts[j] = fmt.Sprintf("%-*s", col.Width, val)
+				rowParts[j] = val
 			}
-			indicator := " "
-			if i == t.cursor {
-				indicator = "►"
-			}
-			line := indicator + strings.Join(rowParts, " ")
-			if i == t.cursor {
-				b.WriteString(SelectedStyle().Render(line))
-			} else {
-				b.WriteString(UnselectedStyle().Render(line))
-			}
+			b.WriteString(indicator + strings.Join(rowParts, " "))
 			b.WriteString("\n")
 		}
 	}
 
-	// Pagination bar
 	b.WriteString(sep + "\n")
 	prevStr := DescriptionStyle().Render("[←]")
 	if t.offset > 0 {

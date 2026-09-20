@@ -3,6 +3,7 @@ package cli
 // StatusInfo represents comprehensive system status.
 type StatusInfo struct {
 	VersionCli      string `json:"version-cli"`
+	VersionCore     string `json:"version-core"`
 	DbMigration     string `json:"db-migration"`
 	User            string `json:"user"`
 	PHP             string `json:"php"`
@@ -56,9 +57,11 @@ type Application struct {
 	Version      string  `json:"version"`
 	Code         string  `json:"code"`
 	UUID         string  `json:"uuid"`
-	Topics       string  `json:"topics"`
+	Tags         string  `json:"tags"`
 	ResultFile   string  `json:"resultfile"`
 	Artifacts    string  `json:"artifacts"`
+	DefFile      string  `json:"deffile"`
+	HelmChart    string  `json:"helmchart"`
 }
 
 // Company represents a company.
@@ -102,6 +105,12 @@ type RunTemplate struct {
 	DatSave             string  `json:"DatSave"`
 	SuccessfulJobsCount int     `json:"successfull_jobs_count"`
 	FailedJobsCount     int     `json:"failed_jobs_count"`
+	DeadlineOffset      *int    `json:"deadline_offset"`
+	MaxAttempts         int     `json:"max_attempts"`
+	RetryBackoff        string  `json:"retry_backoff"`
+	RetryMinGap         int     `json:"retry_min_gap"`
+	AllowLate           int     `json:"allow_late"`
+	AppUUID             string  `json:"app_uuid"`
 }
 
 // Job represents a job.
@@ -111,7 +120,7 @@ type Job struct {
 	Begin             string            `json:"begin"`
 	End               string            `json:"end"`
 	CompanyID         int               `json:"company_id"`
-	Exitcode          int               `json:"exitcode"`
+	Exitcode          *int              `json:"exitcode"`
 	Stdout            string            `json:"stdout"`
 	Stderr            string            `json:"stderr"`
 	LaunchedBy        int               `json:"launched_by"`
@@ -125,21 +134,28 @@ type Job struct {
 	PID               int               `json:"pid"`
 	RetentionUntil    *string           `json:"retention_until"`
 	MarkedForDeletion int               `json:"marked_for_deletion"`
+	TaskID            *int              `json:"task_id"`
+	BlockReason       *string           `json:"block_reason"`
+	BlockedAt         *string           `json:"blocked_at"`
 }
 
 // Credential represents a credential.
 type Credential struct {
-	ID               int    `json:"id"`
-	Name             string `json:"name"`
-	CompanyID        int    `json:"company_id"`
-	CredentialTypeID int    `json:"credential_type_id"`
+	ID               int     `json:"id"`
+	Name             string  `json:"name"`
+	CompanyID        int     `json:"company_id"`
+	FormType         *string `json:"formType"`
+	CredentialTypeID int     `json:"credential_type_id"`
 }
 
-// Token represents a token.
+// Token represents an API bearer token.
 type Token struct {
-	ID    int    `json:"id"`
-	User  string `json:"user"`
-	Token string `json:"token"`
+	ID     int     `json:"id"`
+	UserID int     `json:"user_id"`
+	User   string  `json:"user"` // login from joined user row (list)
+	Token  string  `json:"token"`
+	Start  string  `json:"start"`
+	Until  *string `json:"until"`
 }
 
 // User represents a user.
@@ -187,7 +203,7 @@ type CredType struct {
 	ID        int    `json:"id"`
 	UUID      string `json:"uuid"`
 	Name      string `json:"name"`
-	Class     string `json:"class"`
+	Prototype string `json:"prototype"`
 	CompanyID int    `json:"company_id"`
 	Logo      string `json:"logo"`
 	URL       string `json:"url"`
@@ -203,6 +219,8 @@ type CrPrototype struct {
 	Description string `json:"description"`
 	Logo        string `json:"logo"`
 	URL         string `json:"url"`
+	Homepage    string `json:"homepage"`
+	Tags        string `json:"tags"`
 	Version     string `json:"version"`
 	CreatedAt   string `json:"created_at"`
 	UpdatedAt   string `json:"updated_at"`
@@ -210,9 +228,27 @@ type CrPrototype struct {
 
 // CompanyApp represents a company-application relation.
 type CompanyApp struct {
-	ID        int `json:"id"`
-	CompanyID int `json:"company_id"`
-	AppID     int `json:"app_id"`
+	ID          int    `json:"id"`
+	CompanyID   int    `json:"company_id"`
+	CompanyName string `json:"company_name"`
+	CompanySlug string `json:"company_slug"`
+	AppID       int    `json:"app_id"`
+	AppName     string `json:"app_name"`
+	AppUUID     string `json:"app_uuid"`
+}
+
+// Task represents a scheduled task window.
+type Task struct {
+	ID               int     `json:"id"`
+	RunTemplateID    int     `json:"runtemplate_id"`
+	WindowStart      string  `json:"window_start"`
+	WindowEnd        string  `json:"window_end"`
+	Deadline         string  `json:"deadline"`
+	State            string  `json:"state"`
+	FulfilledByJobID *int    `json:"fulfilled_by_job_id"`
+	FulfilledAt      *string `json:"fulfilled_at"`
+	Attempts         int     `json:"attempts"`
+	CreatedAt        string  `json:"created_at"`
 }
 
 // Queue represents a queue item.
@@ -254,4 +290,21 @@ type EventRule struct {
 	Priority      int    `json:"priority"`
 	Enabled       int    `json:"enabled"`
 	EnvMapping    string `json:"env_mapping"`
+}
+
+// ConfField represents an application configuration field definition.
+type ConfField struct {
+	ID          int    `json:"id"`
+	AppID       int    `json:"app_id"`
+	Keyname     string `json:"keyname"`
+	Type        string `json:"type"`
+	Category    string `json:"category"`
+	Description string `json:"description"`
+	Hint        string `json:"hint"`
+	Note        string `json:"note"`
+	Defval      string `json:"defval"`
+	Required    int    `json:"required"`
+	Secret      int    `json:"secret"`
+	Multiline   int    `json:"multiline"`
+	Expiring    int    `json:"expiring"`
 }

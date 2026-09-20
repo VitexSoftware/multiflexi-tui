@@ -6,13 +6,16 @@ import (
 )
 
 func TestStatusInfoUnmarshal(t *testing.T) {
-	data := `{"version-cli":"2.3.2","user":"root","memory":4259072,"companies":5,"apps":51,"encryption":"active (3 keys)"}`
+	data := `{"version-cli":"2.5.10","version-core":"2.11.0","user":"root","memory":4259072,"companies":5,"apps":51,"encryption":"active (3 keys)"}`
 	var s StatusInfo
 	if err := json.Unmarshal([]byte(data), &s); err != nil {
 		t.Fatalf("unmarshal: %v", err)
 	}
-	if s.VersionCli != "2.3.2" {
-		t.Errorf("VersionCli = %q, want 2.3.2", s.VersionCli)
+	if s.VersionCli != "2.5.10" {
+		t.Errorf("VersionCli = %q, want 2.5.10", s.VersionCli)
+	}
+	if s.VersionCore != "2.11.0" {
+		t.Errorf("VersionCore = %q, want 2.11.0", s.VersionCore)
 	}
 	if s.Memory != 4259072 {
 		t.Errorf("Memory = %d, want 4259072", s.Memory)
@@ -41,6 +44,18 @@ func TestJobUnmarshal(t *testing.T) {
 	}
 	if j.ID != 100 || j.Command != "test-cmd" || j.Env["FOO"] != "bar" || j.PID != 12345 {
 		t.Errorf("unexpected: %+v", j)
+	}
+	if j.Exitcode == nil || *j.Exitcode != 0 {
+		t.Errorf("exitcode = %v, want 0", j.Exitcode)
+	}
+
+	pending := `{"id":101,"command":"wait","exitcode":null}`
+	var p Job
+	if err := json.Unmarshal([]byte(pending), &p); err != nil {
+		t.Fatalf("unmarshal pending: %v", err)
+	}
+	if p.Exitcode != nil {
+		t.Errorf("pending exitcode = %v, want nil", p.Exitcode)
 	}
 }
 
@@ -99,13 +114,49 @@ func TestQueueUnmarshal(t *testing.T) {
 	}
 }
 
-func TestArtifactUnmarshal(t *testing.T) {
-	data := `{"id":100,"job_id":200,"filename":"stdout.txt","content_type":"text/plain","artifact":"data","created_at":"2026-01-01","note":"test"}`
-	var a Artifact
+func TestTaskUnmarshal(t *testing.T) {
+	data := `{"id":1,"runtemplate_id":139,"window_start":"2026-07-01 12:00:00","window_end":"2026-07-01 13:00:00","deadline":"2026-07-01 13:00:00","state":"fulfilled","fulfilled_by_job_id":306425,"fulfilled_at":"2026-07-01 10:15:04","attempts":0,"created_at":"2026-07-01 11:25:47"}`
+	var task Task
+	if err := json.Unmarshal([]byte(data), &task); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	if task.ID != 1 || task.State != "fulfilled" || task.RunTemplateID != 139 {
+		t.Errorf("unexpected: %+v", task)
+	}
+	if task.FulfilledByJobID == nil || *task.FulfilledByJobID != 306425 {
+		t.Errorf("FulfilledByJobID unexpected: %+v", task.FulfilledByJobID)
+	}
+}
+
+func TestCompanyAppUnmarshal(t *testing.T) {
+	data := `{"id":326,"company_id":1,"company_name":"SPOJE.NET","company_slug":"SPOJENET","app_id":1,"app_name":"Checker","app_uuid":"abc"}`
+	var ca CompanyApp
+	if err := json.Unmarshal([]byte(data), &ca); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	if ca.CompanyName != "SPOJE.NET" || ca.AppName != "Checker" || ca.ID != 326 {
+		t.Errorf("unexpected: %+v", ca)
+	}
+}
+
+func TestCredTypeUnmarshal(t *testing.T) {
+	data := `{"id":1,"name":"AbraFlexi","uuid":"u","prototype":"AbraFlexi","company_id":1,"version":0}`
+	var ct CredType
+	if err := json.Unmarshal([]byte(data), &ct); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	if ct.Prototype != "AbraFlexi" || ct.Name != "AbraFlexi" {
+		t.Errorf("unexpected: %+v", ct)
+	}
+}
+
+func TestApplicationTagsUnmarshal(t *testing.T) {
+	data := `{"id":1,"name":"MyApp","version":"1.0","uuid":"abc-123","executable":"/usr/bin/app","enabled":1,"tags":"finance,api","deffile":"/x.app.json","helmchart":""}`
+	var a Application
 	if err := json.Unmarshal([]byte(data), &a); err != nil {
 		t.Fatalf("unmarshal: %v", err)
 	}
-	if a.Filename != "stdout.txt" || a.JobID != 200 || a.Note != "test" {
+	if a.Tags != "finance,api" || a.DefFile != "/x.app.json" {
 		t.Errorf("unexpected: %+v", a)
 	}
 }

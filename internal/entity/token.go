@@ -8,11 +8,30 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
+func tokenUserLabel(t cli.Token) string {
+	if t.User != "" {
+		return t.User
+	}
+	if t.UserID > 0 {
+		return fmt.Sprintf("#%d", t.UserID)
+	}
+	return ""
+}
+
+func tokenUntilLabel(t cli.Token) string {
+	if t.Until == nil || *t.Until == "" {
+		return "never"
+	}
+	return *t.Until
+}
+
 var TokenDef = &EntityDef{
 	Name: "🎟️ Tokens", CLIEntity: "token", DeleteAction: "delete", Limit: 10,
 	Columns: []ui.TableColumn{
-		{Header: "ID", Width: 8, Field: "id"}, {Header: "User", Width: 20, Field: "user"},
-		{Header: "Token", Width: 45, Field: "token"},
+		{Header: "ID", Width: 8, Field: "id"},
+		{Header: "User", Width: 16, Field: "user"},
+		{Header: "Token", Width: 28, Field: "token", Flex: true},
+		{Header: "Until", Width: 20, Field: "until"},
 	},
 	Fetch: func(c cli.Client, limit, offset int) ([]ui.TableRow, error) {
 		var items []cli.Token
@@ -21,8 +40,15 @@ var TokenDef = &EntityDef{
 		}
 		rows := make([]ui.TableRow, len(items))
 		for i, t := range items {
+			tok := t.Token
+			if len(tok) > 12 {
+				tok = tok[:6] + "…" + tok[len(tok)-4:]
+			}
 			rows[i] = ui.TableRow{ID: t.ID, Values: map[string]string{
-				"id": fmt.Sprintf("%d", t.ID), "user": t.User, "token": t.Token,
+				"id":    fmt.Sprintf("%d", t.ID),
+				"user":  tokenUserLabel(t),
+				"token": tok,
+				"until": tokenUntilLabel(t),
 			}, FullData: t}
 		}
 		return rows, nil
@@ -31,14 +57,17 @@ var TokenDef = &EntityDef{
 		t := data.(cli.Token)
 		return []ui.DetailField{
 			{Label: "ID", Value: fmt.Sprintf("%d", t.ID)},
-			{Label: "User", Value: t.User},
+			{Label: "User ID", Value: fmt.Sprintf("%d", t.UserID)},
+			{Label: "User", Value: tokenUserLabel(t)},
 			{Label: "Token", Value: t.Token},
+			{Label: "Start", Value: t.Start},
+			{Label: "Until", Value: tokenUntilLabel(t)},
 		}
 	},
 	ToEditor: func(data interface{}) []ui.EditorField {
 		t := data.(cli.Token)
 		return []ui.EditorField{
-			{Label: "User ID", Placeholder: "User ID", Value: t.User},
+			{Label: "User ID", Placeholder: "User ID", Value: fmt.Sprintf("%d", t.UserID)},
 			{Label: "Token", Placeholder: "Token value", Value: t.Token},
 		}
 	},
@@ -69,10 +98,19 @@ var TokenDef = &EntityDef{
 			Command: "generate",
 			Handler: func(c cli.Client, data interface{}) tea.Cmd {
 				t := data.(cli.Token)
+				userArg := fmt.Sprintf("%d", t.UserID)
+				if t.UserID == 0 && t.User != "" {
+					userArg = t.User
+				}
 				return func() tea.Msg {
-					output, err := c.RunRaw("token", "generate", "--format=json",
-						"--user", t.User)
-					viewer := ui.NewViewer(fmt.Sprintf("Generate Token for User %s", t.User))
+					args := []string{"token:generate", "--format=json"}
+					if t.UserID > 0 {
+						args = append(args, "--user", userArg)
+					} else {
+						args = append(args, "--login", userArg)
+					}
+					output, err := c.RunRaw(args...)
+					viewer := ui.NewViewer(fmt.Sprintf("Generate Token for User %s", userArg))
 					if err != nil {
 						viewer.SetContent("Generate Token", fmt.Sprintf("Error: %v\n\n%s", err, string(output)))
 					} else {

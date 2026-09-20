@@ -29,11 +29,16 @@ var CredentialDef = &EntityDef{
 	},
 	ToDetail: func(data interface{}) []ui.DetailField {
 		cr := data.(cli.Credential)
+		formType := ""
+		if cr.FormType != nil {
+			formType = *cr.FormType
+		}
 		return []ui.DetailField{
 			{Label: "ID", Value: fmt.Sprintf("%d", cr.ID)},
 			{Label: "Name", Value: cr.Name},
 			{Label: "Company ID", Value: fmt.Sprintf("%d", cr.CompanyID)},
 			{Label: "Credential Type ID", Value: fmt.Sprintf("%d", cr.CredentialTypeID)},
+			{Label: "Form Type", Value: formType},
 		}
 	},
 	ToEditor: func(data interface{}) []ui.EditorField {

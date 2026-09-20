@@ -7,7 +7,7 @@ A modern terminal user interface for [multiflexi-cli](https://github.com/VitexSo
 
 ## Features
 
-- **Full Entity CRUD**: List, view details, create, edit, and delete all 14 MultiFlexi entity types
+- **Full Entity CRUD**: List, view details, create, edit, and delete MultiFlexi entity types (15 menus)
 - **Entity-specific Actions**: Beyond CRUD — schedule runs, view stdout/stderr, generate tokens, test event sources, save artifacts, sync credential prototypes, and more
 - **Dynamic Terminal Viewport**: Tables and viewers fill the full terminal height automatically (Midnight Commander style); all views reflow on resize
 - **Scrollable Menu Bar**: When menu items exceed screen width, the bar scrolls to keep the focused item visible
@@ -23,16 +23,17 @@ A modern terminal user interface for [multiflexi-cli](https://github.com/VitexSo
 | Entity | List | Detail | Create | Edit | Delete | Special Actions |
 |--------|------|--------|--------|------|--------|-----------------|
 | Companies | ✅ | ✅ | ✅ | ✅ | ✅ | — |
-| Applications | ✅ | ✅ | ✅ | ✅ | ✅ | Show Config (`s`) |
+| Applications | ✅ | ✅ | ✅ | ✅ | ✅ | Config fields CRUD (`c`) — same as web ``conffield.php`` |
 | RunTemplates | ✅ | ✅ | ✅ | ✅ | ✅ | Schedule (`s`) |
-| Jobs | ✅ | ✅ | ✅ | ✅ | ✅ | View Stdout (`o`), View Stderr (`e`) |
+| Jobs | ✅ | ✅ | ✅ | ✅ | ✅ | View Stdout (`o`), View Stderr (`r`) |
+| Tasks | ✅ | ✅ | — | — | — | — |
 | Credentials | ✅ | ✅ | ✅ | ✅ | ✅ | — |
 | Tokens | ✅ | ✅ | ✅ | ✅ | ✅ | Generate (`g`) |
-| Users | ✅ | ✅ | ✅ | ✅ | ✅ | — |
-| Artifacts | ✅ | ✅ | — | — | ✅ | Save to file (`s`) |
+| Users | ✅ | ✅ | ✅ | ✅ | ✅ | Roles (`r`), Set Roles (`R`), Make Admin (`a`) |
+| Artifacts | ✅ | ✅ | — | — | — | Save to file (`s`) |
 | CredTypes | ✅ | ✅ | ✅ | ✅ | — | — |
 | CrPrototypes | ✅ | ✅ | ✅ | ✅ | ✅ | Sync All (list: `S`) |
-| CompanyApps | ✅ | ✅ | ✅ | ✅ | ✅ | — |
+| CompanyApps | ✅ | ✅ | — | — | — | Assign (`a`), Unassign (`u`) |
 | Queue | ✅ | ✅ | — | — | — | Fix (`f`), Truncate (`T`) |
 | EventSources | ✅ | ✅ | ✅ | ✅ | ✅ | Test (`t`) |
 | EventRules | ✅ | ✅ | ✅ | ✅ | ✅ | — |
@@ -44,7 +45,7 @@ A modern terminal user interface for [multiflexi-cli](https://github.com/VitexSo
 | Key | Action |
 |-----|--------|
 | `Tab` | Toggle focus between menu bar and content |
-| `Esc` | Go back to previous view |
+| `Esc` | Go back (detail→list→status/menu). Always closes the current view. |
 | `Ctrl+C` | Quit |
 | `q` | Quit (when menu focused) |
 
@@ -142,7 +143,7 @@ multiflexi-tui/
 │   │   └── menu.go          # MenuItem type
 │   ├── cli/
 │   │   ├── client.go        # Client interface + CLIClient (exec.Command wrapper)
-│   │   └── types.go         # All entity structs (14 types + StatusInfo)
+│   │   └── types.go         # All entity structs (15 types + StatusInfo)
 │   ├── entity/
 │   │   ├── registry.go      # EntityDef struct + global registry
 │   │   ├── list_view.go     # Generic ListView — works with any EntityDef
@@ -151,6 +152,7 @@ multiflexi-tui/
 │   │   ├── action_form.go   # Generic action form (prompted input → CLI command)
 │   │   ├── company.go
 │   │   ├── job.go
+│   │   ├── task.go
 │   │   ├── application.go
 │   │   ├── runtemplate.go
 │   │   ├── credential.go

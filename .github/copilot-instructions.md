@@ -10,90 +10,44 @@
 
 The TUI now provides complete coverage of all `multiflexi-cli --format=json` functionality with comprehensive entity management:
 
-#### **Complete Entity Coverage (15 entities)**
+#### **Complete Entity Coverage**
 
-| **Entity** | **CLI Command** | **TUI Integration** | **Field Coverage** | **Status** |
-|------------|----------------|-------------------|-------------------|------------|
-| **Applications** | `application list` | ✅ Full UI | All fields | Complete |
-| **Companies** | `company list` | ✅ Full UI | All fields | Complete |
-| **Jobs** | `job list` | ✅ Full UI | All fields | Complete |
-| **Users** | `user list` | ✅ Full UI | All fields | Complete |
-| **RunTemplates** | `runtemplate list` | ✅ Full UI | All fields | Complete |
-| **Credentials** | `credential list` | ✅ Full UI | All fields | Complete |
-| **Tokens** | `token list` | ✅ Full UI | All fields | Complete |
-| **Artifacts** | `artifact list` | ✅ Full UI | **7/7 fields** (Enhanced) | **Updated** |
-| **CredTypes** | `credentialtype list` | ✅ Full UI | **8/8 fields** (Enhanced) | **Updated** |
-| **CrPrototypes** | `crprototype list` | ✅ Full UI | **10/10 fields** (New) | **Added** |
-| **CompanyApps** | `companyapp list` | ✅ Full UI | All fields | Complete |
-| **Encryption** | `encryption status` | ✅ Full UI | All fields | Complete |
-| **Queue** | `queue list` | ✅ Full UI | All fields | Complete |
-| **Prune** | `prune operations` | ✅ Full UI | All operations | Complete |
-| **Status** | `status --format=json` | ✅ Full UI | All fields | Complete |
+| **Entity** | **CLI Command** | **TUI Integration** | **Status** |
+|------------|----------------|-------------------|------------|
+| **Applications** | `application:list` | ✅ Full UI | Complete |
+| **Companies** | `company:list` | ✅ Full UI | Complete |
+| **Jobs** | `job:list` | ✅ Full UI | Complete |
+| **Tasks** | `task:list` | ✅ List + Detail | Complete |
+| **Users** | `user:list` | ✅ Full UI | Complete |
+| **RunTemplates** | `run-template:list` | ✅ Full UI | Complete |
+| **Credentials** | `credential:list` | ✅ Full UI | Complete |
+| **Tokens** | `token:list` | ✅ Full UI | Complete |
+| **Artifacts** | `artifact:list` | ✅ List + Save | Complete |
+| **CredTypes** | `credential-type:list` | ✅ Full UI | Complete |
+| **CrPrototypes** | `credential-prototype:list` | ✅ Full UI | Complete |
+| **CompanyApps** | `company-app:list` | ✅ List + Assign/Unassign | Complete |
+| **Queue** | `queue:list` | ✅ List + Fix/Truncate | Complete |
+| **EventSources** | `event-source:list` | ✅ Full UI | Complete |
+| **EventRules** | `event-rule:list` | ✅ Full UI | Complete |
+| **Status** | `status --format=json` | ✅ Dashboard | Complete |
 
-#### **Recent Enhancements (v2.3.2.110 CLI compatibility)**
+CLI commands use the hyphenated `entity:action` form. Refresh the committed dump with:
 
-**🆕 CrPrototypes Entity (New)**
-- Complete implementation of credential prototype management
-- 10 fields: ID, Name, Version, Description, Fields, Connections, etc.
-- Full CRUD operation support through CLI integration
-
-**📈 Enhanced Artifacts Entity (3→7 fields)**
-```go
-type Artifact struct {
-    ID          int     `json:"id"`
-    JobID       int     `json:"job_id"`  
-    Filename    string  `json:"filename"`      // NEW
-    ContentType string  `json:"content_type"`  // NEW
-    Artifact    string  `json:"artifact"`      // NEW
-    CreatedAt   string  `json:"created_at"`    // NEW
-    Note        *string `json:"note,omitempty"`// NEW
-}
+```bash
+multiflexi-cli describe --format json > multiflexi-cli.json
 ```
 
-**📈 Enhanced CredTypes Entity (3→8 fields)**  
-```go
-type CredType struct {
-    ID        int     `json:"id"`
-    Name      string  `json:"name"`
-    UUID      string  `json:"uuid"`
-    Class     string  `json:"class"`      // NEW
-    CompanyID *int    `json:"company_id,omitempty"` // NEW
-    Logo      *string `json:"logo,omitempty"`       // NEW
-    URL       *string `json:"url,omitempty"`        // NEW
-    Version   int     `json:"version"`              // NEW
-}
-```
+#### **Recent Enhancements (v2.5.x CLI compatibility)**
 
-### **Navigation Integration**
+**Tasks entity**
+- List/detail for scheduled task windows (`task:list` / `task:get`)
 
-All entities are accessible through the main menu system:
-```
-Status | RunTemplates | Jobs | Applications | Companies | Credentials | 
-Tokens | Users | Artifacts | CredTypes | CrPrototypes | CompanyApps | 
-Encryption | Queue | Prune | Commands | Help | Quit
-```
+**CLI namespace rename**
+- `runtemplate` → `run-template`, `credtype` → `credential-type`, `crprototype` → `credential-prototype`, `companyapp` → `company-app`, `eventsource` → `event-source`, `eventrule` → `event-rule`
 
-## Implementation Architecture
+**Application fields**
+- `topics` renamed to `tags`; added `deffile`, `helmchart`
 
-### **CLI Layer (`internal/cli/cli.go`)**
-- All entity structs with complete field mapping
-- JSON unmarshaling with proper nullable field handling  
-- Pagination support (limit/offset) for all list operations
-- Error handling and CLI command execution
-
-### **UI Layer (`internal/ui/`)**
-- Individual model files for each entity type
-- Consistent pagination and navigation patterns
-- Loading states and error handling
-- Cursor management for row selection
-
-### **Application Layer (`internal/app/`)**
-- ViewState management for all entities
-- Menu integration and navigation handling
-- Model initialization and state transitions
-- Context-aware hint system
-
----
 
 # MultiFlexi CLI - Listing Pagination Guide
 
@@ -108,13 +62,13 @@ When `multiflexi-cli describe` output is updated or new listing columns are adde
 #### 1. Identify Changes in CLI Output
 ```bash
 # Test the updated CLI command to see new structure
-multiflexi-cli <entity> list --format=json --limit=1
+multiflexi-cli <entity>:list --format=json --limit=1
 
-# Compare with current struct definitions in internal/cli/cli.go
+# Compare with current struct definitions in internal/cli/types.go
 # Look for new fields, changed field names, or different data types
 ```
 
-#### 2. Update Data Structures in `internal/cli/cli.go`
+#### 2. Update Data Structures in `internal/cli/types.go`
 - **Add new fields** to existing structs with proper JSON tags
 - **Update field names** if CLI field names changed  
 - **Change data types** if CLI output types changed

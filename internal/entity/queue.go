@@ -51,7 +51,7 @@ var QueueDef = &EntityDef{
 			Confirm: "Run queue fix? This repairs stuck queue entries.",
 			Handler: func(c cli.Client) tea.Cmd {
 				return func() tea.Msg {
-					output, err := c.RunRaw("queue", "fix", "--format=json")
+					output, err := c.RunRaw("queue:fix", "--format=json")
 					if err != nil {
 						return ui.StatusMsg{Text: fmt.Sprintf("Queue fix failed: %v", err)}
 					}
@@ -68,7 +68,7 @@ var QueueDef = &EntityDef{
 			Confirm: "TRUNCATE entire queue? All pending jobs will be removed!",
 			Handler: func(c cli.Client) tea.Cmd {
 				return func() tea.Msg {
-					_, err := c.RunRaw("queue", "truncate", "--format=json")
+					_, err := c.RunRaw("queue:truncate", "--format=json")
 					if err != nil {
 						return ui.StatusMsg{Text: fmt.Sprintf("Queue truncate failed: %v", err)}
 					}

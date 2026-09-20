@@ -9,7 +9,7 @@ import (
 )
 
 var RunTemplateDef = &EntityDef{
-	Name: "📋 Run Templates", CLIEntity: "runtemplate", DeleteAction: "delete", Limit: 10,
+	Name: "📋 Run Templates", CLIEntity: "run-template", DeleteAction: "delete", Limit: 10,
 	Columns: []ui.TableColumn{
 		{Header: "ID", Width: 5, Field: "id"}, {Header: "Name", Width: 25, Field: "name"},
 		{Header: "App ID", Width: 8, Field: "app_id"}, {Header: "Company", Width: 10, Field: "company"},
@@ -17,7 +17,7 @@ var RunTemplateDef = &EntityDef{
 	},
 	Fetch: func(c cli.Client, limit, offset int) ([]ui.TableRow, error) {
 		var items []cli.RunTemplate
-		if err := c.List("runtemplate", limit, offset, &items); err != nil {
+		if err := c.List("run-template", limit, offset, &items); err != nil {
 			return nil, err
 		}
 		rows := make([]ui.TableRow, len(items))
@@ -58,6 +58,8 @@ var RunTemplateDef = &EntityDef{
 			{Label: "Executor", Value: t.Executor},
 			{Label: "Last Schedule", Value: last},
 			{Label: "Next Schedule", Value: next},
+			{Label: "Max Attempts", Value: fmt.Sprintf("%d", t.MaxAttempts)},
+			{Label: "Retry Backoff", Value: t.RetryBackoff},
 			{Label: "Success Jobs", Value: fmt.Sprintf("%d", t.SuccessfulJobsCount)},
 			{Label: "Failed Jobs", Value: fmt.Sprintf("%d", t.FailedJobsCount)},
 		}
@@ -126,7 +128,7 @@ var RunTemplateDef = &EntityDef{
 							if v := fields["Executor"]; v != "" {
 								args = append(args, "--executor", v)
 							}
-							_, err := c.RunRaw(append([]string{"runtemplate", "schedule", "--format=json"}, args...)...)
+							_, err := c.RunRaw(append([]string{"run-template:schedule", "--format=json"}, args...)...)
 							if err != nil {
 								return ui.StatusMsg{Text: fmt.Sprintf("Schedule failed: %v", err)}
 							}

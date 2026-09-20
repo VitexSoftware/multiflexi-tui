@@ -9,27 +9,45 @@ import (
 )
 
 var CompanyAppDef = &EntityDef{
-	Name: "🔗 Company-App Relations", CLIEntity: "companyapp", DeleteAction: "delete", Limit: 10,
+	Name: "🔗 Company-App Relations", CLIEntity: "company-app", DeleteAction: "delete", Limit: 10,
 	Columns: []ui.TableColumn{
-		{Header: "Company ID", Width: 12, Field: "company_id"},
-		{Header: "App ID", Width: 12, Field: "app_id"},
+		{Header: "ID", Width: 6, Field: "id"},
+		{Header: "Company", Width: 25, Field: "company"},
+		{Header: "App", Width: 30, Field: "app"},
 	},
 	Fetch: func(c cli.Client, limit, offset int) ([]ui.TableRow, error) {
-		// companyapp list requires --company_id and --app_id filters;
-		// return an empty list so the TUI shows the assign/unassign actions.
-		return []ui.TableRow{}, nil
+		var items []cli.CompanyApp
+		if err := c.List("company-app", limit, offset, &items); err != nil {
+			return nil, err
+		}
+		rows := make([]ui.TableRow, len(items))
+		for i, ca := range items {
+			rows[i] = ui.TableRow{ID: ca.ID, Values: map[string]string{
+				"id":      fmt.Sprintf("%d", ca.ID),
+				"company": ca.CompanyName,
+				"app":     ca.AppName,
+			}, FullData: ca}
+		}
+		return rows, nil
 	},
 	ToDetail: func(data interface{}) []ui.DetailField {
 		ca := data.(cli.CompanyApp)
 		return []ui.DetailField{
 			{Label: "ID", Value: fmt.Sprintf("%d", ca.ID)},
 			{Label: "Company ID", Value: fmt.Sprintf("%d", ca.CompanyID)},
+			{Label: "Company", Value: ca.CompanyName},
+			{Label: "Company Slug", Value: ca.CompanySlug},
 			{Label: "App ID", Value: fmt.Sprintf("%d", ca.AppID)},
+			{Label: "App", Value: ca.AppName},
+			{Label: "App UUID", Value: ca.AppUUID},
 		}
 	},
 	GetID:    func(data interface{}) int { return data.(cli.CompanyApp).ID },
-	GetLabel: func(data interface{}) string { return fmt.Sprintf("CompanyApp %d", data.(cli.CompanyApp).ID) },
-	Actions:  []ui.ActionDef{},
+	GetLabel: func(data interface{}) string {
+		ca := data.(cli.CompanyApp)
+		return fmt.Sprintf("%s → %s", ca.CompanyName, ca.AppName)
+	},
+	Actions: []ui.ActionDef{},
 	ListActions: []ui.ListActionDef{
 		{
 			Label: "Assign",
@@ -45,7 +63,7 @@ var CompanyAppDef = &EntityDef{
 						func(fields map[string]string) tea.Cmd {
 							return func() tea.Msg {
 								out, err := c.RunRaw(
-									"companyapp", "assign", "--format=json",
+									"company-app:assign", "--format=json",
 									"--company_id", fields["Company ID"],
 									"--app_id", fields["App ID"],
 								)
@@ -78,7 +96,7 @@ var CompanyAppDef = &EntityDef{
 						func(fields map[string]string) tea.Cmd {
 							return func() tea.Msg {
 								out, err := c.RunRaw(
-									"companyapp", "unassign", "--format=json",
+									"company-app:unassign", "--format=json",
 									"--company_id", fields["Company ID"],
 									"--app_id", fields["App ID"],
 								)

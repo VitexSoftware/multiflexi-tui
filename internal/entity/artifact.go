@@ -55,7 +55,7 @@ var ArtifactDef = &EntityDef{
 					},
 					func(fields map[string]string) tea.Cmd {
 						return func() tea.Msg {
-							_, err := c.RunRaw("artifact", "save",
+							_, err := c.RunRaw("artifact:save",
 								"--id", fmt.Sprintf("%d", a.ID),
 								"--file", fields["File Path"],
 							)

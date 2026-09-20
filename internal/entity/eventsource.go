@@ -9,14 +9,14 @@ import (
 )
 
 var EventSourceDef = &EntityDef{
-	Name: "📡 Event Sources", CLIEntity: "eventsource", DeleteAction: "remove", Limit: 10,
+	Name: "📡 Event Sources", CLIEntity: "event-source", DeleteAction: "remove", Limit: 10,
 	Columns: []ui.TableColumn{
 		{Header: "ID", Width: 5, Field: "id"}, {Header: "Name", Width: 25, Field: "name"},
 		{Header: "Adapter", Width: 30, Field: "adapter"}, {Header: "Enabled", Width: 8, Field: "enabled"},
 	},
 	Fetch: func(c cli.Client, limit, offset int) ([]ui.TableRow, error) {
 		var items []cli.EventSource
-		if err := c.List("eventsource", limit, offset, &items); err != nil {
+		if err := c.List("event-source", limit, offset, &items); err != nil {
 			return nil, err
 		}
 		rows := make([]ui.TableRow, len(items))
@@ -128,7 +128,7 @@ var EventSourceDef = &EntityDef{
 			Handler: func(c cli.Client, data interface{}) tea.Cmd {
 				es := data.(cli.EventSource)
 				return func() tea.Msg {
-					output, err := c.RunRaw("eventsource", "test", "--format=json",
+					output, err := c.RunRaw("event-source:test", "--format=json",
 						"--id", fmt.Sprintf("%d", es.ID))
 					viewer := ui.NewViewer(fmt.Sprintf("Test: %s", es.Name))
 					if err != nil {

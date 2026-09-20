@@ -41,7 +41,7 @@ Each entity is an `EntityDef` struct with callbacks:
 ```go
 type EntityDef struct {
     Name         string
-    CLIEntity    string          // CLI subcommand (e.g. "company")
+    CLIEntity    string          // CLI namespace (e.g. "company", "run-template")
     DeleteAction string          // "delete" or "remove"
     Limit        int             // default page size
     Columns      []ui.TableColumn
@@ -91,12 +91,14 @@ Chrome accounting:
 Line 0:  menu title + menu items
 Line 1:  hint line
 Line 2:  ══ separator
-...content area (Height − 5 lines)...
-Line H-2: ══ separator
-Line H-1: status message (optional)
-Line H:   help/key hint line
+...content area (Height − menu − footer)...
+Line H-2+: ══ separator, optional status/debug, help
 ```
 
+When a list (or any child view) is opened from the menu or via `NavigateToMsg`,
+`applyContentSize()` forwards the current content-area size **before** `Init()`,
+so the first fetch already uses a page size that fills the terminal — not the
+default `Limit: 10`.
 ## Adding a New Entity
 
 Create a single file `internal/entity/myentity.go`:

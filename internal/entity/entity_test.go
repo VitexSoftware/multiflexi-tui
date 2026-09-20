@@ -1,6 +1,8 @@
 package entity
 
 import (
+	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/VitexSoftware/multiflexi-tui/internal/cli"
@@ -56,7 +58,8 @@ func TestCompanyDetailAndEditor(t *testing.T) {
 }
 
 func TestJobDetailAndEditor(t *testing.T) {
-	j := cli.Job{ID: 50, Command: "run-sync", Executor: "Native", ScheduleType: "daily", PID: 0, Exitcode: 0}
+	exit := 0
+	j := cli.Job{ID: 50, Command: "run-sync", Executor: "Native", ScheduleType: "daily", PID: 0, Exitcode: &exit}
 	fields := JobDef.ToDetail(j)
 	if len(fields) < 10 {
 		t.Errorf("expected >=10 detail fields, got %d", len(fields))
@@ -72,6 +75,10 @@ func TestJobDetailAndEditor(t *testing.T) {
 	nf := JobDef.NewFields()
 	if len(nf) != 4 {
 		t.Errorf("expected 4 new fields for job, got %d", len(nf))
+	}
+
+	if JobDef.Columns[1].Field != "exitcode" {
+		t.Errorf("expected Exit column second, got %+v", JobDef.Columns[1])
 	}
 }
 
@@ -89,6 +96,69 @@ func TestApplicationDetailAndEditor(t *testing.T) {
 	if len(nf) != 5 {
 		t.Errorf("expected 5 new fields, got %d", len(nf))
 	}
+
+	var hasConfig bool
+	for _, act := range ApplicationDef.Actions {
+		if act.Key == "c" && act.Handler != nil {
+			hasConfig = true
+		}
+	}
+	if !hasConfig {
+		t.Error("ApplicationDef missing Config action (c) with Handler")
+	}
+}
+
+func TestConfFieldDef(t *testing.T) {
+	def := NewConfFieldDef(2, "DemoApp")
+	if def.CLIEntity != "conffield" {
+		t.Errorf("CLIEntity = %q", def.CLIEntity)
+	}
+	f := cli.ConfField{
+		ID: 10, AppID: 2, Keyname: "FOO", Type: "string", Description: "d",
+		Hint: "h", Note: "n", Defval: "v", Required: 1, Secret: 0, Multiline: 0, Expiring: 1,
+	}
+	detail := def.ToDetail(f)
+	if len(detail) < 10 {
+		t.Fatalf("expected >=10 detail fields, got %d", len(detail))
+	}
+	ef := def.ToEditor(f)
+	if len(ef) != 10 {
+		t.Fatalf("expected 10 editor fields, got %d", len(ef))
+	}
+	args := def.UpdateArgs(f, map[string]string{
+		"Keyword": "FOO2", "Type": "bool", "Description": "x", "Hint": "", "Note": "",
+		"Default": "1", "Required": "1", "Secret": "0", "Multiline": "0", "Expiring": "0",
+	})
+	joined := fmt.Sprintf("%v", args)
+	if !containsAll(joined, "--id", "10", "--keyname", "FOO2", "--type", "bool") {
+		t.Errorf("update args incomplete: %v", args)
+	}
+	nf := def.NewFields()
+	if len(nf) != 10 {
+		t.Errorf("expected 10 new fields, got %d", len(nf))
+	}
+	cargs := def.CreateArgs(map[string]string{
+		"Keyword": "BAR", "Type": "string", "Description": "desc", "Required": "1",
+	})
+	joined = fmt.Sprintf("%v", cargs)
+	if !containsAll(joined, "--app_id", "2", "--keyname", "BAR", "--type", "string", "--required", "1") {
+		t.Errorf("create args incomplete: %v", cargs)
+	}
+	if def.GetID(f) != 10 {
+		t.Errorf("GetID = %d", def.GetID(f))
+	}
+	if def.GetLabel(f) != "Field: FOO" {
+		t.Errorf("GetLabel = %q", def.GetLabel(f))
+	}
+}
+
+func containsAll(hay string, parts ...string) bool {
+	for _, p := range parts {
+		if !strings.Contains(hay, p) {
+			return false
+		}
+	}
+	return true
 }
 
 func TestRunTemplateDetailAndEditor(t *testing.T) {
@@ -119,10 +189,10 @@ func TestAllEntitiesHaveGetIDAndLabel(t *testing.T) {
 
 func TestAllEntitiesDeleteAction(t *testing.T) {
 	expected := map[string]string{
-		"company":     "remove",
-		"credential":  "remove",
-		"eventsource": "remove",
-		"eventrule":   "remove",
+		"company":          "remove",
+		"credential":       "remove",
+		"event-source":     "remove",
+		"event-rule":       "remove",
 	}
 	for _, e := range All {
 		da := e.Def.DeleteAction
@@ -162,16 +232,19 @@ func TestCompanyAppListActions(t *testing.T) {
 }
 
 func TestCompanyAppToDetail(t *testing.T) {
-	ca := cli.CompanyApp{ID: 7, CompanyID: 3, AppID: 5}
+	ca := cli.CompanyApp{ID: 7, CompanyID: 3, CompanyName: "Acme", AppID: 5, AppName: "Checker"}
 	fields := CompanyAppDef.ToDetail(ca)
-	if len(fields) != 3 {
-		t.Fatalf("expected 3 detail fields, got %d", len(fields))
+	if len(fields) != 7 {
+		t.Fatalf("expected 7 detail fields, got %d", len(fields))
 	}
 	if fields[0].Label != "ID" || fields[0].Value != "7" {
 		t.Errorf("first field: %+v", fields[0])
 	}
 	if CompanyAppDef.GetID(ca) != 7 {
 		t.Errorf("GetID = %d", CompanyAppDef.GetID(ca))
+	}
+	if CompanyAppDef.GetLabel(ca) != "Acme → Checker" {
+		t.Errorf("GetLabel = %q", CompanyAppDef.GetLabel(ca))
 	}
 }
 
