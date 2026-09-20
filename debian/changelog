@@ -1,3 +1,15 @@
+multiflexi-tui (2.4.0) unstable; urgency=medium
+
+  [ CyberVitexus ]
+  * Align with current multiflexi-cli hyphenated entity:action commands and schema
+  * Application Config (c): full CRUD for app-defined config fields (conffield)
+  * Tasks entity listing; Users RBAC roles (view, set, promote admin)
+  * Jobs list Exit column with status emoji and semantic colours
+  * Tokens listing restored (user login, expiry); flex table columns; Esc returns to menu
+  * Screen-sized list viewports and social preview assets
+
+ -- Vitex Software <info@vitexsoftware.cz>  Sun, 20 Sep 2026 18:59:28 +0200
+
 multiflexi-tui (2.3.0) unstable; urgency=medium
 
   [ CyberVitexus ]
