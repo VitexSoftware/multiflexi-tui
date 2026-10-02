@@ -9,4 +9,4 @@ multiflexi-tui (3.0.0) unstable; urgency=medium
   * Admin helpers: encryption status, prune, job/task/queue metrics,
     telemetry test, application JSON import/validate.
 
- -- Vitex Software <info@vitexsoftware.cz>  Fri, 02 Oct 2026 18:30:00 +0200
+ -- Vitex Software <info@vitexsoftware.cz>  Fri, 02 Oct 2026 18:54:19 +0200
