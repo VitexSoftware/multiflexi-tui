@@ -1,0 +1,40 @@
+#pragma once
+
+// Shared tvision include for the whole app. Define Uses_ macros once.
+#define Uses_TKeys
+#define Uses_TEvent
+#define Uses_TRect
+#define Uses_TPoint
+#define Uses_TApplication
+#define Uses_TDeskTop
+#define Uses_TWindow
+#define Uses_TDialog
+#define Uses_TFrame
+#define Uses_TGroup
+#define Uses_TView
+#define Uses_TDrawBuffer
+#define Uses_TScrollBar
+#define Uses_TListViewer
+#define Uses_TStaticText
+#define Uses_TLabel
+#define Uses_TButton
+#define Uses_TInputLine
+#define Uses_TSItem
+#define Uses_TCluster
+#define Uses_TCheckBoxes
+#define Uses_TRadioButtons
+#define Uses_TMemo
+#define Uses_TEditor
+#define Uses_TIndicator
+#define Uses_TMenuBar
+#define Uses_TSubMenu
+#define Uses_TMenuItem
+#define Uses_TStatusLine
+#define Uses_TStatusItem
+#define Uses_TStatusDef
+#define Uses_MsgBox
+#define Uses_TProgram
+#define Uses_TScreen
+#define Uses_TFileDialog
+
+#include <tvision/tv.h>

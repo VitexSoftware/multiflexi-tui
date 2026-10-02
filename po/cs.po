@@ -1,0 +1,149 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: multiflexi-tui 3.0.0\n"
+"Report-Msgid-Bugs-To: info@vitexsoftware.cz\n"
+"PO-Revision-Date: 2026-10-02 18:30+0200\n"
+"Last-Translator: Vitex Software <info@vitexsoftware.cz>\n"
+"Language-Team: Czech <info@vitexsoftware.cz>\n"
+"Language: cs\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "MultiFlexi Status"
+msgstr "Stav MultiFlexi"
+
+msgid "~R~efresh"
+msgstr "~O~bnovit"
+
+msgid "Close"
+msgstr "Zavřít"
+
+msgid "~N~ew"
+msgstr "~N~ový"
+
+msgid "~E~dit"
+msgstr "~U~pravit"
+
+msgid "~D~elete"
+msgstr "~S~mazat"
+
+msgid "~P~rev"
+msgstr "~P~ředchozí"
+
+msgid "Nex~t~"
+msgstr "~D~alší"
+
+msgid "~S~ave"
+msgstr "~U~ložit"
+
+msgid "Cancel"
+msgstr "Zrušit"
+
+msgid "~B~ack"
+msgstr "~Z~pět"
+
+msgid "~N~ext"
+msgstr "~D~alší"
+
+msgid "~F~inish"
+msgstr "~D~okončit"
+
+msgid "Activation Wizard"
+msgstr "Průvodce aktivací"
+
+msgid "Credential Wizard"
+msgstr "Průvodce přihlašovacími údaji"
+
+msgid "Step"
+msgstr "Krok"
+
+msgid "Pick a company"
+msgstr "Vyberte firmu"
+
+msgid "Pick an application"
+msgstr "Vyberte aplikaci"
+
+msgid "~Alt-X~ Exit"
+msgstr "~Alt-X~ Konec"
+
+msgid "~F1~ About"
+msgstr "~F1~ O aplikaci"
+
+msgid "~Alt-S~ Status"
+msgstr "~Alt-S~ Stav"
+
+msgid "Job ID"
+msgstr "ID úlohy"
+
+msgid "Open live job stream"
+msgstr "Otevřít živý výstup úlohy"
+
+msgid "Invalid job id"
+msgstr "Neplatné ID úlohy"
+
+msgid "~F~ollow"
+msgstr "~S~ledovat"
+
+msgid "Prune"
+msgstr "Prořezat"
+
+msgid "Keep latest N jobs/logs"
+msgstr "Ponechat posledních N úloh/logů"
+
+msgid "Select a company first"
+msgstr "Nejprve vyberte firmu"
+
+msgid "Select an application first"
+msgstr "Nejprve vyberte aplikaci"
+
+msgid "Wizard finished"
+msgstr "Průvodce dokončen"
+
+msgid "Select a company"
+msgstr "Vyberte firmu"
+
+msgid "Select a credential type"
+msgstr "Vyberte typ přihlašovacích údajů"
+
+msgid "Name is required"
+msgstr "Název je povinný"
+
+msgid "Complete the steps first"
+msgstr "Nejprve dokončete kroky"
+
+msgid "Name"
+msgstr "Název"
+
+msgid "Pick company"
+msgstr "Vyberte firmu"
+
+msgid "Pick credential type"
+msgstr "Vyberte typ přihlašovacích údajů"
+
+msgid "Enter credential name in the Name field"
+msgstr "Zadejte název do pole Název"
+
+msgid "Confirm create"
+msgstr "Potvrďte vytvoření"
+
+msgid "Done"
+msgstr "Hotovo"
+
+msgid "Credential created (values can be edited later)."
+msgstr "Přihlašovací údaje vytvořeny (hodnoty lze upravit později)."
+
+msgid "App JSON"
+msgstr "App JSON"
+
+msgid "Path for import (existing) or export target"
+msgstr "Cesta pro import (existující) nebo export"
+
+msgid "Import from this path? (No = export selected later via Apps Export action)"
+msgstr "Importovat z této cesty? (Ne = export později přes akci Export v Aplikacích)"
+
+msgid "Validate JSON at path instead?"
+msgstr "Místo toho ověřit JSON na cestě?"
+
+msgid "Initialize encryption key if missing?"
+msgstr "Inicializovat šifrovací klíč, pokud chybí?"

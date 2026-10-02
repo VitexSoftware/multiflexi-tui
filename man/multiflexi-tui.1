@@ -1,0 +1,25 @@
+.TH MULTIFLEXI-TUI 1 "October 2026" "multiflexi-tui 3.0.0" "User Commands"
+.SH NAME
+multiflexi-tui \- Turbo Vision terminal UI for MultiFlexi
+.SH SYNOPSIS
+.B multiflexi-tui
+[\fB\-\-cli=\fIPATH\fR]
+[\fB\-\-envfile=\fIPATH\fR]
+.SH DESCRIPTION
+\fBmultiflexi-tui\fR is a Turbo Vision (tvision) front-end for
+\fBmultiflexi-cli\fR. It provides keyboard-driven browsing and editing of
+MultiFlexi entities (companies, applications, run templates, jobs, credentials,
+users, events, and more), plus activation/credential wizards and live job
+output streaming via polling \fBjob:get\fR.
+.SH OPTIONS
+.TP
+.BI \-\-cli= PATH
+Path to the multiflexi-cli binary (default: multiflexi-cli on PATH, or
+\fBMULTIFLEXI_TUI_CLI\fR).
+.TP
+.BI \-\-envfile= PATH
+Pass \fB\-\-envfile=\fIPATH\fR through to multiflexi-cli.
+.SH SEE ALSO
+multiflexi-cli(1)
+.SH AUTHOR
+Vitex Software <info@vitexsoftware.cz>

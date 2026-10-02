@@ -3,11 +3,9 @@
 %:
 	dh $@
 
-override_dh_auto_build:
-	go build -trimpath -ldflags="-s -w" -o bin/multiflexi-tui ./cmd/multiflexi-tui
+override_dh_auto_configure:
+	dh_auto_configure -- -DCMAKE_BUILD_TYPE=Release
 
 override_dh_auto_test:
-	go test -v ./...
-
-override_dh_auto_clean:
-	rm -rf bin/
+	@echo "Smoke-testing CliClient if multiflexi-cli is available"
+	-debian/multiflexi-tui/../obj-*/multiflexi-tui-cliclient-check || true

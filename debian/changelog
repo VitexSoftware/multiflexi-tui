@@ -1,74 +1,12 @@
-multiflexi-tui (2.4.0) unstable; urgency=medium
+multiflexi-tui (3.0.0) unstable; urgency=medium
 
-  [ CyberVitexus ]
-  * Align with current multiflexi-cli hyphenated entity:action commands and schema
-  * Application Config (c): full CRUD for app-defined config fields (conffield)
-  * Tasks entity listing; Users RBAC roles (view, set, promote admin)
-  * Jobs list Exit column with status emoji and semantic colours
-  * Tokens listing restored (user login, expiry); flex table columns; Esc returns to menu
-  * Screen-sized list viewports and social preview assets
+  * Rewrite in C++ with Turbo Vision (replaces Go/Bubbletea frontend).
+  * Shell out to multiflexi-cli --format=json for all operations.
+  * Entity browsers for companies, applications, run templates, jobs, tasks,
+    credentials, tokens, users, artifacts, credential types/prototypes,
+    company-apps, queue, event sources/rules, and GDPR deletion requests.
+  * Activation and credential wizards; live job stdout/stderr streaming.
+  * Admin helpers: encryption status, prune, job/task/queue metrics,
+    telemetry test, application JSON import/validate.
 
- -- Vitex Software <info@vitexsoftware.cz>  Sun, 20 Sep 2026 18:59:28 +0200
-
-multiflexi-tui (2.3.0) unstable; urgency=medium
-
-  [ CyberVitexus ]
-  * Company-App assignments: assign/unassign application to company via interactive forms
-  * CompanyApp entity redesigned: Assign (a) and Unassign (u) list actions replace stub CRUD
-  * Each assign creates a default RunTemplate; unassign removes RunTemplates and action configs
-
- -- Vitex Software <info@vitexsoftware.cz>  Thu, 24 Apr 2026 12:00:00 +0200
-
-multiflexi-tui (2.2.0) unstable; urgency=medium
-
-  [ CyberVitexus ]
-  * Full entity CRUD with special per-entity actions (schedule, stdout/stderr,
-    generate token, show config, save artifact, sync, test event source)
-  * Dynamic terminal viewport: tables and viewers fill full screen height
-    (Midnight Commander style), all views reflow on resize
-  * Scrollable menu bar: focused item always kept in viewport
-  * CLI command debug bar: shows last multiflexi-cli invocation in footer
-  * Auto-refresh after every create, update, delete and list action
-
- -- Vitex Software <info@vitexsoftware.cz>  Fri, 18 Apr 2026 12:00:00 +0200
-
-multiflexi-tui (2.1.0) unstable; urgency=medium
-
-  [ Vitex Software ]
-  * Architecture rewrite: entity registry, CLI Client interface,
-    navigation stack
-
-  [ vitex ]
-  * Add EventSource and EventRule entities (new in multiflexi-cli)
-  * Add create operations for Company, Job, Application, RunTemplate
-  * Replace God-object Model with lean App and data-driven EntityDef
-    registry
-  * Replace package-level CLI functions with testable Client interface
-  * Fix delete verb per entity (remove vs delete) matching CLI
-  * 22 tests across 4 packages
-
- -- Vitex Software <info@vitexsoftware.cz>  Sat, 04 Apr 2026 14:07:22 +0200
-
-multiflexi-tui (2.0.0) unstable; urgency=medium
-
-  * Complete MultiFlexi CLI parity achieved (100% coverage)
-  * Enhanced Artifacts entity with 7 fields (was 3)
-  * Enhanced CredTypes entity with 8 fields (was 3)
-  * New CrPrototypes entity with full 10-field support
-  * All 15 MultiFlexi entities now supported with complete field coverage
-  * Comprehensive test suite for CLI structures and UI models
-  * Updated documentation for new entities and enhanced features
-  * Improved navigation with complete entity menu integration
-
- -- Vitex Software <info@vitexsoftware.cz>  Thu, 06 Feb 2026 10:00:00 +0100
-
-multiflexi-tui (0.1.0) unstable; urgency=medium
-
-  * Initial release of MultiFlexi TUI
-  * Dynamic command discovery from multiflexi-cli
-  * Interactive scrollable menu using Bubbletea framework
-  * Help viewer for command documentation
-  * Keyboard navigation support
-  * Debian packaging support
-
- -- Vitex Software <info@vitexsoftware.cz>  Mon, 10 Nov 2025 12:00:00 +0100
+ -- Vitex Software <info@vitexsoftware.cz>  Fri, 02 Oct 2026 18:30:00 +0200
