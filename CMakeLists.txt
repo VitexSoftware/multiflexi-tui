@@ -48,6 +48,7 @@ add_custom_target(translations ALL DEPENDS ${MULTIFLEXI_TUI_MO_FILES})
 add_executable(multiflexi-tui
     source/main.cpp
     source/CliClient.cpp
+    source/AsyncCliQueue.cpp
     source/i18n.cpp
     source/SimpleListViewer.cpp
     source/WindowColors.cpp
@@ -59,6 +60,7 @@ add_executable(multiflexi-tui
     source/EntityRegistry.cpp
     source/EntityListView.cpp
     source/EntityDetailView.cpp
+    source/EntityPicker.cpp
     source/Wizards.cpp
     source/JobStreamView.cpp
 )

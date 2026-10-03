@@ -1,4 +1,4 @@
-.TH MULTIFLEXI-TUI 1 "October 2026" "multiflexi-tui 3.0.0" "User Commands"
+.TH MULTIFLEXI-TUI 1 "October 2026" "multiflexi-tui 3.1.0" "User Commands"
 .SH NAME
 multiflexi-tui \- Turbo Vision terminal UI for MultiFlexi
 .SH SYNOPSIS
@@ -11,6 +11,10 @@ multiflexi-tui \- Turbo Vision terminal UI for MultiFlexi
 MultiFlexi entities (companies, applications, run templates, jobs, credentials,
 users, events, and more), plus activation/credential wizards and live job
 output streaming via polling \fBjob:get\fR.
+.PP
+Lists support a filter field and an optional active company scope. Forms offer
+relation pickers for foreign-key fields. CLI calls for list refresh and job
+streams are drained asynchronously so the UI stays responsive.
 .SH OPTIONS
 .TP
 .BI \-\-cli= PATH

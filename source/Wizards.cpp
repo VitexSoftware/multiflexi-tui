@@ -7,23 +7,10 @@
 #include "multiflexitui/WindowLayout.h"
 #include "multiflexitui/i18n.h"
 
+#include <cstring>
 #include <sstream>
 
 namespace multiflexitui {
-
-namespace {
-
-nlohmann::json asArray(const nlohmann::json &data) {
-    if (data.is_array()) {
-        return data;
-    }
-    if (data.is_object() && data.contains("data") && data["data"].is_array()) {
-        return data["data"];
-    }
-    return nlohmann::json::array();
-}
-
-} // namespace
 
 ActivationWizard::ActivationWizard(CliClient &client)
     : TWindowInit(&TDialog::initFrame),
@@ -67,7 +54,7 @@ void ActivationWizard::loadCompanies() {
     companies_.clear();
     auto r = client_.list("company", 200, 0);
     if (r.ok) {
-        for (const auto &item : asArray(r.data)) {
+        for (const auto &item : asJsonArray(r.data)) {
             companies_.push_back(item);
         }
     }
@@ -77,7 +64,7 @@ void ActivationWizard::loadApplications() {
     apps_.clear();
     auto r = client_.list("application", 200, 0);
     if (r.ok) {
-        for (const auto &item : asArray(r.data)) {
+        for (const auto &item : asJsonArray(r.data)) {
             apps_.push_back(item);
         }
     }
@@ -105,27 +92,18 @@ void ActivationWizard::renderStep() {
         }
         break;
     case 3:
-        title << _("Assign company-app (Enter Next to run)");
+        title << _("Assign company-app (Next runs assign)");
         rows[0] = title.str();
         rows.push_back("company_id=" + std::to_string(companyId_));
         rows.push_back("app_id=" + std::to_string(appId_));
         break;
     case 4:
-        title << _("Optional: schedule interval (n/h/d/w) in input");
+        title << _("Optional: schedule? Type interval (n/h/d/w) or leave blank");
         rows[0] = title.str();
-        rows.push_back("runtemplate will be created by assign");
+        rows.push_back("run-template id=" + std::to_string(runTemplateId_));
+        rows.push_back(_("Enter interval in the input field, then Next to schedule (or leave empty to skip)"));
         break;
     case 5:
-        title << _("Optional: enable & schedule now?");
-        rows[0] = title.str();
-        rows.push_back("Type 'yes' in the input to schedule after assign");
-        break;
-    case 6:
-        title << _("Confirm");
-        rows[0] = title.str();
-        rows.push_back("Company " + std::to_string(companyId_) + " + App " + std::to_string(appId_));
-        break;
-    case 7:
         title << _("Summary");
         rows[0] = title.str();
         rows.push_back(summary_.empty() ? "(not finished yet)" : summary_);
@@ -138,31 +116,31 @@ void ActivationWizard::renderStep() {
     }
 }
 
-void ActivationWizard::next() {
-    if (step_ == 1) {
+bool ActivationWizard::advanceFrom(int step) {
+    if (step == 1) {
         const short f = list_->focused;
         if (f > 0 && static_cast<std::size_t>(f - 1) < companies_.size()) {
             companyId_ = jsonToInt(companies_[static_cast<std::size_t>(f - 1)], "id");
         }
         if (companyId_ <= 0) {
             messageBox(_("Select a company first"), mfError | mfOKButton);
-            return;
+            return false;
         }
-    } else if (step_ == 2) {
+    } else if (step == 2) {
         const short f = list_->focused;
         if (f > 0 && static_cast<std::size_t>(f - 1) < apps_.size()) {
             appId_ = jsonToInt(apps_[static_cast<std::size_t>(f - 1)], "id");
         }
         if (appId_ <= 0) {
             messageBox(_("Select an application first"), mfError | mfOKButton);
-            return;
+            return false;
         }
-    } else if (step_ == 3) {
+    } else if (step == 3) {
         auto r = client_.runJson({"company-app:assign", "--company_id=" + std::to_string(companyId_),
                                   "--app_id=" + std::to_string(appId_)});
         if (!r.ok) {
             messageBox(r.errorMessage.c_str(), mfError | mfOKButton);
-            return;
+            return false;
         }
         if (r.data.is_object() && r.data.contains("runtemplate_id")) {
             runTemplateId_ = jsonToInt(r.data, "runtemplate_id");
@@ -173,20 +151,33 @@ void ActivationWizard::next() {
         if (runTemplateId_ > 0) {
             summary_ += " (run-template " + std::to_string(runTemplateId_) + ")";
         }
-    } else if (step_ == 5) {
+    } else if (step == 4) {
         char buf[64] = {};
         extra_->getData(buf);
-        std::string ans = buf;
-        if ((ans == "yes" || ans == "y" || ans == "Y") && runTemplateId_ > 0) {
+        interval_ = buf;
+        if (!interval_.empty() && runTemplateId_ > 0) {
+            // Persist interval on the run-template then schedule.
+            auto u = client_.runJson({"run-template:update", "--id=" + std::to_string(runTemplateId_),
+                                      "--interv=" + interval_, "--active=1"});
+            if (!u.ok) {
+                messageBox(u.errorMessage.c_str(), mfError | mfOKButton);
+                return false;
+            }
             auto r = client_.runJson({"run-template:schedule", "--id=" + std::to_string(runTemplateId_)});
             if (!r.ok) {
                 messageBox(r.errorMessage.c_str(), mfError | mfOKButton);
-            } else {
-                summary_ += "; scheduled";
+                return false;
             }
+            summary_ += "; scheduled interval=" + interval_;
         }
     }
+    return true;
+}
 
+void ActivationWizard::next() {
+    if (!advanceFrom(step_)) {
+        return;
+    }
     if (step_ < kSteps) {
         ++step_;
         renderStep();
@@ -202,18 +193,18 @@ void ActivationWizard::prev() {
 
 void ActivationWizard::finish() {
     while (step_ < kSteps) {
-        next();
-        if (step_ >= kSteps) {
-            break;
+        const int before = step_;
+        if (!advanceFrom(step_)) {
+            renderStep();
+            return;
         }
-        // Avoid infinite loop if next() refused to advance
-        if (step_ < kSteps) {
-            // force advance only after successful critical steps
+        ++step_;
+        if (step_ == before) {
             break;
         }
     }
     renderStep();
-    if (step_ == kSteps) {
+    if (step_ >= kSteps) {
         messageBox(summary_.empty() ? _("Wizard finished") : summary_.c_str(), mfInformation | mfOKButton);
         endModal(cmOK);
     }
@@ -283,7 +274,7 @@ CredentialWizard::CredentialWizard(CliClient &client)
 
     auto cr = client_.list("company", 200, 0);
     if (cr.ok) {
-        for (const auto &item : asArray(cr.data)) {
+        for (const auto &item : asJsonArray(cr.data)) {
             companies_.push_back(item);
         }
     }
@@ -311,7 +302,7 @@ void CredentialWizard::renderStep() {
             auto r = client_.runJson({"credential-type:list", "--company_id=" + std::to_string(companyId_),
                                       "--limit=200", "--offset=0"});
             if (r.ok) {
-                for (const auto &item : asArray(r.data)) {
+                for (const auto &item : asJsonArray(r.data)) {
                     types_.push_back(item);
                     rows.push_back(std::to_string(jsonToInt(item, "id")) + "  " + jsonToString(item["name"]));
                 }
@@ -331,14 +322,68 @@ void CredentialWizard::renderStep() {
         rows.push_back("name=" + credName_);
         break;
     case 5:
+        title << _("Enter field values (Next prompts for each)");
+        rows.push_back(title.str());
+        rows.push_back("credential id=" + std::to_string(credentialId_));
+        rows.push_back("prototype=" + prototypeCode_);
+        rows.push_back(_("Press Next to enter secret/field values"));
+        break;
+    case 6:
         title << _("Done");
         rows.push_back(title.str());
-        rows.push_back(_("Credential created (values can be edited later)."));
+        rows.push_back(_("Credential created with field values."));
         break;
     }
     if (list_ != nullptr) {
         list_->setRows(std::move(rows));
     }
+}
+
+bool CredentialWizard::collectAndSaveFields() {
+    if (credentialId_ <= 0) {
+        return false;
+    }
+    // Resolve prototype fields from type → prototype code.
+    auto typeR = client_.get("credential-type", typeId_);
+    if (typeR.ok && typeR.data.is_object()) {
+        prototypeCode_ = jsonToString(typeR.data.contains("prototype") ? typeR.data["prototype"]
+                                                                       : nlohmann::json());
+    }
+    fieldDefs_.clear();
+    if (!prototypeCode_.empty()) {
+        auto pr = client_.runJson({"credential-prototype:get", "--code=" + prototypeCode_});
+        if (pr.ok && pr.data.is_object() && pr.data.contains("fields") && pr.data["fields"].is_array()) {
+            for (const auto &f : pr.data["fields"]) {
+                fieldDefs_.push_back(f);
+            }
+        }
+    }
+    for (const auto &f : fieldDefs_) {
+        const std::string keyword = jsonToString(f.contains("keyword") ? f["keyword"] : nlohmann::json());
+        const std::string name = jsonToString(f.contains("name") ? f["name"] : nlohmann::json());
+        if (keyword.empty()) {
+            continue;
+        }
+        char buf[256] = {};
+        const std::string hint = jsonToString(f.contains("default_value") ? f["default_value"] : nlohmann::json());
+        if (!hint.empty()) {
+            std::strncpy(buf, hint.c_str(), sizeof(buf) - 1);
+        }
+        const std::string label = name.empty() ? keyword : (name + " (" + keyword + ")");
+        if (inputBox(_("Credential field"), label.c_str(), buf, sizeof(buf) - 1) != cmOK) {
+            continue;
+        }
+        if (buf[0] == '\0') {
+            continue;
+        }
+        auto r = client_.runJson({"credential:update", "--id=" + std::to_string(credentialId_),
+                                  "--field=" + keyword + ":" + std::string(buf)});
+        if (!r.ok) {
+            messageBox(r.errorMessage.c_str(), mfError | mfOKButton);
+            return false;
+        }
+    }
+    return true;
 }
 
 void CredentialWizard::next() {
@@ -376,6 +421,14 @@ void CredentialWizard::next() {
             messageBox(r.errorMessage.c_str(), mfError | mfOKButton);
             return;
         }
+        credentialId_ = jsonToInt(r.data, "id");
+        if (credentialId_ <= 0 && r.data.is_object() && r.data.contains("credential")) {
+            credentialId_ = jsonToInt(r.data["credential"], "id");
+        }
+    } else if (step_ == 5) {
+        if (!collectAndSaveFields()) {
+            // still allow finishing without all fields
+        }
     }
     if (step_ < kSteps) {
         ++step_;
@@ -391,14 +444,14 @@ void CredentialWizard::prev() {
 }
 
 void CredentialWizard::finish() {
-    if (step_ < 4) {
-        messageBox(_("Complete the steps first"), mfError | mfOKButton);
-        return;
-    }
-    if (step_ == 4) {
+    while (step_ < kSteps) {
+        const int before = step_;
         next();
+        if (step_ == before) {
+            return;
+        }
     }
-    if (step_ == 5) {
+    if (step_ >= kSteps) {
         endModal(cmOK);
     }
 }

@@ -3,6 +3,7 @@
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <fcntl.h>
+#include <poll.h>
 #include <unistd.h>
 
 #include <chrono>
@@ -97,6 +98,17 @@ void readAll(int fd, std::string &out) {
     }
 }
 
+void setCloexecNonblock(int fd) {
+    int flags = fcntl(fd, F_GETFL, 0);
+    if (flags >= 0) {
+        fcntl(fd, F_SETFL, flags | O_NONBLOCK);
+    }
+    flags = fcntl(fd, F_GETFD, 0);
+    if (flags >= 0) {
+        fcntl(fd, F_SETFD, flags | FD_CLOEXEC);
+    }
+}
+
 } // namespace
 
 ProcessResult ProcessRunner::run(const std::vector<std::string> &argv,
@@ -181,6 +193,206 @@ ProcessResult ProcessRunner::run(const std::vector<std::string> &argv,
     return result;
 }
 
+ProcessHandle::ProcessHandle(ProcessHandle &&other) noexcept {
+    *this = std::move(other);
+}
+
+ProcessHandle &ProcessHandle::operator=(ProcessHandle &&other) noexcept {
+    if (this == &other) {
+        return *this;
+    }
+    closeFds();
+    if (pid_ > 0 && !done_) {
+        // Best-effort reaping on move-from leave; prefer draining via pump.
+        int status = 0;
+        waitpid(pid_, &status, WNOHANG);
+    }
+    pid_ = other.pid_;
+    outFd_ = other.outFd_;
+    errFd_ = other.errFd_;
+    outEof_ = other.outEof_;
+    errEof_ = other.errEof_;
+    done_ = other.done_;
+    result_ = std::move(other.result_);
+    other.pid_ = -1;
+    other.outFd_ = -1;
+    other.errFd_ = -1;
+    other.outEof_ = true;
+    other.errEof_ = true;
+    other.done_ = true;
+    return *this;
+}
+
+ProcessHandle::~ProcessHandle() {
+    closeFds();
+    if (pid_ > 0 && !done_) {
+        int status = 0;
+        waitpid(pid_, &status, 0);
+        done_ = true;
+    }
+}
+
+void ProcessHandle::closeFds() {
+    if (outFd_ >= 0) {
+        close(outFd_);
+        outFd_ = -1;
+    }
+    if (errFd_ >= 0) {
+        close(errFd_);
+        errFd_ = -1;
+    }
+}
+
+void ProcessHandle::drainFd(int &fd, std::string &buf, bool &eof) {
+    if (fd < 0 || eof) {
+        return;
+    }
+    char tmp[4096];
+    for (;;) {
+        const ssize_t n = read(fd, tmp, sizeof(tmp));
+        if (n > 0) {
+            buf.append(tmp, static_cast<std::size_t>(n));
+            continue;
+        }
+        if (n == 0) {
+            eof = true;
+            close(fd);
+            fd = -1;
+            return;
+        }
+        if (errno == EINTR) {
+            continue;
+        }
+        if (errno == EAGAIN || errno == EWOULDBLOCK) {
+            return;
+        }
+        eof = true;
+        close(fd);
+        fd = -1;
+        return;
+    }
+}
+
+ProcessHandle ProcessHandle::start(const std::vector<std::string> &argv,
+                                   const std::map<std::string, std::string> &extraEnv) {
+    ProcessHandle h;
+    if (argv.empty()) {
+        h.done_ = true;
+        h.result_.spawnFailed = true;
+        h.result_.stdErr = "empty argv";
+        return h;
+    }
+
+    int outPipe[2];
+    int errPipe[2];
+    if (pipe(outPipe) != 0 || pipe(errPipe) != 0) {
+        if (outPipe[0] >= 0) {
+            close(outPipe[0]);
+            close(outPipe[1]);
+        }
+        h.done_ = true;
+        h.result_.spawnFailed = true;
+        h.result_.stdErr = "pipe() failed";
+        return h;
+    }
+
+    pid_t pid = fork();
+    if (pid < 0) {
+        close(outPipe[0]);
+        close(outPipe[1]);
+        close(errPipe[0]);
+        close(errPipe[1]);
+        h.done_ = true;
+        h.result_.spawnFailed = true;
+        h.result_.stdErr = "fork() failed";
+        return h;
+    }
+
+    if (pid == 0) {
+        dup2(outPipe[1], STDOUT_FILENO);
+        dup2(errPipe[1], STDERR_FILENO);
+        close(outPipe[0]);
+        close(outPipe[1]);
+        close(errPipe[0]);
+        close(errPipe[1]);
+        for (const auto &item : extraEnv) {
+            ::setenv(item.first.c_str(), item.second.c_str(), 1);
+        }
+        std::vector<char *> cargv;
+        cargv.reserve(argv.size() + 1);
+        for (const auto &arg : argv) {
+            cargv.push_back(const_cast<char *>(arg.c_str()));
+        }
+        cargv.push_back(nullptr);
+        execvp(cargv[0], cargv.data());
+        _exit(127);
+    }
+
+    close(outPipe[1]);
+    close(errPipe[1]);
+    setCloexecNonblock(outPipe[0]);
+    setCloexecNonblock(errPipe[0]);
+    h.pid_ = pid;
+    h.outFd_ = outPipe[0];
+    h.errFd_ = errPipe[0];
+    h.outEof_ = false;
+    h.errEof_ = false;
+    h.done_ = false;
+    return h;
+}
+
+bool ProcessHandle::pump() {
+    if (done_) {
+        return true;
+    }
+
+    drainFd(outFd_, result_.stdOut, outEof_);
+    drainFd(errFd_, result_.stdErr, errEof_);
+
+    int status = 0;
+    const pid_t waited = waitpid(pid_, &status, WNOHANG);
+    if (waited == 0) {
+        // Still running; also try a short poll to avoid busy spinning callers.
+        pollfd pfds[2];
+        int nfds = 0;
+        if (outFd_ >= 0) {
+            pfds[nfds++] = pollfd{outFd_, POLLIN, 0};
+        }
+        if (errFd_ >= 0) {
+            pfds[nfds++] = pollfd{errFd_, POLLIN, 0};
+        }
+        if (nfds > 0) {
+            poll(pfds, nfds, 0);
+            drainFd(outFd_, result_.stdOut, outEof_);
+            drainFd(errFd_, result_.stdErr, errEof_);
+        }
+        return false;
+    }
+
+    // Child exited — drain remaining output.
+    drainFd(outFd_, result_.stdOut, outEof_);
+    drainFd(errFd_, result_.stdErr, errEof_);
+    closeFds();
+    outEof_ = true;
+    errEof_ = true;
+
+    if (waited < 0) {
+        result_.exitCode = -1;
+        result_.spawnFailed = true;
+    } else if (WIFEXITED(status)) {
+        result_.exitCode = WEXITSTATUS(status);
+        if (result_.exitCode == 127 && result_.stdOut.empty()) {
+            result_.spawnFailed = true;
+        }
+    } else {
+        result_.exitCode = -1;
+        result_.spawnFailed = true;
+    }
+    done_ = true;
+    pid_ = -1;
+    return true;
+}
+
 CliClient::CliClient(std::string binaryPath, std::string envFilePath)
     : binaryPath_(std::move(binaryPath)), envFilePath_(std::move(envFilePath)) {
 }
@@ -197,6 +409,82 @@ void CliClient::setRequestObserver(std::function<void(const std::string &)> obse
     requestObserver_ = std::move(observer);
 }
 
+std::vector<std::string> CliClient::buildArgv(const std::vector<std::string> &args) const {
+    std::vector<std::string> argv;
+    argv.push_back(binaryPath_);
+    if (!envFilePath_.empty()) {
+        argv.push_back("--envfile=" + envFilePath_);
+    }
+    for (const auto &a : args) {
+        argv.push_back(a);
+    }
+    argv.push_back("--format=json");
+    return argv;
+}
+
+CliClient::Result CliClient::parseProcessResult(const ProcessResult &pr, const std::string &binaryPath,
+                                                const std::vector<std::string> &argv) {
+    Result result;
+    result.lastCommand = joinArgv(argv);
+    result.exitCode = pr.exitCode;
+
+    auto noteFailure = [&]() {
+        const std::string logPath = appendCliLog(result.errorMessage, argv, pr);
+        if (!logPath.empty()) {
+            result.errorMessage += "\nLogged to " + logPath;
+        }
+    };
+
+    if (pr.spawnFailed) {
+        result.ok = false;
+        result.errorMessage = binaryPath + " not found on PATH (or at the configured --cli path)";
+        noteFailure();
+        return result;
+    }
+
+    const std::string trimmed = [&]() {
+        std::string s = pr.stdOut;
+        while (!s.empty() && (s.back() == '\n' || s.back() == '\r' || s.back() == ' ')) {
+            s.pop_back();
+        }
+        return s;
+    }();
+
+    if (trimmed.empty()) {
+        result.data = nlohmann::json::object();
+    } else {
+        try {
+            result.data = nlohmann::json::parse(trimmed);
+        } catch (const nlohmann::json::parse_error &e) {
+            result.ok = false;
+            result.errorMessage = "Invalid JSON from " + binaryPath + ": " + e.what();
+            if (!pr.stdErr.empty()) {
+                result.errorMessage += " (stderr: " + pr.stdErr + ")";
+            }
+            noteFailure();
+            return result;
+        }
+    }
+
+    if (pr.exitCode != 0) {
+        result.ok = false;
+        if (result.data.is_object() && result.data.contains("message")) {
+            result.errorMessage = result.data.value("message", std::string("Unknown error"));
+        } else if (result.data.is_object() && result.data.contains("error")) {
+            result.errorMessage = result.data.value("error", std::string("Unknown error"));
+        } else if (!pr.stdErr.empty()) {
+            result.errorMessage = pr.stdErr;
+        } else {
+            result.errorMessage = binaryPath + " exited with code " + std::to_string(pr.exitCode);
+        }
+        noteFailure();
+        return result;
+    }
+
+    result.ok = true;
+    return result;
+}
+
 CliClient::Result CliClient::runJson(const std::vector<std::string> &args) const {
     return runJsonImpl(args, nullptr);
 }
@@ -208,7 +496,6 @@ CliClient::Result CliClient::runJsonWithEnv(const std::vector<std::string> &args
 
 CliClient::Result CliClient::runJsonImpl(const std::vector<std::string> &args,
                                          const std::map<std::string, std::string> *overrideEnv) const {
-    Result result;
     std::vector<std::string> argv;
     argv.push_back(binaryPath_);
     if ((overrideEnv == nullptr) && !envFilePath_.empty()) {
@@ -227,72 +514,40 @@ CliClient::Result CliClient::runJsonImpl(const std::vector<std::string> &args,
     const std::map<std::string, std::string> empty;
     const std::map<std::string, std::string> &env = overrideEnv != nullptr ? *overrideEnv : empty;
     ProcessResult pr = ProcessRunner::run(argv, env);
-    result.lastCommand = lastCommand_;
-
-    auto noteFailure = [&]() {
-        const std::string logPath = appendCliLog(result.errorMessage, argv, pr);
-        if (!logPath.empty()) {
-            result.errorMessage += "\nLogged to " + logPath;
-        }
-    };
-
-    if (pr.spawnFailed) {
-        result.ok = false;
-        result.exitCode = pr.exitCode;
-        result.errorMessage = binaryPath_ + " not found on PATH (or at the configured --cli path)";
-        noteFailure();
-        return result;
-    }
-
-    result.exitCode = pr.exitCode;
-
-    // Some commands print nothing on success (rare); treat empty as {}.
-    const std::string trimmed = [&]() {
-        std::string s = pr.stdOut;
-        while (!s.empty() && (s.back() == '\n' || s.back() == '\r' || s.back() == ' ')) {
-            s.pop_back();
-        }
-        return s;
-    }();
-
-    if (trimmed.empty()) {
-        result.data = nlohmann::json::object();
-    } else {
-        try {
-            result.data = nlohmann::json::parse(trimmed);
-        } catch (const nlohmann::json::parse_error &e) {
-            result.ok = false;
-            result.errorMessage = "Invalid JSON from " + binaryPath_ + ": " + e.what();
-            if (!pr.stdErr.empty()) {
-                result.errorMessage += " (stderr: " + pr.stdErr + ")";
-            }
-            noteFailure();
-            return result;
-        }
-    }
-
-    if (pr.exitCode != 0) {
-        result.ok = false;
-        if (result.data.is_object() && result.data.contains("message")) {
-            result.errorMessage = result.data.value("message", std::string("Unknown error"));
-        } else if (result.data.is_object() && result.data.contains("error")) {
-            result.errorMessage = result.data.value("error", std::string("Unknown error"));
-        } else if (!pr.stdErr.empty()) {
-            result.errorMessage = pr.stdErr;
-        } else {
-            result.errorMessage = binaryPath_ + " exited with code " + std::to_string(pr.exitCode);
-        }
-        noteFailure();
-        return result;
-    }
-
-    result.ok = true;
+    Result result = parseProcessResult(pr, binaryPath_, argv);
+    lastCommand_ = result.lastCommand;
     return result;
 }
 
 CliClient::Result CliClient::list(const std::string &entity, int limit, int offset) const {
-    return runJson({entity + ":list", "--order=D", "--limit=" + std::to_string(limit),
-                    "--offset=" + std::to_string(offset)});
+    ListOptions opts;
+    opts.limit = limit;
+    opts.offset = offset;
+    return list(entity, opts);
+}
+
+CliClient::Result CliClient::list(const std::string &entity, const ListOptions &opts) const {
+    std::vector<std::string> args{entity + ":list", "--order=D",
+                                  "--limit=" + std::to_string(opts.limit),
+                                  "--offset=" + std::to_string(opts.offset)};
+    if (opts.companyId > 0) {
+        args.push_back("--company_id=" + std::to_string(opts.companyId));
+    }
+    if (!opts.filter.empty()) {
+        if (entity == "job") {
+            args.push_back("--status=" + opts.filter);
+        } else if (entity == "task") {
+            args.push_back("--state=" + opts.filter);
+        } else if (entity == "artifact") {
+            args.push_back("--job_id=" + opts.filter);
+        } else {
+            args.push_back("--filter=" + opts.filter);
+        }
+    }
+    for (const auto &extra : opts.extraArgs) {
+        args.push_back(extra);
+    }
+    return runJson(args);
 }
 
 CliClient::Result CliClient::get(const std::string &entity, int id) const {

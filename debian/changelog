@@ -1,3 +1,14 @@
+multiflexi-tui (3.1.0) unstable; urgency=medium
+
+  * Non-blocking CLI queue for list refresh and job streams; Busy status badge.
+  * List filter, active company scope, relation pickers (F2), Actions menu.
+  * Form field paging and password masking; finish Activation/Credential wizards.
+  * CLI parity: assign/unassign credentials & companies, erasure cleanup,
+    skip stale :get for company-app/queue/user-erasure.
+  * Import/Export dialog, key/value admin panels, expanded Czech translations.
+
+ -- Vitex Software <info@vitexsoftware.cz>  Sat, 03 Oct 2026 22:30:00 +0200
+
 multiflexi-tui (3.0.0) unstable; urgency=medium
 
   * Rewrite in C++ with Turbo Vision (replaces Go/Bubbletea frontend).

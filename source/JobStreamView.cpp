@@ -2,6 +2,7 @@
 #include "multiflexitui/JobStreamView.h"
 #include "multiflexitui/AppButton.h"
 #include "multiflexitui/AppShell.h"
+#include "multiflexitui/AsyncCliQueue.h"
 #include "multiflexitui/Commands.h"
 #include "multiflexitui/EntityRegistry.h"
 #include "multiflexitui/WindowColors.h"
@@ -14,10 +15,7 @@ namespace multiflexitui {
 
 JobStreamView::~JobStreamView() {
     if (auto *mf = dynamic_cast<MultiFlexiApp *>(TProgram::application)) {
-        if (mf->streamTick_) {
-            // Drop the tick callback if it still points at this instance.
-            mf->streamTick_ = nullptr;
-        }
+        mf->removeStreamTick(this);
     }
 }
 
@@ -59,8 +57,8 @@ void JobStreamView::draw() {
     writeLine(0, 1, size.x, 1, b);
 }
 
-void JobStreamView::refresh(bool force) {
-    auto r = client_.get("job", jobId_);
+void JobStreamView::applyJobResult(const CliClient::Result &r, bool /*force*/) {
+    pending_ = false;
     if (!r.ok) {
         metaText_ = "Error: " + r.errorMessage;
         drawView();
@@ -71,7 +69,8 @@ void JobStreamView::refresh(bool force) {
     stderr_ = jsonToString(r.data.contains("stderr") ? r.data["stderr"] : nlohmann::json());
     const std::string begin = jsonToString(r.data.contains("begin") ? r.data["begin"] : nlohmann::json());
     const std::string end = jsonToString(r.data.contains("end") ? r.data["end"] : nlohmann::json());
-    const std::string exitcode = jsonToString(r.data.contains("exitcode") ? r.data["exitcode"] : nlohmann::json());
+    const std::string exitcode =
+        jsonToString(r.data.contains("exitcode") ? r.data["exitcode"] : nlohmann::json());
     const int pid = jsonToInt(r.data, "pid");
 
     finished_ = !end.empty() || (!exitcode.empty() && exitcode != "null");
@@ -107,13 +106,40 @@ void JobStreamView::refresh(bool force) {
             out_->focusItem(prev);
         }
     }
-    (void)force;
     drawView();
     lastPoll_ = std::chrono::steady_clock::now();
 }
 
+void JobStreamView::refresh(bool force) {
+    if (pending_) {
+        return;
+    }
+    pending_ = true;
+    auto *self = this;
+    enqueueCliJson(client_, {"job:get", "--id=" + std::to_string(jobId_)},
+                   [self, force](CliClient::Result r) {
+                       if (auto *app = dynamic_cast<MultiFlexiApp *>(TProgram::application)) {
+                           app->setBusy(app->cliQueue().busy());
+                       }
+                       bool alive = false;
+                       if (TProgram::deskTop != nullptr) {
+                           TView *p = TProgram::deskTop->first();
+                           while (p != nullptr) {
+                               if (p == self) {
+                                   alive = true;
+                                   break;
+                               }
+                               p = p->nextView();
+                           }
+                       }
+                       if (alive) {
+                           self->applyJobResult(r, force);
+                       }
+                   });
+}
+
 void JobStreamView::tick() {
-    if (finished_ || !follow_) {
+    if (finished_ || !follow_ || pending_) {
         return;
     }
     const auto now = std::chrono::steady_clock::now();
@@ -143,6 +169,14 @@ TColorAttr JobStreamView::mapColor(uchar index) {
     return windowColor(index, color) ? color : TWindow::mapColor(index);
 }
 
+void openJobStreamForId(TProgram *app, CliClient &client, int jobId) {
+    auto *view = new JobStreamView(client, jobId);
+    app->deskTop->insert(view);
+    if (auto *mf = dynamic_cast<MultiFlexiApp *>(app)) {
+        mf->addStreamTick(view, [view]() { view->tick(); });
+    }
+}
+
 void openJobStreamPicker(TProgram *app, CliClient &client) {
     char buf[32] = {};
     if (inputBox(_("Job ID"), _("Open live job stream"), buf, sizeof(buf) - 1) != cmOK) {
@@ -155,11 +189,7 @@ void openJobStreamPicker(TProgram *app, CliClient &client) {
         messageBox(_("Invalid job id"), mfError | mfOKButton);
         return;
     }
-    auto *view = new JobStreamView(client, id);
-    app->deskTop->insert(view);
-    if (auto *mf = dynamic_cast<MultiFlexiApp *>(app)) {
-        mf->streamTick_ = [view]() { view->tick(); };
-    }
+    openJobStreamForId(app, client, id);
 }
 
 } // namespace multiflexitui

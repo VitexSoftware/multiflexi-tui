@@ -1,6 +1,7 @@
 #pragma once
 
 // Shared tvision include for the whole app. Define Uses_ macros once.
+#define Uses_TObject
 #define Uses_TKeys
 #define Uses_TEvent
 #define Uses_TRect

@@ -7,10 +7,12 @@ A terminal user interface for [multiflexi-cli](https://github.com/VitexSoftware/
 
 - **Status dashboard** from `multiflexi-cli status`
 - **Entity CRUD** for companies, applications, config fields, run templates, jobs, tasks, credentials, tokens, users, artifacts, credential types/prototypes, company-apps, queue, event sources/rules, and GDPR deletion requests
-- **Special actions**: schedule / clone run templates, job stdout & stderr, token generate, user roles, queue fix/truncate, prototype sync, event-source test, app JSON export, …
-- **Activation Wizard** and **Credential Wizard** (TUI approximations of the web wizards)
-- **Live job streaming** via polled `job:get` (stdout/stderr follow-tail)
-- **Admin helpers**: encryption status, prune, job/task/queue metrics, telemetry test, app JSON import/validate
+- **List filter** (`/` or Apply) and **active company** scope (MultiFlexi → Set company…) for run-templates / company-apps
+- **Relation pickers** (F2) for `*_id` fields; **Actions** menu (F2 / Act~i~ons) for all row/list actions and hotkeys
+- **Special actions**: schedule / clone / assign-credential run templates, job stdout & stderr & live stream, token generate, user roles / company assign-unassign, queue fix/truncate, prototype sync, event-source test, app JSON export/import/validate, …
+- **Activation Wizard** and **Credential Wizard** (including credential field values)
+- **Live job streaming** via polled `job:get` (non-blocking; multiple stream windows)
+- **Admin helpers**: encryption status, prune, job/task/queue metrics, telemetry test
 - **Czech** UI strings via gettext (`po/cs.po`)
 
 ## Prerequisites
@@ -40,7 +42,7 @@ Environment overrides: `MULTIFLEXI_TUI_CLI`, `MULTIFLEXI_TUI_LOCALEDIR`.
 
 | Key | Action |
 |-----|--------|
-| `Alt+M` | MultiFlexi menu (Status, Exit) |
+| `Alt+M` | MultiFlexi menu (Status, Set company, Exit) |
 | `Alt+S` | Status |
 | `Alt+C` / `Alt+A` / `Alt+R` / … | Entity menus |
 | `F1` | About |
@@ -48,7 +50,7 @@ Environment overrides: `MULTIFLEXI_TUI_CLI`, `MULTIFLEXI_TUI_LOCALEDIR`.
 | `F6` / `Shift+F6` | Next / previous window |
 | `F10` | Menu |
 
-Entity lists: Enter opens detail, `n`/`Ins` create, `e` edit, `d` delete, `r` refresh.
+Entity lists: Enter opens detail, `n`/`Ins` create, `e` edit, `d` delete, `r` refresh, `/` focus filter, `F2` / `i` actions menu. Forms: `F2` opens a relation picker on `*_id` fields; More/Prev page long forms.
 
 ## Debian package
 
@@ -59,7 +61,7 @@ sudo apt install ../multiflexi-tui_*.deb
 
 ## Architecture
 
-All I/O goes through `CliClient` (`fork`+`execvp` of `multiflexi-cli … --format=json`). UI widgets follow abraflexi-tui patterns (`AppShell`, `SimpleListViewer`, `WindowColors`, …). Entity screens are driven by `EntityRegistry` definitions in `source/EntityRegistry.cpp`.
+All I/O goes through `CliClient` (`fork`+`execvp` of `multiflexi-cli … --format=json`). List refresh and job streams use a non-blocking `AsyncCliQueue` pumped from `AppShell::idle()`. UI widgets follow abraflexi-tui patterns (`AppShell`, `SimpleListViewer`, `WindowColors`, …). Entity screens are driven by `EntityRegistry` definitions in `source/EntityRegistry.cpp`.
 
 ## License
 

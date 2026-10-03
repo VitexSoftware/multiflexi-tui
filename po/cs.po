@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: multiflexi-tui 3.0.0\n"
+"Project-Id-Version: multiflexi-tui 3.1.0\n"
 "Report-Msgid-Bugs-To: info@vitexsoftware.cz\n"
-"PO-Revision-Date: 2026-10-02 18:30+0200\n"
+"PO-Revision-Date: 2026-10-03 22:30+0200\n"
 "Last-Translator: Vitex Software <info@vitexsoftware.cz>\n"
 "Language-Team: Czech <info@vitexsoftware.cz>\n"
 "Language: cs\n"
@@ -109,9 +109,6 @@ msgstr "Vyberte typ přihlašovacích údajů"
 msgid "Name is required"
 msgstr "Název je povinný"
 
-msgid "Complete the steps first"
-msgstr "Nejprve dokončete kroky"
-
 msgid "Name"
 msgstr "Název"
 
@@ -130,20 +127,461 @@ msgstr "Potvrďte vytvoření"
 msgid "Done"
 msgstr "Hotovo"
 
-msgid "Credential created (values can be edited later)."
-msgstr "Přihlašovací údaje vytvořeny (hodnoty lze upravit později)."
-
-msgid "App JSON"
-msgstr "App JSON"
-
-msgid "Path for import (existing) or export target"
-msgstr "Cesta pro import (existující) nebo export"
-
-msgid "Import from this path? (No = export selected later via Apps Export action)"
-msgstr "Importovat z této cesty? (Ne = export později přes akci Export v Aplikacích)"
-
-msgid "Validate JSON at path instead?"
-msgstr "Místo toho ověřit JSON na cestě?"
-
 msgid "Initialize encryption key if missing?"
 msgstr "Inicializovat šifrovací klíč, pokud chybí?"
+
+msgid "Filter"
+msgstr "Filtr"
+
+msgid "~A~pply"
+msgstr "~P~oužít"
+
+msgid "Act~i~ons"
+msgstr "Akc~e~"
+
+msgid "Actions"
+msgstr "Akce"
+
+msgid "Busy…"
+msgstr "Zaneprázdněno…"
+
+msgid "No actions available"
+msgstr "Žádné akce nejsou k dispozici"
+
+msgid "~O~K"
+msgstr "~O~K"
+
+msgid "Select an item"
+msgstr "Vyberte položku"
+
+msgid "Select an item first"
+msgstr "Nejprve vyberte položku"
+
+msgid "Choose action"
+msgstr "Zvolte akci"
+
+msgid "~M~ore"
+msgstr "~V~íce"
+
+msgid "~F2~"
+msgstr "~F2~"
+
+msgid "Path"
+msgstr "Cesta"
+
+msgid "~I~mport"
+msgstr "~I~mport"
+
+msgid "~V~alidate"
+msgstr "~O~věřit"
+
+msgid "E~x~port…"
+msgstr "E~x~port…"
+
+msgid "App JSON Import/Export"
+msgstr "Import/export App JSON"
+
+msgid "Import completed."
+msgstr "Import dokončen."
+
+msgid "Use Applications → row Actions → Export JSON to export a selected app."
+msgstr "Pro export použijte Aplikace → Akce řádku → Export JSON."
+
+msgid "~M~ultiFlexi"
+msgstr "~M~ultiFlexi"
+
+msgid "~S~tatus"
+msgstr "~S~tav"
+
+msgid "Set ~c~ompany…"
+msgstr "Nastavit ~f~irmu…"
+
+msgid "E~x~it"
+msgstr "Kone~c~"
+
+msgid "~C~ompanies"
+msgstr "~F~irmy"
+
+msgid "~L~ist"
+msgstr "~S~eznam"
+
+msgid "~A~pplications"
+msgstr "~A~plikace"
+
+msgid "~C~onfig fields"
+msgstr "~K~onfigurační pole"
+
+msgid "Company ~a~pps"
+msgstr "Firemní ~a~plikace"
+
+msgid "Activation ~W~izard"
+msgstr "Průvodce ~a~ktivací"
+
+msgid "~R~unTemplates"
+msgstr "~Š~ablony běhu"
+
+msgid "~S~tale"
+msgstr "~Z~astaralé"
+
+msgid "Credentia~l~s"
+msgstr "Přihlašovací ~ú~daje"
+
+msgid "~C~redentials"
+msgstr "~P~řihlašovací údaje"
+
+msgid "~T~ypes"
+msgstr "~T~ypy"
+
+msgid "~P~rototypes"
+msgstr "~P~rototypy"
+
+msgid "Credential ~W~izard"
+msgstr "Průvodce přihlašovacími ~ú~daji"
+
+msgid "~J~obs"
+msgstr "~Ú~lohy"
+
+msgid "~T~asks"
+msgstr "~Ú~koly"
+
+msgid "~Q~ueue"
+msgstr "~F~ronta"
+
+msgid "Queue ~o~verview"
+msgstr "Přehled ~f~ronty"
+
+msgid "Job st~a~tus"
+msgstr "St~a~v úloh"
+
+msgid "Task s~t~atus"
+msgstr "Stav ú~k~olů"
+
+msgid "Live ~s~tream…"
+msgstr "Živý ~v~ýstup…"
+
+msgid "Arti~f~acts"
+msgstr "Arti~f~akty"
+
+msgid "~E~vents"
+msgstr "~U~dálosti"
+
+msgid "Event ~s~ources"
+msgstr "~Z~droje událostí"
+
+msgid "Event ~r~ules"
+msgstr "~P~ravidla událostí"
+
+msgid "Ad~m~in"
+msgstr "Sprá~v~a"
+
+msgid "~U~sers"
+msgstr "~U~živatelé"
+
+msgid "~T~okens"
+msgstr "~T~okeny"
+
+msgid "Deletion ~r~equests"
+msgstr "Žádosti o ~s~mazání"
+
+msgid "~E~ncryption"
+msgstr "~Š~ifrování"
+
+msgid "~P~rune…"
+msgstr "~P~rořezat…"
+
+msgid "Telemetry ~t~est"
+msgstr "Test ~t~elemetrie"
+
+msgid "~I~mport/Export app JSON…"
+msgstr "~I~mport/export app JSON…"
+
+msgid "~W~indow"
+msgstr "~O~kno"
+
+msgid "~T~ile"
+msgstr "~D~láždit"
+
+msgid "C~a~scade"
+msgstr "K~a~skáda"
+
+msgid "~M~inimize all"
+msgstr "~M~inimalizovat vše"
+
+msgid "~R~estore"
+msgstr "~O~bnovit"
+
+msgid "Close a~l~l"
+msgstr "Zavřít ~v~še"
+
+msgid "~H~elp"
+msgstr "~N~ápověda"
+
+msgid "~A~bout"
+msgstr "~O~ aplikaci"
+
+msgid "Language: ~S~ystem"
+msgstr "Jazyk: ~S~ystém"
+
+msgid "Language: ~E~nglish"
+msgstr "Jazyk: ~A~ngličtina"
+
+msgid "Language: ~C~zech"
+msgstr "Jazyk: ~Č~eština"
+
+msgid "Clear active company filter? (No = pick another)"
+msgstr "Zrušit filtr aktivní firmy? (Ne = vybrat jinou)"
+
+msgid "Set active company"
+msgstr "Nastavit aktivní firmu"
+
+msgid "Companies"
+msgstr "Firmy"
+
+msgid "Applications"
+msgstr "Aplikace"
+
+msgid "Config Fields"
+msgstr "Konfigurační pole"
+
+msgid "RunTemplates"
+msgstr "Šablony běhu"
+
+msgid "Jobs"
+msgstr "Úlohy"
+
+msgid "Tasks"
+msgstr "Úkoly"
+
+msgid "Credentials"
+msgstr "Přihlašovací údaje"
+
+msgid "Tokens"
+msgstr "Tokeny"
+
+msgid "Users"
+msgstr "Uživatelé"
+
+msgid "Artifacts"
+msgstr "Artefakty"
+
+msgid "Credential Types"
+msgstr "Typy přihlašovacích údajů"
+
+msgid "Cred Prototypes"
+msgstr "Prototypy přihlašovacích údajů"
+
+msgid "Company Apps"
+msgstr "Firemní aplikace"
+
+msgid "Queue"
+msgstr "Fronta"
+
+msgid "Event Sources"
+msgstr "Zdroje událostí"
+
+msgid "Event Rules"
+msgstr "Pravidla událostí"
+
+msgid "Deletion Requests"
+msgstr "Žádosti o smazání"
+
+msgid "Enabled"
+msgstr "Zapnuto"
+
+msgid "Description"
+msgstr "Popis"
+
+msgid "Password"
+msgstr "Heslo"
+
+msgid "Config fields"
+msgstr "Konfigurační pole"
+
+msgid "Show config"
+msgstr "Zobrazit konfiguraci"
+
+msgid "Export JSON"
+msgstr "Exportovat JSON"
+
+msgid "Remove JSON"
+msgstr "Odstranit JSON"
+
+msgid "Schedule"
+msgstr "Naplánovat"
+
+msgid "Clone"
+msgstr "Klonovat"
+
+msgid "List credentials"
+msgstr "Seznam přihlašovacích údajů"
+
+msgid "Assign credential"
+msgstr "Přiřadit přihlašovací údaje"
+
+msgid "Unassign credential"
+msgstr "Odebrat přihlašovací údaje"
+
+msgid "Stdout"
+msgstr "Stdout"
+
+msgid "Stderr"
+msgstr "Stderr"
+
+msgid "Live stream"
+msgstr "Živý výstup"
+
+msgid "Encrypt existing"
+msgstr "Šifrovat existující"
+
+msgid "Generate"
+msgstr "Generovat"
+
+msgid "Roles"
+msgstr "Role"
+
+msgid "Make Admin"
+msgstr "Udělat správcem"
+
+msgid "Assign company"
+msgstr "Přiřadit firmu"
+
+msgid "Unassign company"
+msgstr "Odebrat firmu"
+
+msgid "Save"
+msgstr "Uložit"
+
+msgid "Import JSON"
+msgstr "Importovat JSON"
+
+msgid "Validate JSON"
+msgstr "Ověřit JSON"
+
+msgid "Sync all"
+msgstr "Synchronizovat vše"
+
+msgid "Assign"
+msgstr "Přiřadit"
+
+msgid "Unassign"
+msgstr "Odebrat"
+
+msgid "Fix"
+msgstr "Opravit"
+
+msgid "Truncate"
+msgstr "Vyprázdnit"
+
+msgid "Test"
+msgstr "Test"
+
+msgid "Approve"
+msgstr "Schválit"
+
+msgid "Reject"
+msgstr "Zamítnout"
+
+msgid "Process"
+msgstr "Zpracovat"
+
+msgid "Audit"
+msgstr "Audit"
+
+msgid "Create request"
+msgstr "Vytvořit žádost"
+
+msgid "Cleanup audits"
+msgstr "Vyčistit audity"
+
+msgid "Pick credential"
+msgstr "Vyberte přihlašovací údaje"
+
+msgid "Pick credential to unassign"
+msgstr "Vyberte přihlašovací údaje k odebrání"
+
+msgid "Pick application"
+msgstr "Vyberte aplikaci"
+
+msgid "Pick user"
+msgstr "Vyberte uživatele"
+
+msgid "Pick company to unassign"
+msgstr "Vyberte firmu k odebrání"
+
+msgid "Credential assigned."
+msgstr "Přihlašovací údaje přiřazeny."
+
+msgid "Credential unassigned."
+msgstr "Přihlašovací údaje odebrány."
+
+msgid "Assigned."
+msgstr "Přiřazeno."
+
+msgid "Unassigned."
+msgstr "Odebráno."
+
+msgid "Clone created (disabled)."
+msgstr "Klon vytvořen (neaktivní)."
+
+msgid "Encryption pass completed."
+msgstr "Šifrování dokončeno."
+
+msgid "Admin role set."
+msgstr "Role správce nastavena."
+
+msgid "Prototypes synchronized."
+msgstr "Prototypy synchronizovány."
+
+msgid "Queue truncated."
+msgstr "Fronta vyprázdněna."
+
+msgid "Old GDPR audit logs cleaned up."
+msgstr "Staré GDPR auditní záznamy vyčištěny."
+
+msgid "Application removed from JSON definition."
+msgstr "Aplikace odstraněna podle JSON definice."
+
+msgid "Unassign this application from the company?"
+msgstr "Odebrat tuto aplikaci firmě?"
+
+msgid "Truncate the entire job queue?"
+msgstr "Vyprázdnit celou frontu úloh?"
+
+msgid "Process approved erasure (destructive)?"
+msgstr "Zpracovat schválené smazání (destruktivní)?"
+
+msgid "Output path"
+msgstr "Výstupní cesta"
+
+msgid "Save artifact"
+msgstr "Uložit artefakt"
+
+msgid "Credential field"
+msgstr "Pole přihlašovacích údajů"
+
+msgid "Credential created with field values."
+msgstr "Přihlašovací údaje vytvořeny s hodnotami polí."
+
+msgid "Enter field values (Next prompts for each)"
+msgstr "Zadejte hodnoty polí (Další vyzve pro každé)"
+
+msgid "Press Next to enter secret/field values"
+msgstr "Stiskněte Další pro zadání tajných/hodnot polí"
+
+msgid "Assign company-app (Next runs assign)"
+msgstr "Přiřadit firemní aplikaci (Další spustí přiřazení)"
+
+msgid "Optional: schedule? Type interval (n/h/d/w) or leave blank"
+msgstr "Volitelně naplánovat? Zadejte interval (n/h/d/w) nebo nechte prázdné"
+
+msgid "Enter interval in the input field, then Next to schedule (or leave empty to skip)"
+msgstr "Zadejte interval do pole a stiskněte Další pro naplánování (nebo nechte prázdné)"
+
+msgid "Summary"
+msgstr "Souhrn"
+
+msgid "Company"
+msgstr "Firma"
+
+msgid "Application"
+msgstr "Aplikace"

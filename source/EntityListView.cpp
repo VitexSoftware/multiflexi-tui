@@ -1,15 +1,38 @@
 #include "multiflexitui/TV.h"
 #include "multiflexitui/EntityListView.h"
 #include "multiflexitui/EntityDetailView.h"
+#include "multiflexitui/EntityPicker.h"
 #include "multiflexitui/AppButton.h"
+#include "multiflexitui/AppShell.h"
+#include "multiflexitui/AsyncCliQueue.h"
 #include "multiflexitui/Commands.h"
 #include "multiflexitui/WindowColors.h"
 #include "multiflexitui/WindowLayout.h"
 #include "multiflexitui/i18n.h"
 
+#include <algorithm>
+#include <cctype>
 #include <sstream>
 
 namespace multiflexitui {
+
+namespace {
+
+std::string toLower(std::string s) {
+    std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+    return s;
+}
+
+bool clientSideMatch(const EntityDef &def, const nlohmann::json &row, const std::string &filter) {
+    if (filter.empty()) {
+        return true;
+    }
+    const std::string needle = toLower(filter);
+    const std::string hay = toLower(formatRow(def, row));
+    return hay.find(needle) != std::string::npos;
+}
+
+} // namespace
 
 EntityListView::EntityListView(CliClient &client, const EntityDef &def)
     : TWindowInit(&TWindow::initFrame),
@@ -23,18 +46,26 @@ EntityListView::EntityListView(CliClient &client, const EntityDef &def)
     growWide(status_);
     insert(status_);
 
+    insert(new TLabel(TRect(2, 2, 10, 3), _("Filter"), nullptr));
+    filterInput_ = new TInputLine(TRect(11, 2, 50, 3), 80);
+    growWide(filterInput_);
+    insert(filterInput_);
+    TView *apply = new AppButton(TRect(52, 2, 64, 4), _("~A~pply"), cmEntityApplyFilter, bfNormal);
+    stickRight(apply);
+    insert(apply);
+
     TScrollBar *vBar = standardScrollBar(sbVertical | sbHandleKeyboard);
     TScrollBar *hBar = standardScrollBar(sbHorizontal | sbHandleKeyboard);
-    list_ = new SimpleListViewer(TRect(1, 2, 76, 18), vBar, hBar);
+    list_ = new SimpleListViewer(TRect(1, 4, 76, 18), vBar, hBar);
     growFill(list_);
     insert(list_);
 
     int x = 2;
-    auto addBtn = [&](const char *title, ushort cmd) {
-        TView *b = new AppButton(TRect(x, 19, x + 12, 21), title, cmd, bfNormal);
+    auto addBtn = [&](const char *title, ushort cmd, int width = 12) {
+        TView *b = new AppButton(TRect(x, 19, x + width, 21), title, cmd, bfNormal);
         stickBottom(b);
         insert(b);
-        x += 13;
+        x += width + 1;
     };
     addBtn(_("~R~efresh"), cmEntityRefresh);
     if (def_.canCreate) {
@@ -48,25 +79,16 @@ EntityListView::EntityListView(CliClient &client, const EntityDef &def)
     }
     addBtn(_("~P~rev"), cmEntityPrevPage);
     addBtn(_("Nex~t~"), cmEntityNextPage);
-
-    // List-level action buttons (first few)
-    for (std::size_t i = 0; i < def_.listActions.size() && i < 3; ++i) {
-        const std::string label = "~" + std::to_string(i + 1) + "~ " + def_.listActions[i].label;
-        TView *b = new AppButton(TRect(x, 19, x + 16, 21), label.c_str(),
-                                 static_cast<ushort>(cmEntityAction + 50 + i), bfNormal);
-        stickBottom(b);
-        insert(b);
-        x += 17;
-    }
+    addBtn(_("Act~i~ons"), cmEntityActionsMenu, 12);
 
     selectNext(False);
     refresh();
 }
 
+EntityListView::~EntityListView() = default;
+
 void EntityListView::setStatus(const std::string &text) {
     statusText_ = text;
-    // TStaticText has no setter for text after construction in classic TV;
-    // redraw via draw() reading statusText_.
     drawView();
 }
 
@@ -82,8 +104,19 @@ void EntityListView::draw() {
     }
 }
 
-void EntityListView::refresh() {
-    auto result = client_.list(def_.cliEntity, def_.pageSize, offset_);
+void EntityListView::applyFilterFromInput() {
+    if (filterInput_ == nullptr) {
+        return;
+    }
+    char buf[128] = {};
+    filterInput_->getData(buf);
+    filter_ = buf;
+    offset_ = 0;
+    refresh();
+}
+
+void EntityListView::applyListResult(const CliClient::Result &result) {
+    loading_ = false;
     rows_.clear();
     if (!result.ok) {
         setStatus("Error: " + result.errorMessage);
@@ -93,22 +126,17 @@ void EntityListView::refresh() {
         return;
     }
 
-    nlohmann::json arr = result.data;
-    if (arr.is_object() && arr.contains("data") && arr["data"].is_array()) {
-        arr = arr["data"];
-    }
-    if (!arr.is_array()) {
-        // Some list commands return a bare object; wrap it.
-        if (arr.is_object()) {
-            arr = nlohmann::json::array({arr});
-        } else {
-            arr = nlohmann::json::array();
-        }
-    }
-
+    nlohmann::json arr = asJsonArray(result.data);
     std::vector<std::string> lines;
     lines.push_back(formatHeader(def_));
+
+    const bool useClientFilter =
+        !filter_.empty() && def_.cliEntity != "job" && def_.cliEntity != "task" && def_.cliEntity != "artifact";
+
     for (const auto &item : arr) {
+        if (useClientFilter && !clientSideMatch(def_, item, filter_)) {
+            continue;
+        }
         rows_.push_back(item);
         lines.push_back(formatRow(def_, item));
     }
@@ -116,9 +144,77 @@ void EntityListView::refresh() {
         list_->setRows(std::move(lines));
     }
     std::ostringstream st;
-    st << def_.name << "  offset=" << offset_ << "  rows=" << rows_.size()
-       << "  [" << client_.lastCommand() << "]";
+    st << def_.name << "  offset=" << offset_ << "  rows=" << rows_.size();
+    if (!filter_.empty()) {
+        st << "  filter=" << filter_;
+    }
+    st << "  [" << result.lastCommand << "]";
     setStatus(st.str());
+}
+
+void EntityListView::refresh() {
+    if (loading_) {
+        return;
+    }
+    loading_ = true;
+    setStatus(_("Busy…"));
+
+    ListOptions opts;
+    opts.limit = def_.pageSize;
+    opts.offset = offset_;
+    if (def_.supportsCompanyScope) {
+        if (auto *app = dynamic_cast<MultiFlexiApp *>(TProgram::application)) {
+            if (app->activeCompanyId() > 0) {
+                opts.companyId = app->activeCompanyId();
+            }
+        }
+    }
+    if (!filter_.empty() &&
+        (def_.cliEntity == "job" || def_.cliEntity == "task" || def_.cliEntity == "artifact")) {
+        opts.filter = filter_;
+    }
+
+    std::vector<std::string> args{def_.cliEntity + ":list", "--order=D",
+                                  "--limit=" + std::to_string(opts.limit),
+                                  "--offset=" + std::to_string(opts.offset)};
+    if (opts.companyId > 0) {
+        args.push_back("--company_id=" + std::to_string(opts.companyId));
+    }
+    if (!opts.filter.empty()) {
+        if (def_.cliEntity == "job") {
+            args.push_back("--status=" + opts.filter);
+        } else if (def_.cliEntity == "task") {
+            args.push_back("--state=" + opts.filter);
+        } else if (def_.cliEntity == "artifact") {
+            args.push_back("--job_id=" + opts.filter);
+        }
+    }
+
+    // Capture weak-ish: if window closed before callback, skip update.
+    auto *self = this;
+    const bool enqueued = enqueueCliJson(client_, args, [self](CliClient::Result r) {
+        if (auto *app = dynamic_cast<MultiFlexiApp *>(TProgram::application)) {
+            app->setBusy(app->cliQueue().busy());
+        }
+        // Ensure the view is still on the desktop.
+        bool alive = false;
+        if (TProgram::deskTop != nullptr) {
+            TView *p = TProgram::deskTop->first();
+            while (p != nullptr) {
+                if (p == self) {
+                    alive = true;
+                    break;
+                }
+                p = p->nextView();
+            }
+        }
+        if (alive) {
+            self->applyListResult(r);
+        }
+    });
+    if (!enqueued) {
+        // sync fallback already invoked callback
+    }
 }
 
 nlohmann::json EntityListView::selectedRow() const {
@@ -126,7 +222,6 @@ nlohmann::json EntityListView::selectedRow() const {
         return {};
     }
     const short focused = list_->focused;
-    // Row 0 is header.
     if (focused <= 0) {
         return {};
     }
@@ -142,11 +237,13 @@ void EntityListView::openDetail() {
     if (row.is_null() || row.empty()) {
         return;
     }
-    const int id = jsonToInt(row, def_.idKey);
-    if (id > 0) {
-        auto r = client_.get(def_.cliEntity, id);
-        if (r.ok) {
-            row = r.data;
+    if (def_.supportsGet) {
+        const int id = jsonToInt(row, def_.idKey);
+        if (id > 0) {
+            auto r = client_.get(def_.cliEntity, id);
+            if (r.ok) {
+                row = r.data;
+            }
         }
     }
     owner->execView(new EntityDetailView(client_, def_, std::move(row)));
@@ -210,6 +307,32 @@ void EntityListView::runListAction(std::size_t index) {
     }
 }
 
+void EntityListView::openActionsMenu() {
+    std::vector<std::string> labels;
+    std::vector<std::pair<bool, std::size_t>> map; // isList, index
+    for (std::size_t i = 0; i < def_.listActions.size(); ++i) {
+        labels.push_back(std::string("[List] ") + def_.listActions[i].label);
+        map.push_back({true, i});
+    }
+    for (std::size_t i = 0; i < def_.rowActions.size(); ++i) {
+        labels.push_back(def_.rowActions[i].label);
+        map.push_back({false, i});
+    }
+    if (labels.empty()) {
+        messageBox(_("No actions available"), mfInformation | mfOKButton);
+        return;
+    }
+    const int idx = pickActionIndex(labels, _("Actions"));
+    if (idx < 0 || static_cast<std::size_t>(idx) >= map.size()) {
+        return;
+    }
+    if (map[static_cast<std::size_t>(idx)].first) {
+        runListAction(map[static_cast<std::size_t>(idx)].second);
+    } else {
+        runRowAction(map[static_cast<std::size_t>(idx)].second);
+    }
+}
+
 void EntityListView::handleEvent(TEvent &event) {
     TWindow::handleEvent(event);
 
@@ -225,8 +348,17 @@ void EntityListView::handleEvent(TEvent &event) {
                 clearEvent(event);
             }
             return;
+        case kbF2:
+            openActionsMenu();
+            clearEvent(event);
+            return;
         default:
-            if (event.keyDown.charScan.charCode == 'r') {
+            if (event.keyDown.charScan.charCode == '/') {
+                if (filterInput_ != nullptr) {
+                    filterInput_->select();
+                }
+                clearEvent(event);
+            } else if (event.keyDown.charScan.charCode == 'r') {
                 refresh();
                 clearEvent(event);
             } else if (event.keyDown.charScan.charCode == 'n' && def_.canCreate) {
@@ -238,6 +370,28 @@ void EntityListView::handleEvent(TEvent &event) {
             } else if (event.keyDown.charScan.charCode == 'd' && !def_.deleteAction.empty()) {
                 doDelete();
                 clearEvent(event);
+            } else if (event.keyDown.charScan.charCode == 'i') {
+                openActionsMenu();
+                clearEvent(event);
+            } else {
+                // Row-action hotkeys
+                const char ch = event.keyDown.charScan.charCode;
+                if (ch != 0) {
+                    for (std::size_t i = 0; i < def_.rowActions.size(); ++i) {
+                        if (def_.rowActions[i].hotkey != 0 && def_.rowActions[i].hotkey == ch) {
+                            runRowAction(i);
+                            clearEvent(event);
+                            return;
+                        }
+                    }
+                    for (std::size_t i = 0; i < def_.listActions.size(); ++i) {
+                        if (def_.listActions[i].hotkey != 0 && def_.listActions[i].hotkey == ch) {
+                            runListAction(i);
+                            clearEvent(event);
+                            return;
+                        }
+                    }
+                }
             }
             break;
         }
@@ -271,16 +425,15 @@ void EntityListView::handleEvent(TEvent &event) {
             refresh();
             clearEvent(event);
             break;
+        case cmEntityActionsMenu:
+            openActionsMenu();
+            clearEvent(event);
+            break;
+        case cmEntityApplyFilter:
+            applyFilterFromInput();
+            clearEvent(event);
+            break;
         default:
-            if (event.message.command >= cmEntityAction + 50 &&
-                event.message.command < cmEntityAction + 50 + 10) {
-                runListAction(static_cast<std::size_t>(event.message.command - (cmEntityAction + 50)));
-                clearEvent(event);
-            } else if (event.message.command >= cmEntityAction &&
-                       event.message.command < cmEntityAction + 50) {
-                runRowAction(static_cast<std::size_t>(event.message.command - cmEntityAction));
-                clearEvent(event);
-            }
             break;
         }
     }

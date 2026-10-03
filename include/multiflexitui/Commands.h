@@ -35,6 +35,7 @@ constexpr unsigned short cmOpenQueueOverview = 1128;
 constexpr unsigned short cmOpenTelemetryTest = 1129;
 constexpr unsigned short cmOpenStaleRunTemplates = 1130;
 constexpr unsigned short cmOpenImportExport = 1131;
+constexpr unsigned short cmOpenSetCompany = 1132;
 
 constexpr unsigned short cmEntityRefresh = 1200;
 constexpr unsigned short cmEntityNew = 1201;
@@ -46,6 +47,14 @@ constexpr unsigned short cmEntityNextPage = 1206;
 constexpr unsigned short cmEntityAction = 1207; // infoPtr = action index
 constexpr unsigned short cmEntitySave = 1208;
 constexpr unsigned short cmEntityFormOk = 1209;
+constexpr unsigned short cmEntityActionsMenu = 1210;
+constexpr unsigned short cmEntityApplyFilter = 1211;
+constexpr unsigned short cmEntityFormPick = 1212;
+constexpr unsigned short cmEntityFormMore = 1213;
+constexpr unsigned short cmEntityFormPrevFields = 1214;
+constexpr unsigned short cmImportJson = 1215;
+constexpr unsigned short cmExportJsonHint = 1216;
+constexpr unsigned short cmValidateJson = 1217;
 
 constexpr unsigned short cmMinimizeAll = 200;
 constexpr unsigned short cmRestoreWindows = 201;

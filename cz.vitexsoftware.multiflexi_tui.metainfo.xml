@@ -8,7 +8,7 @@
   <summary>Turbo Vision TUI for MultiFlexi CLI</summary>
   <description>
     <p>
-      MultiFlexi TUI provides a terminal user interface for the MultiFlexi CLI tool. It features a dynamic command menu that loads available commands from multiflexi-cli and displays help text in an easy-to-navigate interface. Built using the tvision Turbo Vision framework, it offers: * Dynamic command discovery * Scrollable command list * Interactive help viewer * Keyboard-driven navigation This package provides a user-friendly way to explore and use MultiFlexi commands through an intuitive terminal interface.
+      MultiFlexi TUI is a Turbo Vision terminal front-end for multiflexi-cli. Browse and edit companies, applications, run templates, jobs, credentials and more; run activation and credential wizards; follow live job output; and use admin helpers such as encryption status and prune. Lists support filtering and an active company scope; forms offer relation pickers for foreign keys.
     </p>
   </description>
   <categories>

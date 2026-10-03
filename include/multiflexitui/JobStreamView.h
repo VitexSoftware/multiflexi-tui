@@ -9,7 +9,6 @@
 
 namespace multiflexitui {
 
-// Live job output viewer: polls job:get while the job appears active.
 class JobStreamView : public TWindow {
 public:
     JobStreamView(CliClient &client, int jobId);
@@ -19,10 +18,12 @@ public:
     void draw() override;
     TColorAttr mapColor(uchar index) override;
 
-    void tick(); // called from AppShell::idle
+    void tick();
     void refresh(bool force = false);
 
 private:
+    void applyJobResult(const CliClient::Result &r, bool force);
+
     CliClient &client_;
     int jobId_;
     SimpleListViewer *out_ = nullptr;
@@ -32,9 +33,11 @@ private:
     std::string metaText_;
     bool follow_ = true;
     bool finished_ = false;
+    bool pending_ = false;
     std::chrono::steady_clock::time_point lastPoll_{};
 };
 
 void openJobStreamPicker(TProgram *app, CliClient &client);
+void openJobStreamForId(TProgram *app, CliClient &client, int jobId);
 
 } // namespace multiflexitui

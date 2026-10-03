@@ -46,7 +46,7 @@ AboutView::AboutView()
     options |= ofCentered;
     makeMaximizable(*this);
 
-    insert(new TStaticText(TRect(2, 2, 70, 3), "multiflexi-tui 3.0.0    MIT    Vitex Software"));
+    insert(new TStaticText(TRect(2, 2, 70, 3), "multiflexi-tui 3.1.0    MIT    Vitex Software"));
     insert(new TStaticText(TRect(2, 3, 70, 4), "Enter opens the selected link in a browser."));
 
     std::vector<std::string> rows;

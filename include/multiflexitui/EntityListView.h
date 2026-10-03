@@ -14,6 +14,7 @@ namespace multiflexitui {
 class EntityListView : public TWindow {
 public:
     EntityListView(CliClient &client, const EntityDef &def);
+    ~EntityListView() override;
 
     void handleEvent(TEvent &event) override;
     void draw() override;
@@ -26,18 +27,24 @@ public:
     void doDelete();
     void runRowAction(std::size_t index);
     void runListAction(std::size_t index);
+    void openActionsMenu();
 
 private:
     void setStatus(const std::string &text);
+    void applyFilterFromInput();
     nlohmann::json selectedRow() const;
+    void applyListResult(const CliClient::Result &result);
 
     CliClient &client_;
     EntityDef def_;
     SimpleListViewer *list_ = nullptr;
+    TInputLine *filterInput_ = nullptr;
     TStaticText *status_ = nullptr;
     std::vector<nlohmann::json> rows_;
     int offset_ = 0;
+    std::string filter_;
     std::string statusText_;
+    bool loading_ = false;
 };
 
 void openEntityList(TProgram *app, CliClient &client, const std::string &cliEntity);

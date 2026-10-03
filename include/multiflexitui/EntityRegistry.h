@@ -18,17 +18,18 @@ struct ColumnDef {
 };
 
 struct FieldDef {
-    std::string key;         // JSON key / CLI option name without --
-    std::string label;       // form label
-    std::string placeholder; // empty-field hint
+    std::string key;            // JSON key / CLI option name without --
+    std::string label;          // form label
+    std::string placeholder;    // empty-field hint / create default
     bool required = false;
-    bool secret = false;     // password-style (still plain TInputLine)
-    bool readOnly = false;   // shown in detail only
+    bool secret = false;        // password-style input
+    bool readOnly = false;      // shown in detail only
+    std::string relationEntity; // if set, F2 opens EntityPicker for this CLI entity
 };
 
 struct EntityAction {
     std::string label;
-    char hotkey = 0; // unused in TV menus but kept for docs parity
+    char hotkey = 0;
     // Returns true if the list should refresh afterwards.
     std::function<bool(CliClient &client, const nlohmann::json &row)> run;
 };
@@ -41,6 +42,8 @@ struct EntityDef {
     int pageSize = 40;
     bool canCreate = false;
     bool canEdit = false;
+    bool supportsGet = true;          // false → detail uses list row (no :get)
+    bool supportsCompanyScope = false; // pass active --company_id on list
     std::vector<ColumnDef> columns;
     std::vector<FieldDef> createFields;
     std::vector<FieldDef> editFields;
@@ -60,5 +63,7 @@ std::string formatHeader(const EntityDef &def);
 std::vector<std::string> buildCliArgs(const std::vector<FieldDef> &fields,
                                       const std::map<std::string, std::string> &values,
                                       int id = -1);
+nlohmann::json asJsonArray(const nlohmann::json &data);
+std::string defaultExportPath(const std::string &filename);
 
 } // namespace multiflexitui
