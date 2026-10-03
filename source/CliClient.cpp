@@ -540,6 +540,8 @@ CliClient::Result CliClient::list(const std::string &entity, const ListOptions &
             args.push_back("--state=" + opts.filter);
         } else if (entity == "artifact") {
             args.push_back("--job_id=" + opts.filter);
+        } else if (entity == "conffield") {
+            args.push_back("--app_id=" + opts.filter);
         } else {
             args.push_back("--filter=" + opts.filter);
         }

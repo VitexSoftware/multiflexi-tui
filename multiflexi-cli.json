@@ -716,7 +716,7 @@
                 "name": "enabled",
                 "shortcut": null,
                 "is_value_required": false,
-                "description": "Enabled (true\/false)",
+                "description": "Enabled (true/false)",
                 "default": null
             },
             "settings": {
@@ -799,7 +799,7 @@
                 "name": "enabled",
                 "shortcut": null,
                 "is_value_required": false,
-                "description": "Enabled (true\/false)",
+                "description": "Enabled (true/false)",
                 "default": null
             },
             "settings": {
@@ -2462,14 +2462,14 @@
                 "name": "from",
                 "shortcut": null,
                 "is_value_required": true,
-                "description": "Bulk delete: only jobs scheduled\/begun at or after this datetime (Y-m-d H:i:s)",
+                "description": "Bulk delete: only jobs scheduled/begun at or after this datetime (Y-m-d H:i:s)",
                 "default": null
             },
             "to": {
                 "name": "to",
                 "shortcut": null,
                 "is_value_required": true,
-                "description": "Bulk delete: only jobs scheduled\/begun at or before this datetime (Y-m-d H:i:s)",
+                "description": "Bulk delete: only jobs scheduled/begun at or before this datetime (Y-m-d H:i:s)",
                 "default": null
             },
             "dry-run": {
@@ -3513,7 +3513,7 @@
                 "name": "enabled",
                 "shortcut": null,
                 "is_value_required": false,
-                "description": "Enabled (true\/false)",
+                "description": "Enabled (true/false)",
                 "default": null
             }
         }
@@ -3582,7 +3582,7 @@
                 "name": "enabled",
                 "shortcut": null,
                 "is_value_required": false,
-                "description": "Enabled (true\/false)",
+                "description": "Enabled (true/false)",
                 "default": null
             }
         }
@@ -3746,7 +3746,7 @@
                 "name": "replace",
                 "shortcut": null,
                 "is_value_required": false,
-                "description": "Replace existing roles (true\/false), default true",
+                "description": "Replace existing roles (true/false), default true",
                 "default": "true"
             },
             "assigned_by": {
@@ -3962,6 +3962,13 @@
                 "is_value_required": false,
                 "description": "Number of records to keep",
                 "default": 1000
+            },
+            "format": {
+                "name": "format",
+                "shortcut": "f",
+                "is_value_required": false,
+                "description": "The output format: text or json. Defaults to text.",
+                "default": "text"
             }
         }
     },

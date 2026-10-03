@@ -71,4 +71,7 @@ constexpr unsigned short cmWizardFinish = 1402;
 constexpr unsigned short cmStreamRefresh = 1410;
 constexpr unsigned short cmStreamToggleFollow = 1411;
 
+constexpr unsigned short cmServiceStart = 1420;
+constexpr unsigned short cmServiceStop = 1421;
+
 } // namespace multiflexitui

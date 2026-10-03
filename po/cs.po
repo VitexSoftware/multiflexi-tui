@@ -10,11 +10,20 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
+msgid "Co:"
+msgstr "Firma:"
+
 msgid "MultiFlexi Status"
 msgstr "Stav MultiFlexi"
 
 msgid "~R~efresh"
 msgstr "~O~bnovit"
+
+msgid "~S~tart"
+msgstr "~S~tart"
+
+msgid "Sto~p~"
+msgstr "Sto~p~"
 
 msgid "Close"
 msgstr "Zavřít"
@@ -87,6 +96,24 @@ msgstr "~S~ledovat"
 
 msgid "Prune"
 msgstr "Prořezat"
+
+msgid "What to prune"
+msgstr "Co prořezat"
+
+msgid "~L~ogs table"
+msgstr "Tabulka ~l~ogů"
+
+msgid "~J~obs table"
+msgstr "Tabulka ~j~obů"
+
+msgid "Keep latest N records"
+msgstr "Ponechat posledních N záznamů"
+
+msgid "~P~rune"
+msgstr "~P~řezat"
+
+msgid "Select at least one of: logs, jobs."
+msgstr "Vyberte alespoň jedno: logy, joby."
 
 msgid "Keep latest N jobs/logs"
 msgstr "Ponechat posledních N úloh/logů"

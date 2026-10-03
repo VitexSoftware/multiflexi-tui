@@ -85,6 +85,66 @@ private:
     TInputLine *path_ = nullptr;
 };
 
+class PruneDialog : public TDialog {
+public:
+    PruneDialog()
+        : TWindowInit(&TDialog::initFrame), TDialog(TRect(14, 6, 66, 18), _("Prune")) {
+        options |= ofCentered;
+
+        insert(new TLabel(TRect(2, 2, 30, 3), _("What to prune"), nullptr));
+        // Bit0 = logs, bit1 = jobs — both on by default.
+        checks_ = new TCheckBoxes(TRect(3, 3, 30, 5),
+                                  new TSItem(_("~L~ogs table"), new TSItem(_("~J~obs table"), nullptr)));
+        {
+            ushort marks = 0x3; // both checked
+            checks_->setData(&marks);
+        }
+        insert(checks_);
+
+        keep_ = new TInputLine(TRect(30, 6, 42, 7), 12);
+        char buf[16] = "1000";
+        keep_->setData(buf);
+        insert(keep_);
+        insert(new TLabel(TRect(2, 6, 28, 7), _("Keep latest N records"), keep_));
+
+        insert(new AppButton(TRect(2, 9, 16, 11), _("~P~rune"), cmOK, bfDefault));
+        insert(new AppButton(TRect(34, 9, 48, 11), _("Cancel"), cmCancel, bfNormal));
+        selectNext(False);
+    }
+
+    ushort selectedMask() const {
+        ushort marks = 0;
+        if (checks_ != nullptr) {
+            checks_->getData(&marks);
+        }
+        return marks;
+    }
+
+    bool pruneLogs() const { return (selectedMask() & 0x1) != 0; }
+    bool pruneJobs() const { return (selectedMask() & 0x2) != 0; }
+
+    std::string keepCount() const {
+        char buf[16] = {};
+        if (keep_ != nullptr) {
+            keep_->getData(buf);
+        }
+        std::string s = buf;
+        while (!s.empty() && (s.back() == ' ' || s.back() == '\0')) {
+            s.pop_back();
+        }
+        return s.empty() ? "1000" : s;
+    }
+
+    TColorAttr mapColor(uchar index) override {
+        TColorAttr color;
+        return windowColor(index, color) ? color : TDialog::mapColor(index);
+    }
+
+private:
+    TCheckBoxes *checks_ = nullptr;
+    TInputLine *keep_ = nullptr;
+};
+
 } // namespace
 
 MultiFlexiApp::MultiFlexiApp()
@@ -259,14 +319,24 @@ void MultiFlexiApp::openSetCompany() {
             return;
         }
     }
-    const int id = pickEntityId(client_, "company", _("Set active company"));
+    auto *dlg = new EntityPickerDialog(client_, "company", _("Set active company"));
+    const ushort code = deskTop->execView(dlg);
+    const int id = (code == cmOK) ? dlg->selectedId() : 0;
+    std::string name;
+    if (id > 0) {
+        const auto row = dlg->selectedRow();
+        if (row.is_object() && row.contains("name")) {
+            name = jsonToString(row["name"]);
+        } else if (row.is_object() && row.contains("slug")) {
+            name = jsonToString(row["slug"]);
+        }
+        if (name.empty()) {
+            name = std::to_string(id);
+        }
+    }
+    TObject::destroy(dlg);
     if (id <= 0) {
         return;
-    }
-    auto r = client_.get("company", id);
-    std::string name = std::to_string(id);
-    if (r.ok && r.data.is_object() && r.data.contains("name")) {
-        name = jsonToString(r.data["name"]);
     }
     setActiveCompany(id, name);
 }
@@ -285,11 +355,27 @@ void MultiFlexiApp::openAdminJsonResult(const std::vector<std::string> &args, co
 }
 
 void MultiFlexiApp::openPruneDialog() {
-    char buf[16] = "1000";
-    if (inputBox(_("Prune"), _("Keep latest N jobs/logs"), buf, sizeof(buf) - 1) != cmOK) {
+    auto *dlg = new PruneDialog();
+    const ushort code = deskTop->execView(dlg);
+    const bool logs = dlg->pruneLogs();
+    const bool jobs = dlg->pruneJobs();
+    const std::string keep = dlg->keepCount();
+    TObject::destroy(dlg);
+    if (code != cmOK) {
         return;
     }
-    openAdminJsonResult({"prune", "--keep=" + std::string(buf)}, "prune");
+    if (!logs && !jobs) {
+        messageBox(_("Select at least one of: logs, jobs."), mfError | mfOKButton);
+        return;
+    }
+    std::vector<std::string> args{"prune", "--keep=" + keep};
+    if (logs) {
+        args.push_back("--logs");
+    }
+    if (jobs) {
+        args.push_back("--jobs");
+    }
+    openAdminJsonResult(args, "prune");
 }
 
 void MultiFlexiApp::openImportExportDialog() {

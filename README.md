@@ -5,7 +5,7 @@ A terminal user interface for [multiflexi-cli](https://github.com/VitexSoftware/
 
 ## Features
 
-- **Status dashboard** from `multiflexi-cli status`
+- **Status dashboard** from `multiflexi-cli status`, with Start/Stop for `executor` / `scheduler` / `housekeeper` service rows
 - **Entity CRUD** for companies, applications, config fields, run templates, jobs, tasks, credentials, tokens, users, artifacts, credential types/prototypes, company-apps, queue, event sources/rules, and GDPR deletion requests
 - **List filter** (`/` or Apply) and **active company** scope (MultiFlexi → Set company…) for run-templates / company-apps
 - **Relation pickers** (F2) for `*_id` fields; **Actions** menu (F2 / Act~i~ons) for all row/list actions and hotkeys

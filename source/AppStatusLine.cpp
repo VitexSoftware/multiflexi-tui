@@ -1,6 +1,8 @@
 #include "multiflexitui/TV.h"
 #include "multiflexitui/AppStatusLine.h"
 #include "multiflexitui/Commands.h"
+#include "multiflexitui/WindowColors.h"
+#include "multiflexitui/i18n.h"
 
 namespace multiflexitui {
 
@@ -38,6 +40,8 @@ void AppStatusLine::draw() {
     TDrawBuffer b;
     const TAttrPair cNormal = getColor(0x0301);
     const TAttrPair cNormDisabled = getColor(0x0202);
+    // Accent for the active-company badge so it reads as context, not a hotkey.
+    const TColorAttr cCompany(TColor(TColorRGB(0xF2C23E)), TColor(TColorRGB(kWindowBg)));
     b.moveChar(0, ' ', cNormal, static_cast<ushort>(size.x));
     urlStart_ = -1;
     urlEnd_ = -1;
@@ -61,54 +65,61 @@ void AppStatusLine::draw() {
         used += length + 2;
     }
 
-    std::string badge;
-
+    // Right-side context: company (always when set) + optional Busy badge.
+    std::string right;
     if (!company_.empty()) {
-        badge = company_;
+        right = std::string(_("Co:")) + " " + company_;
     }
-
     if (!queryMode_.empty()) {
-        if (!badge.empty()) {
-            badge += ' ';
+        if (!right.empty()) {
+            right += "  ";
         }
-
-        badge += queryMode_;
+        right += queryMode_;
     }
 
-    if (!badge.empty() && used + 2 < size.x) {
-        const int avail = size.x - used - 2;
-
-        if (static_cast<int>(badge.size()) > avail) {
-            badge.resize(static_cast<std::size_t>(avail));
-        }
-
-        b.moveStr(static_cast<ushort>(used + 1), badge, cNormal);
-        used += static_cast<int>(badge.size()) + 1;
-    }
-
-    if (!currentUrl_.empty() && used + 1 < size.x) {
-        const int avail = size.x - used - 1;
-        std::string shown = currentUrl_;
-
-        if (static_cast<int>(shown.size()) > avail) {
-            if (avail <= 3) {
-                shown = shown.substr(shown.size() - static_cast<std::size_t>(avail));
+    int rightStart = size.x;
+    if (!right.empty() && used + 2 < size.x) {
+        int avail = size.x - used - 1;
+        if (static_cast<int>(right.size()) > avail) {
+            // Keep the Co: prefix; ellipsize the company name from the left.
+            if (avail > 4) {
+                right = "..." + right.substr(right.size() - static_cast<std::size_t>(avail - 3));
             } else {
-                shown = "..." + shown.substr(shown.size() - static_cast<std::size_t>(avail - 3));
+                right.resize(static_cast<std::size_t>(avail));
             }
         }
-
-        int start = size.x - static_cast<int>(shown.size());
-
-        if (start < used + 1) {
-            start = used + 1;
+        rightStart = size.x - static_cast<int>(right.size());
+        if (rightStart < used + 1) {
+            rightStart = used + 1;
         }
+        const TColorAttr color = company_.empty() ? TColorAttr(cNormal) : cCompany;
+        b.moveStr(static_cast<ushort>(rightStart), right, color);
+    }
 
-        TColorAttr link(cNormal);
-        link.setStyle(static_cast<ushort>(link.getStyle() | slUnderline));
-        b.moveStr(static_cast<ushort>(start), shown, link);
-        urlStart_ = start;
-        urlEnd_ = start + static_cast<int>(shown.size());
+    // CLI command fills the gap between hotkeys and the right badge.
+    if (!currentUrl_.empty() && used + 1 < rightStart) {
+        const int avail = rightStart - used - 2;
+        if (avail > 0) {
+            std::string shown = currentUrl_;
+            if (static_cast<int>(shown.size()) > avail) {
+                if (avail <= 3) {
+                    shown = shown.substr(shown.size() - static_cast<std::size_t>(avail));
+                } else {
+                    shown = "..." + shown.substr(shown.size() - static_cast<std::size_t>(avail - 3));
+                }
+            }
+
+            int start = rightStart - 1 - static_cast<int>(shown.size());
+            if (start < used + 1) {
+                start = used + 1;
+            }
+
+            TColorAttr link(cNormal);
+            link.setStyle(static_cast<ushort>(link.getStyle() | slUnderline));
+            b.moveStr(static_cast<ushort>(start), shown, link);
+            urlStart_ = start;
+            urlEnd_ = start + static_cast<int>(shown.size());
+        }
     }
 
     writeLine(0, 0, static_cast<ushort>(size.x), 1, b);
