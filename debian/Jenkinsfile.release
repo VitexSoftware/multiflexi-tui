@@ -4,7 +4,7 @@
 // to repo.multiflexi.eu via MultiFlexi-publish. Testing builds use debian/Jenkinsfile.
 // Multi-arch matrix with node-local build roots (no NFS stash).
 
-String[] architectures = ['amd64', 'arm64']
+String[] architectures = ['amd64'] // arm64 needs libtvision-dev (not in repo yet)
 String[] distributions = ['debian:bookworm', 'debian:trixie', 'ubuntu:jammy', 'ubuntu:noble']
 
 String vendor = 'vitexsoftware'
@@ -136,8 +136,10 @@ def localBuildTree(String root, String gitUrl, String gitCommit, String buildId,
             fi
             mkdir -p "$LB_OUT" "$(dirname "$LB_TREE")"
             lock="$LB_ROOT/locks/$(basename "$LB_MIRROR").lock"
-            # clone --shared avoids concurrent worktree metadata races
-            flock "$lock" git clone --shared --no-checkout "$LB_MIRROR" "$LB_TREE"
+            # Local clone hardlinks objects into $LB_TREE (mounted into Docker).
+            # --shared only writes alternates to the bare mirror, which is NOT
+            # mounted into the build container and breaks git inside it.
+            flock "$lock" git clone --no-checkout "$LB_MIRROR" "$LB_TREE"
             git -C "$LB_TREE" checkout --detach -f "$LB_SHA"
         '''
     }
