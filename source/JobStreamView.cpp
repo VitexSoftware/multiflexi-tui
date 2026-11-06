@@ -71,13 +71,20 @@ void JobStreamView::applyJobResult(const CliClient::Result &r, bool /*force*/) {
     const std::string end = jsonToString(r.data.contains("end") ? r.data["end"] : nlohmann::json());
     const std::string exitcode =
         jsonToString(r.data.contains("exitcode") ? r.data["exitcode"] : nlohmann::json());
+    const std::string exitcodeDesc = jsonToString(
+        r.data.contains("exitcode_description") ? r.data["exitcode_description"] : nlohmann::json());
     const int pid = jsonToInt(r.data, "pid");
 
     finished_ = !end.empty() || (!exitcode.empty() && exitcode != "null");
     std::ostringstream meta;
     meta << "job=" << jobId_ << " pid=" << pid << " begin=" << begin << " end=" << end
-         << " exit=" << exitcode << (follow_ ? " [follow]" : " [paused]")
-         << (finished_ ? " DONE" : " LIVE");
+         << " exit=" << exitcode;
+
+    if (!exitcodeDesc.empty() && exitcodeDesc != "null") {
+        meta << " (" << exitcodeDesc << ")";
+    }
+
+    meta << (follow_ ? " [follow]" : " [paused]") << (finished_ ? " DONE" : " LIVE");
     metaText_ = meta.str();
 
     std::vector<std::string> lines;

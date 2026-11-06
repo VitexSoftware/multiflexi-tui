@@ -402,7 +402,8 @@ void registerBuiltinEntities() {
         e.canCreate = true;
         e.canEdit = true;
         e.columns = {{"id", "ID", 8}, {"runtemplate_id", "RT", 6}, {"company_id", "Co", 5},
-                     {"exitcode", "Exit", 5}, {"begin", "Begin", 20}, {"executor", "Exec", 10}};
+                     {"exitcode", "Exit", 5}, {"exitcode_description", _("Meaning"), 24},
+                     {"begin", "Begin", 20}, {"executor", "Exec", 10}};
         e.createFields = {
             field("runtemplate_id", "RunTemplate ID", "", true, false, "run-template"),
             field("scheduled", "Scheduled", "now", true),
